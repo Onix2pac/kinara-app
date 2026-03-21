@@ -1,0 +1,3334 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#1a5c52">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="KINARA">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>KINARA v6 · Gestión de Pacientes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --teal-dark:   #1e6b5e;
+    --teal:        #2e8b7a;
+    --teal-mid:    #48b09c;
+    --teal-light:  #c8ebe4;
+    --teal-pale:   #eaf7f4;
+    --gold:        #E8B84B;
+    --gold-dark:   #c49a30;
+    --gold-pale:   #fdf4e0;
+    --text-dark:   #0f2e28;
+    --text-mid:    #3a6b62;
+    --text-soft:   #74a89f;
+    --bg:          #f2fbf8;
+    --white:       #ffffff;
+    --border:      #b8dfd8;
+    --danger:      #c0392b;
+    --shadow-sm:   0 1px 4px rgba(30,107,94,.08);
+    --shadow-md:   0 4px 16px rgba(30,107,94,.13);
+    --shadow-lg:   0 12px 40px rgba(30,107,94,.18);
+    --radius:      14px;
+    --radius-sm:   8px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text-dark); min-height: 100vh; overflow-x: hidden; }
+
+  /* ── HEADER ── */
+  .app-header { background: var(--teal-dark); padding: 0 20px; height: 60px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 12px rgba(0,0,0,.25); }
+  .header-brand { display: flex; align-items: center; gap: 10px; }
+  .header-logo-icon { width: 34px; height: 34px; }
+  .header-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; color: white; letter-spacing: .08em; }
+  .header-actions { display: flex; align-items: center; gap: 8px; }
+  .btn-icon { background: rgba(255,255,255,.1); border: none; color: white; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; transition: background .2s; }
+  .btn-icon:hover { background: rgba(255,255,255,.2); }
+
+  /* ── VIEWS ── */
+  .view { display: none; animation: fadeIn .25s ease; }
+  .view.active { display: block; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+
+  /* ── LISTA PACIENTES ── */
+  .list-container { padding: 20px 16px 100px; max-width: 680px; margin: 0 auto; }
+  .search-bar { position: relative; margin-bottom: 20px; }
+  .search-bar input { width: 100%; padding: 13px 16px 13px 44px; border: 1.5px solid var(--border); border-radius: var(--radius); background: white; font-family: 'DM Sans',sans-serif; font-size: 15px; color: var(--text-dark); outline: none; box-shadow: var(--shadow-sm); transition: border-color .2s, box-shadow .2s; }
+  .search-bar input:focus { border-color: var(--teal-mid); box-shadow: 0 0 0 3px rgba(61,155,138,.15); }
+  .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-soft); font-size: 18px; pointer-events: none; }
+  .section-label { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-soft); font-weight: 500; margin-bottom: 10px; padding-left: 2px; }
+  .patient-list { display: flex; flex-direction: column; gap: 10px; }
+  .patient-card { background: white; border: 1.5px solid var(--border); border-radius: var(--radius); padding: 14px 16px; display: flex; align-items: center; gap: 14px; cursor: pointer; box-shadow: var(--shadow-sm); transition: transform .15s, box-shadow .15s, border-color .15s; }
+  .patient-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--teal-mid); }
+  .patient-avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--teal-light); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond',serif; font-size: 18px; font-weight: 600; color: var(--teal-dark); flex-shrink: 0; }
+  .patient-info { flex: 1; min-width: 0; }
+  .patient-name { font-size: 15px; font-weight: 500; color: var(--text-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .patient-meta { font-size: 12px; color: var(--text-soft); margin-top: 2px; display: flex; gap: 10px; }
+  .patient-badge { padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; flex-shrink: 0; }
+  .badge-active { background: var(--teal-light); color: var(--teal-dark); }
+  .badge-alta { background: var(--gold-pale); color: var(--gold-dark); }
+  .patient-chevron { color: var(--text-soft); font-size: 16px; }
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--text-soft); }
+  .empty-state .empty-icon { font-size: 48px; margin-bottom: 16px; }
+  .stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .stat-card { background: white; border: 1.5px solid var(--border); border-radius: var(--radius); padding: 14px 12px; text-align: center; box-shadow: var(--shadow-sm); }
+  .stat-num { font-family: 'Cormorant Garamond',serif; font-size: 28px; font-weight: 600; color: var(--teal-dark); line-height: 1; }
+  .stat-label { font-size: 11px; color: var(--text-soft); margin-top: 4px; text-transform: uppercase; letter-spacing: .06em; }
+
+  /* ── FAB ── */
+  .fab { position: fixed; bottom: 28px; right: 20px; background: var(--gold); color: var(--teal-dark); border: none; width: 58px; height: 58px; border-radius: 50%; font-size: 26px; cursor: pointer; box-shadow: 0 6px 20px rgba(232,184,75,.5); display: flex; align-items: center; justify-content: center; transition: transform .2s, box-shadow .2s; z-index: 90; }
+  .fab:hover { transform: scale(1.08); box-shadow: 0 8px 28px rgba(232,184,75,.6); }
+  .fab:active { transform: scale(.96); }
+
+  /* ── FICHA ── */
+  .ficha-container { padding: 0 0 100px; max-width: 680px; margin: 0 auto; }
+  .ficha-hero { background: linear-gradient(135deg, var(--teal-dark) 0%, var(--teal) 100%); padding: 24px 20px 20px; display: flex; align-items: center; gap: 16px; }
+  .ficha-avatar { width: 60px; height: 60px; border-radius: 50%; background: rgba(255,255,255,.15); border: 2px solid rgba(255,255,255,.3); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond',serif; font-size: 26px; font-weight: 600; color: white; flex-shrink: 0; }
+  .ficha-hero-info h2 { font-family: 'Cormorant Garamond',serif; font-size: 24px; font-weight: 600; color: white; line-height: 1.2; }
+  .ficha-hero-info p { font-size: 13px; color: var(--teal-light); margin-top: 4px; }
+  .ficha-status { margin-top: 6px; display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; background: rgba(255,255,255,.15); color: white; }
+  .ficha-tabs { display: flex; background: white; border-bottom: 1.5px solid var(--border); padding: 0 4px; overflow-x: auto; scrollbar-width: none; }
+  .ficha-tabs::-webkit-scrollbar { display: none; }
+  .ficha-tab { padding: 14px 16px; font-size: 13px; font-weight: 500; color: var(--text-soft); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; transition: color .2s, border-color .2s; }
+  .ficha-tab.active { color: var(--teal-dark); border-bottom-color: var(--teal); }
+  .ficha-section { padding: 20px 16px; }
+
+  /* ── FORMS ── */
+  .form-group { margin-bottom: 16px; }
+  .form-label { display: block; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-soft); font-weight: 500; margin-bottom: 6px; }
+  .form-control { width: 100%; padding: 11px 14px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); background: white; font-family: 'DM Sans',sans-serif; font-size: 15px; color: var(--text-dark); outline: none; transition: border-color .2s, box-shadow .2s; }
+  .form-control:focus { border-color: var(--teal-mid); box-shadow: 0 0 0 3px rgba(61,155,138,.12); }
+  textarea.form-control { resize: vertical; min-height: 80px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .select-control { width: 100%; padding: 11px 14px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); background: white; font-family: 'DM Sans',sans-serif; font-size: 15px; color: var(--text-dark); outline: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237aa39d' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; }
+  .select-control:focus { border-color: var(--teal-mid); box-shadow: 0 0 0 3px rgba(61,155,138,.12); }
+
+  /* ── INFO CARDS ── */
+  .info-card { background: white; border: 1.5px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow-sm); }
+  .info-card-title { font-size: 13px; font-weight: 500; color: var(--teal-dark); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .info-row { display: flex; align-items: flex-start; padding: 6px 0; border-bottom: 1px solid var(--teal-pale); }
+  .info-row:last-child { border-bottom: none; }
+  .info-key { font-size: 12px; color: var(--text-soft); width: 130px; flex-shrink: 0; }
+  .info-val { font-size: 13px; color: var(--text-dark); flex: 1; }
+
+  /* ── SESIONES ── */
+  .session-item { background: white; border: 1.5px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; box-shadow: var(--shadow-sm); cursor: pointer; transition: border-color .15s, transform .15s; }
+  .session-item:hover { border-color: var(--teal-mid); transform: translateY(-1px); }
+  .session-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .session-num { font-size: 12px; font-weight: 500; color: var(--teal-mid); text-transform: uppercase; letter-spacing: .06em; }
+  .session-date { font-size: 12px; color: var(--text-soft); }
+  .session-type { font-size: 14px; font-weight: 500; color: var(--text-dark); }
+  .session-pain { display: flex; align-items: center; gap: 4px; margin-top: 6px; }
+  .pain-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .pain-label { font-size: 12px; color: var(--text-soft); }
+  .session-fotos-strip { display: flex; gap: 6px; margin-top: 10px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+  .session-fotos-strip::-webkit-scrollbar { display: none; }
+  .foto-thumb { width: 56px; height: 56px; border-radius: 8px; object-fit: cover; border: 1.5px solid var(--border); cursor: pointer; flex-shrink: 0; transition: transform .15s, border-color .15s; }
+  .foto-thumb:hover { transform: scale(1.05); border-color: var(--teal-mid); }
+  .foto-thumb-add { width: 56px; height: 56px; border-radius: 8px; border: 1.5px dashed var(--border); background: var(--teal-pale); display: flex; align-items: center; justify-content: center; color: var(--text-soft); font-size: 22px; cursor: pointer; flex-shrink: 0; transition: border-color .15s, background .15s; }
+  .foto-thumb-add:hover { border-color: var(--teal-mid); background: var(--teal-light); }
+
+  /* ── GALERÍA TAB ── */
+  .galeria-section { padding: 16px; }
+  .galeria-paciente-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .galeria-grupo { margin-bottom: 24px; }
+  .galeria-grupo-titulo { font-size: 12px; font-weight: 500; color: var(--text-soft); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+  .galeria-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .galeria-foto-wrap { position: relative; aspect-ratio: 1; border-radius: 10px; overflow: hidden; cursor: pointer; }
+  .galeria-foto-wrap img { width: 100%; height: 100%; object-fit: cover; transition: transform .2s; }
+  .galeria-foto-wrap:hover img { transform: scale(1.04); }
+  .galeria-foto-tag { position: absolute; bottom: 4px; left: 4px; background: rgba(26,92,82,.75); color: white; font-size: 10px; font-weight: 500; padding: 2px 6px; border-radius: 6px; backdrop-filter: blur(2px); }
+  .galeria-foto-del { position: absolute; top: 4px; right: 4px; background: rgba(192,57,43,.85); color: white; border: none; width: 22px; height: 22px; border-radius: 50%; font-size: 13px; cursor: pointer; display: none; align-items: center; justify-content: center; line-height: 1; }
+  .galeria-foto-wrap:hover .galeria-foto-del { display: flex; }
+  .galeria-empty { text-align: center; padding: 30px 0; color: var(--text-soft); font-size: 14px; }
+
+  /* ── COMPARADOR ANTES/DESPUÉS ── */
+  .comparador-wrap { margin-top: 12px; background: white; border: 1.5px solid var(--border); border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow-sm); }
+  .comparador-titulo { font-size: 13px; font-weight: 500; color: var(--teal-dark); margin-bottom: 10px; }
+  .comparador-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .comparador-slot { position: relative; aspect-ratio: 3/4; border-radius: 10px; overflow: hidden; background: var(--teal-pale); border: 1.5px solid var(--border); }
+  .comparador-slot img { width: 100%; height: 100%; object-fit: cover; }
+  .comparador-label { position: absolute; bottom: 0; left: 0; right: 0; padding: 8px; background: linear-gradient(transparent, rgba(26,92,82,.7)); color: white; font-size: 12px; font-weight: 500; text-align: center; }
+  .comparador-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-soft); font-size: 13px; gap: 8px; }
+
+  /* ── FOTO UPLOAD EN SESIÓN ── */
+  .foto-upload-area { border: 2px dashed var(--border); border-radius: var(--radius); padding: 16px; background: var(--teal-pale); transition: border-color .2s, background .2s; }
+  .foto-upload-area.drag-over { border-color: var(--teal-mid); background: var(--teal-light); }
+  .foto-tipo-selector { display: flex; gap: 8px; margin-bottom: 10px; }
+  .foto-tipo-btn { flex: 1; padding: 8px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); background: white; font-family: 'DM Sans',sans-serif; font-size: 13px; font-weight: 500; color: var(--text-mid); cursor: pointer; text-align: center; transition: all .15s; }
+  .foto-tipo-btn.active { background: var(--teal-light); border-color: var(--teal-mid); color: var(--teal-dark); }
+  .foto-preview-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .foto-preview-item { position: relative; width: 72px; height: 72px; }
+  .foto-preview-item img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; border: 1.5px solid var(--border); }
+  .foto-preview-remove { position: absolute; top: -6px; right: -6px; background: var(--danger); color: white; border: none; width: 18px; height: 18px; border-radius: 50%; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; }
+  .foto-upload-btn-area { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 8px 0; }
+  .foto-upload-btn { background: white; border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 10px 18px; font-family: 'DM Sans',sans-serif; font-size: 14px; font-weight: 500; color: var(--teal-dark); cursor: pointer; transition: border-color .2s; }
+  .foto-upload-btn:hover { border-color: var(--teal-mid); }
+  .foto-upload-hint { font-size: 12px; color: var(--text-soft); text-align: center; }
+
+  /* ── VISOR FULLSCREEN ── */
+  .visor-overlay { position: fixed; inset: 0; background: rgba(10,20,18,.95); z-index: 500; display: none; flex-direction: column; align-items: center; justify-content: center; }
+  .visor-overlay.open { display: flex; }
+  .visor-img { max-width: 95vw; max-height: 80vh; object-fit: contain; border-radius: 8px; }
+  .visor-toolbar { display: flex; align-items: center; gap: 16px; margin-top: 16px; }
+  .visor-btn { background: rgba(255,255,255,.12); border: none; color: white; padding: 8px 16px; border-radius: 20px; font-family: 'DM Sans',sans-serif; font-size: 13px; cursor: pointer; transition: background .2s; }
+  .visor-btn:hover { background: rgba(255,255,255,.22); }
+  .visor-close { position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,.1); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .visor-info { color: rgba(255,255,255,.6); font-size: 13px; margin-top: 8px; text-align: center; }
+
+  /* ── MODAL / DRAWER ── */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(10,30,28,.5); z-index: 200; display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .25s; backdrop-filter: blur(3px); }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal-drawer { background: white; border-radius: 20px 20px 0 0; padding: 24px 20px 40px; width: 100%; max-width: 680px; max-height: 90vh; overflow-y: auto; transform: translateY(100%); transition: transform .3s cubic-bezier(.32,.72,0,1); }
+  .modal-overlay.open .modal-drawer { transform: translateY(0); }
+  .modal-handle { width: 36px; height: 4px; border-radius: 2px; background: var(--border); margin: 0 auto 20px; }
+  .modal-title { font-family: 'Cormorant Garamond',serif; font-size: 22px; font-weight: 600; color: var(--teal-dark); margin-bottom: 20px; }
+
+  /* ── BUTTONS ── */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 12px 22px; border-radius: var(--radius-sm); font-family: 'DM Sans',sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; border: none; transition: transform .15s, box-shadow .15s; }
+  .btn:active { transform: scale(.97); }
+  .btn-primary { background: var(--teal); color: white; box-shadow: 0 3px 12px rgba(42,122,111,.3); width: 100%; padding: 14px; }
+  .btn-primary:hover { box-shadow: 0 5px 18px rgba(42,122,111,.4); }
+  .btn-gold { background: var(--gold); color: var(--teal-dark); box-shadow: 0 3px 12px rgba(232,184,75,.3); width: 100%; padding: 14px; font-weight: 600; }
+  .btn-ghost { background: transparent; color: var(--text-soft); border: 1.5px solid var(--border); width: 100%; padding: 13px; }
+
+  /* ── DOLOR SCALE ── */
+  .dolor-scale { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .dolor-btn { width: 38px; height: 38px; border-radius: var(--radius-sm); border: 1.5px solid var(--border); background: white; font-size: 13px; font-weight: 500; cursor: pointer; transition: all .15s; color: var(--text-mid); }
+  .dolor-btn.selected { color: white; border-color: transparent; }
+  .dolor-btn[data-v="0"].selected,.dolor-btn[data-v="1"].selected,.dolor-btn[data-v="2"].selected { background: #3D9B8A; }
+  .dolor-btn[data-v="3"].selected,.dolor-btn[data-v="4"].selected,.dolor-btn[data-v="5"].selected { background: #E8B84B; }
+  .dolor-btn[data-v="6"].selected,.dolor-btn[data-v="7"].selected { background: #e07c2a; }
+  .dolor-btn[data-v="8"].selected,.dolor-btn[data-v="9"].selected,.dolor-btn[data-v="10"].selected { background: #c0392b; }
+
+  /* ── CHIPS ── */
+  .chip-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .chip { padding: 4px 10px; border-radius: 20px; font-size: 12px; border: 1.5px solid var(--border); color: var(--text-mid); background: white; cursor: pointer; transition: all .15s; }
+  .chip.selected { background: var(--teal-light); border-color: var(--teal-mid); color: var(--teal-dark); font-weight: 500; }
+
+  /* ── BACK BTN ── */
+  .back-btn { display: flex; align-items: center; gap: 6px; background: none; border: none; color: var(--teal-light); font-size: 14px; cursor: pointer; padding: 0; }
+  .back-btn:hover { color: white; }
+
+  /* ── TOAST ── */
+  .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--teal-dark); color: white; padding: 10px 20px; border-radius: 24px; font-size: 13px; font-weight: 500; opacity: 0; transition: all .3s; z-index: 300; white-space: nowrap; box-shadow: var(--shadow-lg); }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── OFFLINE ── */
+  .offline-banner { background: #c0392b; color: white; text-align: center; padding: 6px; font-size: 12px; display: none; }
+  body.offline .offline-banner { display: block; }
+  .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gold); display: inline-block; margin-right: 6px; animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  /* ── PWA INSTALL BANNER ── */
+  .install-banner { background: linear-gradient(135deg, var(--teal) 0%, var(--teal-dark) 100%); color: white; padding: 12px 16px; display: none; align-items: center; gap: 12px; }
+  .install-banner.show { display: flex; }
+  .install-banner p { flex: 1; font-size: 13px; line-height: 1.4; }
+  .install-banner strong { font-weight: 600; }
+  .install-btn { background: var(--gold); color: var(--teal-dark); border: none; padding: 8px 16px; border-radius: 20px; font-family: 'DM Sans',sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; flex-shrink: 0; }
+  .install-dismiss { background: none; border: none; color: rgba(255,255,255,.6); font-size: 20px; cursor: pointer; padding: 0 4px; }
+
+  /* ══════════════════════════════════════
+     FASE 3 — MAPA CORPORAL CLÍNICO
+  ══════════════════════════════════════ */
+  .mapa-container { padding: 16px; }
+  .mapa-toolbar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .mapa-zone-type { display: flex; align-items: center; gap: 5px; padding: 6px 10px; border: 1.5px solid var(--border); border-radius: 20px; background: white; font-family: 'DM Sans',sans-serif; font-size: 12px; font-weight: 500; color: var(--text-mid); cursor: pointer; transition: all .15s; white-space: nowrap; }
+  .mapa-zone-type.active { border-color: currentColor; background: #f8fffe; }
+  .mapa-zone-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .mapa-tool-btn { padding: 7px 12px; border: 1.5px solid var(--border); border-radius: 20px; background: white; font-family: 'DM Sans',sans-serif; font-size: 12px; font-weight: 500; color: var(--text-mid); cursor: pointer; transition: all .15s; }
+  .mapa-tool-btn:hover { border-color: var(--teal-mid); color: var(--teal-dark); }
+  .mapa-view-btns { display: flex; border: 1.5px solid var(--border); border-radius: 20px; overflow: hidden; }
+  .mapa-view-btn { padding: 6px 12px; font-size: 12px; font-weight: 500; border: none; background: white; color: var(--text-soft); cursor: pointer; transition: all .15s; }
+  .mapa-view-btn.active { background: var(--teal-light); color: var(--teal-dark); }
+  .mapa-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+
+  /* Zona clínica interactiva */
+  .zona-clinica { cursor: pointer; transition: opacity .15s; }
+  .zona-clinica:hover { opacity: 0.75; }
+  .zona-clinica rect, .zona-clinica ellipse, .zona-clinica path, .zona-clinica polygon { transition: fill .2s; }
+  .zona-clinica.marcada rect, .zona-clinica.marcada ellipse, .zona-clinica.marcada path, .zona-clinica.marcada polygon { stroke-width: 2; }
+
+  /* Zona marcada chips */
+  .zonas-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+  .zona-chip { display: flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; border: 1.5px solid; }
+  .zona-chip-del { background: none; border: none; cursor: pointer; font-size: 14px; line-height: 1; padding: 0; margin-left: 2px; opacity: .6; }
+  .zona-chip-del:hover { opacity: 1; }
+
+  /* ══════════════════════════════════════
+     FASE 3 — CONSENTIMIENTO + FIRMA
+  ══════════════════════════════════════ */
+  .consent-container { padding: 16px; }
+  .consent-card { background: white; border: 1.5px solid var(--border); border-radius: var(--radius); padding: 18px; margin-bottom: 14px; box-shadow: var(--shadow-sm); }
+  .consent-card h3 { font-family: 'Cormorant Garamond',serif; font-size: 17px; font-weight: 600; color: var(--teal-dark); margin-bottom: 10px; }
+  .consent-text { font-size: 13px; color: var(--text-mid); line-height: 1.7; }
+  .consent-text p { margin-bottom: 8px; }
+  .consent-checks { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+  .consent-check { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; }
+  .consent-check input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--teal); flex-shrink: 0; margin-top: 1px; cursor: pointer; }
+  .consent-check span { font-size: 13px; color: var(--text-dark); line-height: 1.5; }
+  .firma-area-wrap { border: 1.5px dashed var(--border); border-radius: var(--radius); overflow: hidden; background: white; touch-action: none; position: relative; }
+  .firma-area-wrap canvas { display: block; width: 100%; cursor: crosshair; }
+  .firma-placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 14px; color: var(--text-soft); pointer-events: none; transition: opacity .2s; }
+  .firma-toolbar { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+  .firma-hint { font-size: 11px; color: var(--text-soft); }
+  .consent-status { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; }
+  .consent-ok { background: var(--teal-light); color: var(--teal-dark); }
+  .consent-pending { background: var(--gold-pale); color: var(--gold-dark); }
+  .consent-firmado-wrap { text-align: center; }
+  .consent-firma-img { max-width: 200px; border: 1px solid var(--border); border-radius: 8px; margin: 8px auto; display: block; }
+
+  /* ══════════════════════════════════════
+     FASE 3 — CERTIFICADO / PDF
+  ══════════════════════════════════════ */
+  .cert-preview { background: white; border: 1.5px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow-sm); margin-bottom: 16px; }
+  .cert-header-row { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 2px solid var(--teal-light); }
+  .cert-logo-circle { width: 52px; height: 52px; border-radius: 50%; background: var(--teal-dark); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .cert-marca { flex: 1; }
+  .cert-marca h1 { font-family: 'Cormorant Garamond',serif; font-size: 20px; font-weight: 600; color: var(--teal-dark); letter-spacing: .06em; }
+  .cert-marca p { font-size: 11px; color: var(--text-soft); margin-top: 1px; }
+  .cert-title { text-align: center; margin: 14px 0; }
+  .cert-title h2 { font-family: 'Cormorant Garamond',serif; font-size: 18px; font-weight: 600; color: var(--teal-dark); }
+  .cert-title p { font-size: 12px; color: var(--text-soft); margin-top: 3px; }
+  .cert-body { font-size: 13px; color: var(--text-dark); line-height: 1.8; margin: 14px 0; text-align: justify; }
+  .cert-body strong { font-weight: 500; color: var(--teal-dark); }
+  .cert-datos { background: var(--teal-pale); border-radius: var(--radius-sm); padding: 12px 14px; margin: 12px 0; }
+  .cert-dato-row { display: flex; gap: 8px; font-size: 12px; padding: 3px 0; }
+  .cert-dato-key { color: var(--text-soft); width: 120px; flex-shrink: 0; }
+  .cert-dato-val { color: var(--text-dark); font-weight: 500; }
+  .cert-firma-row { display: flex; justify-content: flex-end; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+  .cert-firma-block { text-align: center; }
+  .cert-firma-img { height: 50px; margin-bottom: 4px; display: block; }
+  .cert-firma-line { width: 180px; border-top: 1px solid var(--text-dark); padding-top: 6px; }
+  .cert-firma-name { font-size: 12px; font-weight: 500; color: var(--text-dark); }
+  .cert-firma-title { font-size: 11px; color: var(--text-soft); }
+  .cert-firma-reg { font-size: 10px; color: var(--text-soft); margin-top: 2px; }
+  .cert-qr { font-size: 10px; color: var(--text-soft); text-align: center; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); }
+
+  /* ══════════════════════════════════════
+     MENÚ LATERAL / PANEL
+  ══════════════════════════════════════ */
+  .menu-overlay { position: fixed; inset: 0; background: rgba(10,30,28,.5); z-index: 250; opacity: 0; pointer-events: none; transition: opacity .25s; backdrop-filter: blur(3px); }
+  .menu-overlay.open { opacity: 1; pointer-events: all; }
+  .menu-panel { position: fixed; top: 0; right: 0; bottom: 0; width: 300px; max-width: 85vw; background: white; z-index: 260; transform: translateX(100%); transition: transform .3s cubic-bezier(.32,.72,0,1); box-shadow: -4px 0 24px rgba(0,0,0,.15); display: flex; flex-direction: column; }
+  .menu-overlay.open .menu-panel { transform: translateX(0); }
+  .menu-header { background: linear-gradient(135deg, var(--teal-dark), var(--teal)); padding: 24px 20px 20px; color: white; }
+  .menu-header h3 { font-family: 'Cormorant Garamond',serif; font-size: 20px; font-weight: 600; letter-spacing: .06em; }
+  .menu-header p { font-size: 12px; color: var(--teal-light); margin-top: 4px; }
+  .menu-body { flex: 1; overflow-y: auto; padding: 12px 0; }
+  .menu-item { display: flex; align-items: center; gap: 12px; padding: 14px 20px; font-size: 14px; color: var(--text-dark); cursor: pointer; transition: background .15s; border: none; background: none; width: 100%; text-align: left; font-family: 'DM Sans',sans-serif; }
+  .menu-item:hover { background: var(--teal-pale); }
+  .menu-item-icon { font-size: 18px; width: 24px; text-align: center; flex-shrink: 0; }
+  .menu-item-text { flex: 1; }
+  .menu-item-sub { font-size: 11px; color: var(--text-soft); display: block; margin-top: 1px; }
+  .menu-divider { height: 1px; background: var(--border); margin: 8px 20px; }
+  .menu-footer { padding: 16px 20px; border-top: 1px solid var(--border); font-size: 11px; color: var(--text-soft); text-align: center; }
+
+  /* ══════════════════════════════════════
+     EVALUACIÓN CLÍNICA
+  ══════════════════════════════════════ */
+  .eval-section { padding: 16px; }
+  .eval-card { background: white; border: 1.5px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; box-shadow: var(--shadow-sm); }
+  .eval-card-title { font-size: 13px; font-weight: 500; color: var(--teal-dark); margin-bottom: 12px; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+  .eval-card-title .arrow { transition: transform .2s; font-size: 11px; }
+  .eval-card-title .arrow.open { transform: rotate(90deg); }
+  .eval-card-body { display: none; }
+  .eval-card-body.open { display: block; }
+  .eval-vital-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .eval-vital-item { display: flex; flex-direction: column; gap: 4px; }
+  .eval-vital-label { font-size: 11px; color: var(--text-soft); text-transform: uppercase; letter-spacing: .06em; }
+  .eval-vital-input { padding: 9px 12px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-family: 'DM Sans',sans-serif; font-size: 14px; color: var(--text-dark); outline: none; width: 100%; transition: border-color .2s; }
+  .eval-vital-input:focus { border-color: var(--teal-mid); }
+  .eval-imc-display { background: var(--teal-pale); border-radius: var(--radius-sm); padding: 10px 14px; text-align: center; margin-top: 8px; }
+  .eval-imc-valor { font-family: 'Cormorant Garamond',serif; font-size: 26px; font-weight: 600; color: var(--teal-dark); }
+  .eval-imc-label { font-size: 11px; color: var(--text-soft); }
+  .eval-historial-item { background: var(--teal-pale); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 8px; cursor: pointer; transition: border-color .15s; }
+  .eval-historial-item:hover { border-color: var(--teal-mid); }
+
+  /* ══════════════════════════════════════
+     CUESTIONARIO DE TOXICIDAD
+  ══════════════════════════════════════ */
+  .quest-container { margin-top: 14px; }
+  .quest-cat { border: 1.5px solid var(--border); border-radius: var(--radius); margin-bottom: 10px; overflow: hidden; background: white; }
+  .quest-cat-header { display: flex; align-items: center; gap: 10px; padding: 12px 14px; cursor: pointer; transition: background .15s; }
+  .quest-cat-header:hover { background: #fafffe; }
+  .quest-cat-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .quest-cat-name { flex: 1; font-size: 14px; font-weight: 500; color: var(--text-dark); }
+  .quest-cat-score { font-size: 13px; font-weight: 600; color: var(--teal-dark); min-width: 24px; text-align: right; }
+  .quest-cat-arrow { font-size: 11px; color: var(--text-soft); transition: transform .2s; }
+  .quest-cat-arrow.open { transform: rotate(90deg); }
+  .quest-cat-body { display: none; padding: 0 14px 14px; }
+  .quest-cat-body.open { display: block; }
+  .quest-item { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--teal-pale); }
+  .quest-item:last-child { border-bottom: none; }
+  .quest-item-label { flex: 1; font-size: 13px; color: var(--text-dark); min-width: 0; }
+  .quest-radios { display: flex; gap: 4px; flex-shrink: 0; }
+  .quest-radio { width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid var(--border); background: white; font-size: 12px; font-weight: 500; color: var(--text-mid); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .15s; }
+  .quest-radio.selected { color: white; border-color: transparent; }
+  .quest-resultado { background: white; border: 2px solid var(--border); border-radius: var(--radius); padding: 20px; text-align: center; margin-top: 14px; }
+  .quest-total-num { font-family: 'Cormorant Garamond',serif; font-size: 48px; font-weight: 600; line-height: 1; }
+  .quest-total-label { font-size: 12px; color: var(--text-soft); margin-top: 4px; }
+  .quest-nivel { display: inline-block; padding: 4px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; color: white; margin-top: 10px; }
+  .quest-recomendacion { font-size: 13px; color: var(--text-mid); margin-top: 10px; line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<div class="offline-banner">Sin conexión · Los datos se guardan localmente</div>
+<div class="install-banner" id="install-banner">
+  <p><strong>Instalar KINARA</strong><br>Agrégala a tu pantalla de inicio para usarla como app</p>
+  <button class="install-btn" id="install-btn">Instalar</button>
+  <button class="install-dismiss" onclick="document.getElementById('install-banner').classList.remove('show')">×</button>
+</div>
+
+<!-- HEADER -->
+<header class="app-header">
+  <div class="header-brand">
+    <svg class="header-logo-icon" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Arco exterior / luna creciente -->
+      <path d="M22 4 C12 4 4 12 4 22 C4 32 12 40 22 40" stroke="#4ec9b0" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.85"/>
+      <!-- Segundo arco interior -->
+      <path d="M22 8 C14 8 8 14 8 22 C8 30 14 36 22 36" stroke="#4ec9b0" stroke-width="1.2" stroke-linecap="round" fill="none" opacity="0.45"/>
+      <!-- Silueta femenina de espalda — cabeza -->
+      <ellipse cx="24" cy="11" rx="4.5" ry="5" fill="#2e8b7a" opacity="0.9"/>
+      <!-- Cabello fluyendo -->
+      <path d="M19.5 10 Q16 14 15 20 Q14.5 24 16 26" stroke="#2e8b7a" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.7"/>
+      <!-- Torso y hombros -->
+      <path d="M20 16 Q17 18 16 22 Q15.5 26 17 30 Q19 33 24 33 Q29 33 31 30 Q32.5 26 32 22 Q31 18 28 16 Q26 15 24 15.5 Q22 15 20 16Z" fill="#2e8b7a" opacity="0.85"/>
+      <!-- Columna vertebral dorada -->
+      <circle cx="24" cy="18" r="1.4" fill="#E8B84B"/>
+      <circle cx="24" cy="21.5" r="1.2" fill="#E8B84B"/>
+      <circle cx="24" cy="24.5" r="1.0" fill="#E8B84B"/>
+      <circle cx="24" cy="27" r="0.85" fill="#E8B84B"/>
+      <circle cx="24" cy="29.2" r="0.7" fill="#E8B84B"/>
+      <!-- Estrella dorada de 4 puntas -->
+      <path d="M33 7 L34 9.5 L36.5 10.5 L34 11.5 L33 14 L32 11.5 L29.5 10.5 L32 9.5 Z" fill="#E8B84B"/>
+    </svg>
+    <div><div class="header-title">KINARA</div></div>
+  </div>
+  <div class="header-actions">
+    <span style="font-size:11px;color:var(--teal-light);display:flex;align-items:center;" id="sync-status">
+      <span class="sync-dot"></span>Local
+    </span>
+    <button class="btn-icon" onclick="toggleMenu()">☰</button>
+  </div>
+</header>
+
+<!-- ══ VIEW: LISTA ══ -->
+<div class="view active" id="view-lista">
+  <div class="list-container">
+    <div class="search-bar">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="search-input" placeholder="Buscar por nombre o cédula..." oninput="filtrarPacientes(this.value)">
+    </div>
+    <div class="stats-row" id="stats-row"></div>
+    <div class="section-label" id="lista-label">Todos los pacientes</div>
+    <div class="patient-list" id="patient-list"></div>
+  </div>
+  <button class="fab" onclick="abrirNuevoPaciente()">+</button>
+</div>
+
+<!-- ══ VIEW: FICHA ══ -->
+<div class="view" id="view-ficha">
+  <div class="ficha-container">
+    <div class="ficha-hero">
+      <button class="back-btn" onclick="volverLista()">← Volver</button>
+      <div style="flex:1"></div>
+      <button class="btn-icon" onclick="editarPacienteActual()">✏️</button>
+    </div>
+    <div class="ficha-hero" id="ficha-hero-data" style="padding-top:0">
+      <div class="ficha-avatar" id="ficha-avatar"></div>
+      <div class="ficha-hero-info">
+        <h2 id="ficha-nombre"></h2>
+        <p id="ficha-meta"></p>
+        <span class="ficha-status" id="ficha-status"></span>
+      </div>
+    </div>
+    <div class="ficha-tabs">
+      <div class="ficha-tab active" onclick="activarTab(this,'tab-datos')">Datos</div>
+      <div class="ficha-tab" onclick="activarTab(this,'tab-medico')">Historial</div>
+      <div class="ficha-tab" onclick="activarTab(this,'tab-evaluacion')">Evaluación</div>
+      <div class="ficha-tab" onclick="activarTab(this,'tab-sesiones')">Sesiones</div>
+      <div class="ficha-tab" onclick="activarTab(this,'tab-galeria')">Fotos</div>
+      <div class="ficha-tab" onclick="activarTab(this,'tab-mapa')">Mapa</div>
+      <div class="ficha-tab" onclick="activarTab(this,'tab-consentimiento')">Consent.</div>
+      <div class="ficha-tab" onclick="activarTab(this,'tab-certificado')">Alta</div>
+    </div>
+    <div class="ficha-section" id="tab-datos"><div class="info-card" id="datos-card"></div></div>
+    <div class="ficha-section" id="tab-medico" style="display:none"><div class="info-card" id="medico-card"></div></div>
+
+    <!-- TAB: EVALUACIÓN CLÍNICA -->
+    <div id="tab-evaluacion" style="display:none">
+      <div class="eval-section" id="eval-content"></div>
+    </div>
+
+    <div class="ficha-section" id="tab-sesiones" style="display:none">
+      <div id="sesiones-list"></div>
+      <button class="btn btn-primary" style="margin-top:8px" onclick="abrirNuevaSesion()">+ Registrar sesión</button>
+    </div>
+    <div id="tab-galeria" style="display:none">
+      <div class="galeria-section" id="galeria-content"></div>
+    </div>
+
+    <!-- TAB: MAPA CORPORAL -->
+    <div id="tab-mapa" style="display:none">
+      <div class="mapa-container">
+
+        <!-- Toolbar superior -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+          <span style="font-size:13px;font-weight:500;color:var(--teal-dark)">Mapa de dolor corporal</span>
+          <div class="mapa-view-btns">
+            <button class="mapa-view-btn active" onclick="cambiarVistaBody('frente',this)">Frente</button>
+            <button class="mapa-view-btn" onclick="cambiarVistaBody('espalda',this)">Espalda</button>
+            <button class="mapa-view-btn" onclick="cambiarVistaBody('rostro',this)">Rostro</button>
+            <button class="mapa-view-btn" onclick="cambiarVistaBody('ambos',this)">Ambos</button>
+          </div>
+        </div>
+
+        <!-- Instrucción clínica -->
+        <div style="background:var(--teal-pale);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:var(--text-mid);line-height:1.5">
+          <strong style="color:var(--teal-dark)">Instrucción:</strong> Toca las zonas del cuerpo para marcar áreas de dolor o intervención. Selecciona el tipo de marca antes de tocar.
+        </div>
+
+        <!-- Selector de tipo de marca -->
+        <div class="mapa-toolbar" style="margin-bottom:14px">
+          <button class="mapa-zone-type active" data-color="#e74c3c" data-label="Dolor" onclick="setZoneTipo(this)">
+            <span class="mapa-zone-dot" style="background:#e74c3c"></span> Dolor
+          </button>
+          <button class="mapa-zone-type" data-color="#e67e22" data-label="Inflamación" onclick="setZoneTipo(this)">
+            <span class="mapa-zone-dot" style="background:#e67e22"></span> Inflamación
+          </button>
+          <button class="mapa-zone-type" data-color="#3498db" data-label="Tratado" onclick="setZoneTipo(this)">
+            <span class="mapa-zone-dot" style="background:#3498db"></span> Tratado
+          </button>
+          <button class="mapa-zone-type" data-color="#27ae60" data-label="Mejoría" onclick="setZoneTipo(this)">
+            <span class="mapa-zone-dot" style="background:#27ae60"></span> Mejoría
+          </button>
+          <button class="mapa-zone-type" data-color="#8e44ad" data-label="Contractura" onclick="setZoneTipo(this)">
+            <span class="mapa-zone-dot" style="background:#8e44ad"></span> Contractura
+          </button>
+        </div>
+
+        <!-- MAPA CLÍNICO SVG interactivo -->
+        <div id="mapa-clinico-wrap" style="background:white;border:1.5px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow-sm);overflow-x:auto">
+          <div id="mapa-clinico-inner" style="min-width:300px"></div>
+        </div>
+
+        <!-- Zonas marcadas -->
+        <div id="mapa-zonas-marcadas" style="margin-top:12px"></div>
+
+        <!-- Notas del mapa -->
+        <div class="form-group" style="margin-top:12px">
+          <label class="form-label">Notas clínicas del mapa</label>
+          <textarea class="form-control" id="mapa-notas" rows="2" placeholder="Observaciones sobre las zonas marcadas..."></textarea>
+        </div>
+
+        <div class="mapa-actions">
+          <button class="mapa-tool-btn" onclick="limpiarMapaClinico()">🗑️ Limpiar todo</button>
+          <button class="mapa-tool-btn" onclick="guardarMapaClinico()" style="background:var(--teal-light);border-color:var(--teal-mid);color:var(--teal-dark)">💾 Guardar mapa</button>
+          <button class="mapa-tool-btn" onclick="exportarMapaPNG()">⬇️ Exportar PNG</button>
+        </div>
+
+        <div id="mapa-historial" style="margin-top:16px"></div>
+      </div>
+    </div>
+
+    <!-- TAB: CONSENTIMIENTO -->
+    <div id="tab-consentimiento" style="display:none">
+      <div class="consent-container" id="consent-content"></div>
+    </div>
+
+    <!-- TAB: CERTIFICADO DE ALTA -->
+    <div id="tab-certificado" style="display:none">
+      <div style="padding:16px" id="cert-content"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ MODAL: NUEVO PACIENTE ══ -->
+<div class="modal-overlay" id="modal-paciente">
+  <div class="modal-drawer">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-paciente-title">Nuevo paciente</div>
+    <div class="form-group">
+      <label class="form-label">Nombre completo *</label>
+      <input class="form-control" id="np-nombre" type="text" placeholder="Ej: María García López" autocomplete="name">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Tipo documento</label>
+        <select class="select-control" id="np-tipo-doc">
+          <option value="CC">Cédula CC</option>
+          <option value="TI">Tarjeta TI</option>
+          <option value="CE">Cédula CE</option>
+          <option value="PP">Pasaporte</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Número documento *</label>
+        <input class="form-control" id="np-cedula" type="text" placeholder="1234567890" inputmode="numeric">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Fecha nacimiento</label>
+        <input class="form-control" id="np-fecha-nac" type="date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Sexo</label>
+        <select class="select-control" id="np-sexo">
+          <option value="">—</option>
+          <option value="F">Femenino</option>
+          <option value="M">Masculino</option>
+          <option value="O">Otro</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Teléfono</label>
+      <input class="form-control" id="np-telefono" type="tel" placeholder="300 000 0000" inputmode="tel">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Correo electrónico</label>
+      <input class="form-control" id="np-correo" type="email" placeholder="correo@ejemplo.com">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Motivo de consulta</label>
+      <textarea class="form-control" id="np-motivo" placeholder="Descripción del motivo..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tipo de servicio *</label>
+      <select class="select-control" id="np-tipo-servicio">
+        <option value="general">Fisioterapia general</option>
+        <option value="ortopedico">Ortopédico</option>
+        <option value="geriatrico">Geriátrico</option>
+        <option value="pediatrico">Pediátrico</option>
+        <option value="respiratorio">Respiratorio</option>
+        <option value="dermatofuncional">Dermatofuncional</option>
+        <option value="sueroterapia">Sueroterapia / Detox</option>
+        <option value="alta_muscular">Alta muscular</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Diagnóstico / Condición</label>
+      <input class="form-control" id="np-diagnostico" type="text" placeholder="Ej: Lumbalgia crónica">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Medicamentos actuales</label>
+      <input class="form-control" id="np-medicamentos" type="text" placeholder="Ej: Ibuprofeno 400mg">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Alergias</label>
+      <input class="form-control" id="np-alergias" type="text" placeholder="Ej: Penicilina">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Antecedentes relevantes</label>
+      <textarea class="form-control" id="np-antecedentes" placeholder="Cirugías previas, enfermedades crónicas..."></textarea>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
+      <button class="btn btn-primary" onclick="guardarPaciente()">Guardar paciente</button>
+      <button class="btn btn-ghost" onclick="cerrarModal('modal-paciente')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: NUEVA SESIÓN ══ -->
+<div class="modal-overlay" id="modal-sesion">
+  <div class="modal-drawer">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Registrar sesión</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Fecha</label>
+        <input class="form-control" id="ns-fecha" type="date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Hora</label>
+        <input class="form-control" id="ns-hora" type="time">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tipo de tratamiento</label>
+      <select class="select-control" id="ns-tipo">
+        <option>Fisioterapia general</option>
+        <option>Terapia manual</option>
+        <option>Electroterapia</option>
+        <option>Ultrasonido terapéutico</option>
+        <option>Kinesiotaping</option>
+        <option>Ejercicio terapéutico</option>
+        <option>Punción seca</option>
+        <option>Otro</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Escala de dolor (0–10)</label>
+      <div class="dolor-scale" id="dolor-scale"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Evolución / Notas</label>
+      <textarea class="form-control" id="ns-notas" placeholder="Observaciones, respuesta al tratamiento..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Área tratada</label>
+      <div class="chip-list" id="area-chips">
+        <div class="chip" onclick="toggleChip(this)">Cuello / cervical</div>
+        <div class="chip" onclick="toggleChip(this)">Hombro</div>
+        <div class="chip" onclick="toggleChip(this)">Codo / antebrazo</div>
+        <div class="chip" onclick="toggleChip(this)">Muñeca / mano</div>
+        <div class="chip" onclick="toggleChip(this)">Lumbar / espalda</div>
+        <div class="chip" onclick="toggleChip(this)">Cadera / pelvis</div>
+        <div class="chip" onclick="toggleChip(this)">Rodilla</div>
+        <div class="chip" onclick="toggleChip(this)">Tobillo / pie</div>
+        <div class="chip" onclick="toggleChip(this)">General / postural</div>
+      </div>
+    </div>
+
+    <!-- FOTOS EN SESIÓN -->
+    <div class="form-group">
+      <label class="form-label">Fotos de la sesión</label>
+      <div class="foto-upload-area" id="foto-upload-area">
+        <div class="foto-tipo-selector">
+          <button class="foto-tipo-btn active" data-tipo="antes" onclick="selTipo(this)">📷 Antes</button>
+          <button class="foto-tipo-btn" data-tipo="durante" onclick="selTipo(this)">📷 Durante</button>
+          <button class="foto-tipo-btn" data-tipo="despues" onclick="selTipo(this)">📷 Después</button>
+        </div>
+        <div class="foto-upload-btn-area">
+          <button type="button" class="foto-upload-btn" onclick="document.getElementById('foto-file-input').click()">
+            📁 Seleccionar foto
+          </button>
+          <span class="foto-upload-hint">Desde galería o cámara · JPG/PNG · Máx 5MB</span>
+        </div>
+        <input type="file" id="foto-file-input" accept="image/*" capture="environment" multiple style="display:none" onchange="agregarFotos(this.files)">
+        <div class="foto-preview-list" id="foto-preview-list"></div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
+      <button class="btn btn-primary" onclick="guardarSesion()">Guardar sesión</button>
+      <button class="btn btn-ghost" onclick="cerrarModal('modal-sesion')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MENÚ LATERAL ══ -->
+<div class="menu-overlay" id="menu-overlay" onclick="if(event.target===this)cerrarMenu()">
+  <div class="menu-panel">
+    <div class="menu-header">
+      <h3>KINARA</h3>
+      <p>Gestión Clínica · v6</p>
+    </div>
+    <div class="menu-body">
+      <button class="menu-item" onclick="exportarDatos()">
+        <span class="menu-item-icon">💾</span>
+        <span>
+          <span class="menu-item-text">Exportar copia de seguridad</span>
+          <span class="menu-item-sub">Descargar todos los datos como JSON</span>
+        </span>
+      </button>
+      <button class="menu-item" onclick="document.getElementById('import-file-input').click()">
+        <span class="menu-item-icon">📂</span>
+        <span>
+          <span class="menu-item-text">Importar copia de seguridad</span>
+          <span class="menu-item-sub">Restaurar datos desde archivo JSON</span>
+        </span>
+      </button>
+      <input type="file" id="import-file-input" accept=".json" style="display:none" onchange="importarDatos(this.files[0])">
+      <div class="menu-divider"></div>
+      <button class="menu-item" onclick="limpiarDatosDemo()">
+        <span class="menu-item-icon">🧹</span>
+        <span>
+          <span class="menu-item-text">Limpiar datos de ejemplo</span>
+          <span class="menu-item-sub">Eliminar pacientes demo (demo1, demo2, demo3)</span>
+        </span>
+      </button>
+      <div class="menu-divider"></div>
+      <button class="menu-item" onclick="cerrarMenu()">
+        <span class="menu-item-icon">✕</span>
+        <span class="menu-item-text">Cerrar menú</span>
+      </button>
+    </div>
+    <div class="menu-footer">
+      KINARA v6 · Offline-first<br>
+      Geraldine Castillo Torres · Fisioterapeuta<br>
+      COLFI 22915 · ReTHUS 2025-08-21
+    </div>
+  </div>
+</div>
+
+<!-- ══ VISOR FOTO FULLSCREEN ══ -->
+<div class="visor-overlay" id="visor-overlay">
+  <button class="visor-close" onclick="cerrarVisor()">×</button>
+  <img class="visor-img" id="visor-img" src="" alt="">
+  <div class="visor-info" id="visor-info"></div>
+  <div class="visor-toolbar">
+    <button class="visor-btn" onclick="visorNav(-1)">← Anterior</button>
+    <button class="visor-btn" onclick="visorNav(1)">Siguiente →</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════
+// ESTADO
+// ══════════════════════════════════════
+let DB = null;
+let pacientes = [];
+let pacienteActualId = null;
+let dolorSeleccionado = 0;
+let editandoPacienteId = null;
+let fotosNuevaSesion = [];   // [{tipo, dataUrl, file}]
+let fotoTipoActual = 'antes';
+let visorFotos = [];
+let visorIdx = 0;
+let deferredInstall = null;
+
+// ══════════════════════════════════════
+// INDEXEDDB — versión 5 con evaluaciones + configuracion
+// ══════════════════════════════════════
+function initDB() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open('KinaraDB', 5);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('pacientes')) {
+        const s = db.createObjectStore('pacientes', { keyPath: 'id' });
+        s.createIndex('nombre','nombre',{unique:false});
+      }
+      if (!db.objectStoreNames.contains('sesiones')) {
+        const s = db.createObjectStore('sesiones', { keyPath: 'id' });
+        s.createIndex('pacienteId','pacienteId',{unique:false});
+      }
+      if (!db.objectStoreNames.contains('fotos')) {
+        const s = db.createObjectStore('fotos', { keyPath: 'id' });
+        s.createIndex('sesionId','sesionId',{unique:false});
+        s.createIndex('pacienteId','pacienteId',{unique:false});
+      }
+      if (!db.objectStoreNames.contains('mapas')) {
+        const s = db.createObjectStore('mapas', { keyPath: 'id' });
+        s.createIndex('pacienteId','pacienteId',{unique:false});
+      }
+      if (!db.objectStoreNames.contains('consentimientos')) {
+        const s = db.createObjectStore('consentimientos', { keyPath: 'id' });
+        s.createIndex('pacienteId','pacienteId',{unique:false});
+      }
+      if (!db.objectStoreNames.contains('evaluaciones')) {
+        const s = db.createObjectStore('evaluaciones', { keyPath: 'id' });
+        s.createIndex('pacienteId','pacienteId',{unique:false});
+      }
+      if (!db.objectStoreNames.contains('configuracion')) {
+        db.createObjectStore('configuracion', { keyPath: 'clave' });
+      }
+    };
+    req.onsuccess = e => { DB = e.target.result; res(DB); };
+    req.onerror = () => rej(req.error);
+  });
+}
+
+function txGet(store, indexName, key) {
+  return new Promise((res, rej) => {
+    const tx = DB.transaction(store, 'readonly');
+    const os = tx.objectStore(store);
+    const req = (indexName && key !== undefined)
+      ? os.index(indexName).getAll(key)
+      : os.getAll();
+    req.onsuccess = () => res(req.result);
+    req.onerror = () => rej(req.error);
+  });
+}
+
+function txPut(store, obj) {
+  return new Promise((res, rej) => {
+    const tx = DB.transaction(store, 'readwrite');
+    const req = tx.objectStore(store).put(obj);
+    req.onsuccess = () => res(req.result);
+    req.onerror = () => rej(req.error);
+  });
+}
+
+function txDelete(store, id) {
+  return new Promise((res, rej) => {
+    const tx = DB.transaction(store, 'readwrite');
+    const req = tx.objectStore(store).delete(id);
+    req.onsuccess = () => res();
+    req.onerror = () => rej(req.error);
+  });
+}
+
+// ══════════════════════════════════════
+// LISTA PACIENTES
+// ══════════════════════════════════════
+async function cargarLista() {
+  pacientes = await txGet('pacientes');
+  renderLista(pacientes);
+  renderStats(pacientes);
+}
+
+function renderStats(lista) {
+  const activos = lista.filter(p => p.estado === 'Activo').length;
+  const alta = lista.filter(p => p.estado === 'Alta').length;
+  document.getElementById('stats-row').innerHTML = `
+    <div class="stat-card"><div class="stat-num">${lista.length}</div><div class="stat-label">Pacientes</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--teal-mid)">${activos}</div><div class="stat-label">En tratamiento</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--gold-dark)">${alta}</div><div class="stat-label">Alta médica</div></div>
+  `;
+}
+
+function renderLista(lista) {
+  const el = document.getElementById('patient-list');
+  document.getElementById('lista-label').textContent =
+    lista.length === pacientes.length ? `Todos los pacientes (${lista.length})` : `Resultados (${lista.length})`;
+  if (!lista.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">🩺</div><p>No hay pacientes registrados</p><small>Toca el botón + para agregar el primero</small></div>`;
+    return;
+  }
+  const sorted = [...lista].sort((a,b) => a.nombre.localeCompare(b.nombre));
+  el.innerHTML = sorted.map(p => {
+    const ini = p.nombre.split(' ').slice(0,2).map(x=>x[0]).join('').toUpperCase();
+    const bc = p.estado === 'Alta' ? 'badge-alta' : 'badge-active';
+    const fr = p.fecha_registro ? new Date(p.fecha_registro).toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'}) : '';
+    return `<div class="patient-card" onclick="abrirFicha('${p.id}')">
+      <div class="patient-avatar">${ini}</div>
+      <div class="patient-info">
+        <div class="patient-name">${p.nombre}</div>
+        <div class="patient-meta"><span>${p.tipo_doc||'CC'} ${p.cedula}</span>${fr?`<span>Desde ${fr}</span>`:''}</div>
+        ${p.tipo_servicio && p.tipo_servicio !== 'general' ? `<div style="font-size:10px;color:var(--teal-mid);margin-top:2px">${TIPOS_SERVICIO_LABEL[p.tipo_servicio]||''}</div>` : ''}
+      </div>
+      <span class="patient-badge ${bc}">${p.estado||'Activo'}</span>
+      <span class="patient-chevron">›</span>
+    </div>`;
+  }).join('');
+}
+
+function filtrarPacientes(q) {
+  const t = q.toLowerCase().trim();
+  if (!t) { renderLista(pacientes); return; }
+  renderLista(pacientes.filter(p => p.nombre.toLowerCase().includes(t) || p.cedula.includes(t)));
+}
+
+// ══════════════════════════════════════
+// FICHA
+// ══════════════════════════════════════
+async function abrirFicha(id) {
+  pacienteActualId = id;
+  const p = pacientes.find(x => x.id === id);
+  if (!p) return;
+  const ini = p.nombre.split(' ').slice(0,2).map(x=>x[0]).join('').toUpperCase();
+  document.getElementById('ficha-avatar').textContent = ini;
+  document.getElementById('ficha-nombre').textContent = p.nombre;
+  let edad = '';
+  if (p.fecha_nac) {
+    edad = Math.floor((Date.now()-new Date(p.fecha_nac).getTime())/(365.25*24*3600*1000)) + ' años · ';
+  }
+  document.getElementById('ficha-meta').textContent = `${edad}${p.tipo_doc||'CC'} ${p.cedula}`;
+  document.getElementById('ficha-status').textContent = p.estado || 'Activo';
+
+  document.getElementById('datos-card').innerHTML = `
+    <div class="info-card-title">📋 Información personal</div>
+    ${ir('Teléfono',p.telefono||'—')}${ir('Correo',p.correo||'—')}
+    ${ir('Sexo',p.sexo==='F'?'Femenino':p.sexo==='M'?'Masculino':p.sexo||'—')}
+    ${ir('Fecha nacimiento',p.fecha_nac?new Date(p.fecha_nac+'T12:00:00').toLocaleDateString('es-CO',{day:'2-digit',month:'long',year:'numeric'}):'—')}
+    ${ir('Tipo de servicio',TIPOS_SERVICIO_LABEL[p.tipo_servicio]||'Fisioterapia general')}
+    ${ir('Motivo de consulta',p.motivo||'—')}
+    ${ir('Registro',new Date(p.fecha_registro).toLocaleDateString('es-CO',{day:'2-digit',month:'long',year:'numeric'}))}
+  `;
+  document.getElementById('medico-card').innerHTML = `
+    <div class="info-card-title">🏥 Historial clínico</div>
+    ${ir('Diagnóstico',p.diagnostico||'—')}${ir('Medicamentos',p.medicamentos||'—')}
+    ${ir('Alergias',p.alergias||'—')}${ir('Antecedentes',p.antecedentes||'—')}
+  `;
+
+  await cargarSesiones(id);
+  await cargarGaleria(id);
+
+  document.querySelectorAll('.ficha-tab').forEach((t,i) => t.classList.toggle('active', i===0));
+  const allTabs2 = ['tab-datos','tab-medico','tab-evaluacion','tab-sesiones','tab-galeria','tab-mapa','tab-consentimiento','tab-certificado'];
+  allTabs2.forEach(id => { const el2=document.getElementById(id); if(el2) el2.style.display = id==='tab-datos'?'block':'none'; });
+  mostrarView('view-ficha');
+}
+
+function ir(k,v) {
+  return `<div class="info-row"><span class="info-key">${k}</span><span class="info-val">${v}</span></div>`;
+}
+
+async function cargarSesiones(pid) {
+  const todas = await txGet('sesiones','pacienteId',pid);
+  const sesiones = todas.sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+  const todasFotos = await txGet('fotos','pacienteId',pid);
+  const el = document.getElementById('sesiones-list');
+  if (!sesiones.length) {
+    el.innerHTML = `<p style="color:var(--text-soft);font-size:14px;text-align:center;padding:20px 0">Sin sesiones registradas</p>`;
+    return;
+  }
+  const fotosPorSesion = {};
+  todasFotos.forEach(f => {
+    if (!fotosPorSesion[f.sesionId]) fotosPorSesion[f.sesionId] = [];
+    fotosPorSesion[f.sesionId].push(f);
+  });
+
+  el.innerHTML = sesiones.map((s,i) => {
+    const cd = s.dolor<=2?'#3D9B8A':s.dolor<=5?'#E8B84B':s.dolor<=7?'#e07c2a':'#c0392b';
+    const fd = new Date(s.fecha+'T12:00:00').toLocaleDateString('es-CO',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+    const fotos = fotosPorSesion[s.id] || [];
+    const fotosHtml = fotos.slice(0,5).map(f =>
+      `<img class="foto-thumb" src="${f.dataUrl}" title="${f.tipo}" onclick="abrirVisorSesion('${s.id}')">`
+    ).join('') + `<div class="foto-thumb-add" onclick="abrirNuevaSesionConFoto('${s.id}')">+</div>`;
+
+    return `<div class="session-item">
+      <div class="session-header">
+        <span class="session-num">Sesión ${sesiones.length-i}</span>
+        <span class="session-date">${fd}${s.hora?' · '+s.hora:''}</span>
+      </div>
+      <div class="session-type">${s.tipo}</div>
+      ${s.areas?`<div style="font-size:12px;color:var(--text-soft);margin-top:4px">${s.areas}</div>`:''}
+      <div class="session-pain">
+        <div class="pain-dot" style="background:${cd}"></div>
+        <span class="pain-label">Dolor: ${s.dolor}/10</span>
+        ${s.notas?`<span style="font-size:12px;color:var(--text-soft);margin-left:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px">${s.notas}</span>`:''}
+      </div>
+      <div class="session-fotos-strip">${fotosHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════
+// GALERÍA TAB
+// ══════════════════════════════════════
+async function cargarGaleria(pid) {
+  const sesiones = (await txGet('sesiones','pacienteId',pid)).sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
+  const todasFotos = await txGet('fotos','pacienteId',pid);
+  const el = document.getElementById('galeria-content');
+
+  if (!todasFotos.length) {
+    el.innerHTML = `<div class="galeria-empty">📷<br>Aún no hay fotos registradas<br><small style="font-size:12px">Las fotos se agregan al registrar o editar una sesión</small></div>`;
+    return;
+  }
+
+  // Agrupar por tipo para comparador rápido
+  const antes = todasFotos.filter(f=>f.tipo==='antes');
+  const despues = todasFotos.filter(f=>f.tipo==='despues');
+
+  let html = '';
+
+  // Comparador antes/después (primera de cada tipo)
+  if (antes.length && despues.length) {
+    html += `<div class="comparador-wrap">
+      <div class="comparador-titulo">Comparación antes / después</div>
+      <div class="comparador-grid">
+        <div class="comparador-slot">
+          <img src="${antes[0].dataUrl}" onclick="abrirVisorFoto(${JSON.stringify(antes[0]).replace(/"/g,'&quot;')})">
+          <div class="comparador-label">Antes · ${new Date(antes[0].fecha+'T12:00:00').toLocaleDateString('es-CO',{day:'2-digit',month:'short'})}</div>
+        </div>
+        <div class="comparador-slot">
+          <img src="${despues[despues.length-1].dataUrl}" onclick="abrirVisorFoto(${JSON.stringify(despues[despues.length-1]).replace(/"/g,'&quot;')})">
+          <div class="comparador-label">Después · ${new Date(despues[despues.length-1].fecha+'T12:00:00').toLocaleDateString('es-CO',{day:'2-digit',month:'short'})}</div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // Fotos por sesión
+  const fotosPorSesion = {};
+  todasFotos.forEach(f => {
+    if (!fotosPorSesion[f.sesionId]) fotosPorSesion[f.sesionId] = [];
+    fotosPorSesion[f.sesionId].push(f);
+  });
+
+  sesiones.forEach((s, si) => {
+    const fotos = fotosPorSesion[s.id];
+    if (!fotos || !fotos.length) return;
+    const fd = new Date(s.fecha+'T12:00:00').toLocaleDateString('es-CO',{day:'2-digit',month:'long',year:'numeric'});
+    const idx = sesiones.filter(ss => fotosPorSesion[ss.id]?.length).indexOf(s);
+    html += `<div class="galeria-grupo">
+      <div class="galeria-grupo-titulo">
+        <span>Sesión · ${fd}</span>
+        <span style="color:var(--text-soft);font-size:11px">${fotos.length} foto${fotos.length!==1?'s':''}</span>
+      </div>
+      <div class="galeria-grid">
+        ${fotos.map(f => `
+          <div class="galeria-foto-wrap" onclick="abrirVisorGrupo('${s.id}','${f.id}')">
+            <img src="${f.dataUrl}" loading="lazy">
+            <div class="galeria-foto-tag">${f.tipo}</div>
+            <button class="galeria-foto-del" onclick="event.stopPropagation();eliminarFoto('${f.id}','${pid}')">×</button>
+          </div>
+        `).join('')}
+      </div>
+    </div>`;
+  });
+
+  el.innerHTML = html;
+}
+
+// ══════════════════════════════════════
+// FOTOS — subida y gestión
+// ══════════════════════════════════════
+function selTipo(btn) {
+  document.querySelectorAll('.foto-tipo-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  fotoTipoActual = btn.dataset.tipo;
+}
+
+function agregarFotos(files) {
+  Array.from(files).forEach(file => {
+    if (file.size > 5*1024*1024) { toast('Foto muy grande (máx 5MB)'); return; }
+    const reader = new FileReader();
+    reader.onload = e => {
+      // Comprimir imagen antes de guardar
+      comprimirImagen(e.target.result, 1200, 0.8).then(dataUrl => {
+        fotosNuevaSesion.push({ tipo: fotoTipoActual, dataUrl, nombre: file.name });
+        renderFotosPreviews();
+      });
+    };
+    reader.readAsDataURL(file);
+  });
+  document.getElementById('foto-file-input').value = '';
+}
+
+function comprimirImagen(dataUrl, maxW, quality) {
+  return new Promise(res => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let w = img.width, h = img.height;
+      if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      res(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.src = dataUrl;
+  });
+}
+
+function renderFotosPreviews() {
+  const el = document.getElementById('foto-preview-list');
+  el.innerHTML = fotosNuevaSesion.map((f, i) => `
+    <div class="foto-preview-item">
+      <img src="${f.dataUrl}">
+      <button class="foto-preview-remove" onclick="quitarFotoPreview(${i})">×</button>
+      <div style="font-size:10px;color:var(--text-soft);text-align:center;margin-top:2px">${f.tipo}</div>
+    </div>
+  `).join('');
+}
+
+function quitarFotoPreview(i) {
+  fotosNuevaSesion.splice(i, 1);
+  renderFotosPreviews();
+}
+
+async function guardarFotosSesion(sesionId) {
+  const p = pacientes.find(x => x.id === pacienteActualId);
+  for (const f of fotosNuevaSesion) {
+    await txPut('fotos', {
+      id: 'foto_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
+      sesionId,
+      pacienteId: pacienteActualId,
+      tipo: f.tipo,
+      dataUrl: f.dataUrl,
+      fecha: new Date().toISOString().split('T')[0],
+      created_at: new Date().toISOString()
+    });
+    await new Promise(r => setTimeout(r, 5)); // evitar colisión de IDs
+  }
+}
+
+async function eliminarFoto(fotoId, pid) {
+  if (!confirm('¿Eliminar esta foto?')) return;
+  await txDelete('fotos', fotoId);
+  await cargarGaleria(pid);
+  toast('Foto eliminada');
+}
+
+// ══════════════════════════════════════
+// VISOR FULLSCREEN
+// ══════════════════════════════════════
+function abrirVisorFoto(foto) {
+  visorFotos = [foto];
+  visorIdx = 0;
+  renderVisor();
+  document.getElementById('visor-overlay').classList.add('open');
+}
+
+async function abrirVisorGrupo(sesionId, fotoId) {
+  const fotos = await txGet('fotos','sesionId',sesionId);
+  visorFotos = fotos.sort((a,b) => a.created_at.localeCompare(b.created_at));
+  visorIdx = visorFotos.findIndex(f => f.id === fotoId) || 0;
+  renderVisor();
+  document.getElementById('visor-overlay').classList.add('open');
+}
+
+async function abrirVisorSesion(sesionId) {
+  await abrirVisorGrupo(sesionId, null);
+  visorIdx = 0;
+  renderVisor();
+}
+
+function renderVisor() {
+  if (!visorFotos.length) return;
+  const f = visorFotos[visorIdx];
+  document.getElementById('visor-img').src = f.dataUrl;
+  document.getElementById('visor-info').textContent =
+    `${f.tipo.charAt(0).toUpperCase()+f.tipo.slice(1)} · ${visorIdx+1} de ${visorFotos.length}`;
+}
+
+function visorNav(dir) {
+  visorIdx = (visorIdx + dir + visorFotos.length) % visorFotos.length;
+  renderVisor();
+}
+
+function cerrarVisor() { document.getElementById('visor-overlay').classList.remove('open'); }
+
+document.getElementById('visor-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('visor-overlay')) cerrarVisor();
+});
+
+// ══════════════════════════════════════
+// MODAL PACIENTE
+// ══════════════════════════════════════
+function abrirNuevoPaciente() {
+  editandoPacienteId = null;
+  document.getElementById('modal-paciente-title').textContent = 'Nuevo paciente';
+  ['np-nombre','np-cedula','np-telefono','np-correo','np-motivo','np-diagnostico','np-medicamentos','np-alergias','np-antecedentes'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('np-sexo').value='';
+  document.getElementById('np-tipo-doc').value='CC';
+  document.getElementById('np-tipo-servicio').value='general';
+  document.getElementById('np-fecha-nac').value='';
+  abrirModal('modal-paciente');
+}
+
+function editarPacienteActual() {
+  const p = pacientes.find(x => x.id === pacienteActualId);
+  if (!p) return;
+  editandoPacienteId = p.id;
+  document.getElementById('modal-paciente-title').textContent = 'Editar paciente';
+  document.getElementById('np-nombre').value = p.nombre||'';
+  document.getElementById('np-cedula').value = p.cedula||'';
+  document.getElementById('np-tipo-doc').value = p.tipo_doc||'CC';
+  document.getElementById('np-tipo-servicio').value = p.tipo_servicio||'general';
+  document.getElementById('np-fecha-nac').value = p.fecha_nac||'';
+  document.getElementById('np-sexo').value = p.sexo||'';
+  document.getElementById('np-telefono').value = p.telefono||'';
+  document.getElementById('np-correo').value = p.correo||'';
+  document.getElementById('np-motivo').value = p.motivo||'';
+  document.getElementById('np-diagnostico').value = p.diagnostico||'';
+  document.getElementById('np-medicamentos').value = p.medicamentos||'';
+  document.getElementById('np-alergias').value = p.alergias||'';
+  document.getElementById('np-antecedentes').value = p.antecedentes||'';
+  abrirModal('modal-paciente');
+}
+
+async function guardarPaciente() {
+  const nombre = document.getElementById('np-nombre').value.trim();
+  const cedula = document.getElementById('np-cedula').value.trim();
+  if (!nombre||!cedula) { toast('Nombre y documento son obligatorios'); return; }
+  const id = editandoPacienteId || 'p_'+Date.now();
+  const ex = editandoPacienteId ? pacientes.find(x=>x.id===editandoPacienteId) : null;
+  const p = {
+    id, nombre, cedula,
+    tipo_doc: document.getElementById('np-tipo-doc').value,
+    tipo_servicio: document.getElementById('np-tipo-servicio').value,
+    fecha_nac: document.getElementById('np-fecha-nac').value,
+    sexo: document.getElementById('np-sexo').value,
+    telefono: document.getElementById('np-telefono').value.trim(),
+    correo: document.getElementById('np-correo').value.trim(),
+    motivo: document.getElementById('np-motivo').value.trim(),
+    diagnostico: document.getElementById('np-diagnostico').value.trim(),
+    medicamentos: document.getElementById('np-medicamentos').value.trim(),
+    alergias: document.getElementById('np-alergias').value.trim(),
+    antecedentes: document.getElementById('np-antecedentes').value.trim(),
+    estado: ex ? ex.estado : 'Activo',
+    fecha_registro: ex ? ex.fecha_registro : new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+  await txPut('pacientes', p);
+  await cargarLista();
+  cerrarModal('modal-paciente');
+  toast(editandoPacienteId ? '✓ Paciente actualizado' : '✓ Paciente registrado');
+  if (editandoPacienteId) await abrirFicha(id);
+}
+
+// ══════════════════════════════════════
+// MODAL SESIÓN
+// ══════════════════════════════════════
+function abrirNuevaSesion() {
+  fotosNuevaSesion = [];
+  document.getElementById('foto-preview-list').innerHTML = '';
+  document.getElementById('ns-fecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('ns-hora').value = new Date().toTimeString().slice(0,5);
+  document.getElementById('ns-tipo').value = 'Fisioterapia general';
+  document.getElementById('ns-notas').value = '';
+  dolorSeleccionado = 0;
+  document.querySelectorAll('.dolor-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelector('.dolor-btn[data-v="0"]').classList.add('selected');
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.foto-tipo-btn').forEach(b => b.classList.toggle('active', b.dataset.tipo==='antes'));
+  fotoTipoActual = 'antes';
+  abrirModal('modal-sesion');
+}
+
+function abrirNuevaSesionConFoto(sesionId) {
+  toast('Usa + Registrar sesión para agregar fotos');
+}
+
+async function guardarSesion() {
+  const fecha = document.getElementById('ns-fecha').value;
+  if (!fecha) { toast('Selecciona una fecha'); return; }
+  const areas = [...document.querySelectorAll('#area-chips .chip.selected')].map(c=>c.textContent).join(', ');
+  const sesionId = 's_'+Date.now();
+  const sesion = {
+    id: sesionId,
+    pacienteId: pacienteActualId,
+    fecha,
+    hora: document.getElementById('ns-hora').value,
+    tipo: document.getElementById('ns-tipo').value,
+    dolor: dolorSeleccionado,
+    notas: document.getElementById('ns-notas').value.trim(),
+    areas,
+    created_at: new Date().toISOString()
+  };
+  await txPut('sesiones', sesion);
+  if (fotosNuevaSesion.length) await guardarFotosSesion(sesionId);
+  await cargarSesiones(pacienteActualId);
+  await cargarGaleria(pacienteActualId);
+
+  const tabs = document.querySelectorAll('.ficha-tab');
+  tabs.forEach(t=>t.classList.remove('active'));
+  tabs[3].classList.add('active');
+  ['tab-datos','tab-medico','tab-evaluacion','tab-sesiones','tab-galeria','tab-mapa','tab-consentimiento','tab-certificado'].forEach(id=>{
+    const el2=document.getElementById(id); if(el2) el2.style.display = id==='tab-sesiones'?'block':'none';
+  });
+
+  cerrarModal('modal-sesion');
+  toast(`✓ Sesión guardada${fotosNuevaSesion.length?' con '+fotosNuevaSesion.length+' foto(s)':''}`);
+  fotosNuevaSesion = [];
+}
+
+// ══════════════════════════════════════
+// TABS — actualizado para 7 pestañas
+// ══════════════════════════════════════
+function activarTab(el, tabId) {
+  document.querySelectorAll('.ficha-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  const allTabs = ['tab-datos','tab-medico','tab-evaluacion','tab-sesiones','tab-galeria','tab-mapa','tab-consentimiento','tab-certificado'];
+  allTabs.forEach(id => {
+    const el2 = document.getElementById(id);
+    if (el2) el2.style.display = id===tabId ? 'block' : 'none';
+  });
+  if (tabId==='tab-evaluacion') renderEvaluacion();
+  if (tabId==='tab-mapa') initMapa();
+  if (tabId==='tab-consentimiento') renderConsentimiento();
+  if (tabId==='tab-certificado') renderCertificado();
+}
+
+// ══════════════════════════════════════
+// MAPA CORPORAL CLÍNICO — ZONAS
+// ══════════════════════════════════════
+let zonasMarcadas = {};   // { zonaId: { color, label, tipo } }
+let zonaTipoActual = { color: '#e74c3c', label: 'Dolor' };
+let mapaVistaActual = 'frente';
+
+// Definición de zonas clínicas con coordenadas SVG para ambas vistas
+const ZONAS_DEF = {
+  rostro: [
+    { id:'r_frente',      label:'Frente',             shape:'rect',    x:62,  y:18,  w:76, h:34 },
+    { id:'r_sien_d',      label:'Sien der.',           shape:'ellipse', cx:57, cy:42,  rx:14, ry:18 },
+    { id:'r_sien_i',      label:'Sien izq.',           shape:'ellipse', cx:143,cy:42,  rx:14, ry:18 },
+    { id:'r_ceja_d',      label:'Ceja/arco der.',      shape:'rect',    x:62,  y:52,  w:30, h:12 },
+    { id:'r_ceja_i',      label:'Ceja/arco izq.',      shape:'rect',    x:108, y:52,  w:30, h:12 },
+    { id:'r_ojo_d',       label:'Ojo / parpado der.',  shape:'ellipse', cx:80, cy:72,  rx:18, ry:11 },
+    { id:'r_ojo_i',       label:'Ojo / párpado izq.',  shape:'ellipse', cx:120,cy:72,  rx:18, ry:11 },
+    { id:'r_nariz',       label:'Nariz / dorso',       shape:'rect',    x:88,  y:64,  w:24, h:38 },
+    { id:'r_pomulo_d',    label:'Pómulo der.',         shape:'ellipse', cx:68, cy:95,  rx:20, ry:16 },
+    { id:'r_pomulo_i',    label:'Pómulo izq.',         shape:'ellipse', cx:132,cy:95,  rx:20, ry:16 },
+    { id:'r_labio_sup',   label:'Labio superior',      shape:'rect',    x:80,  y:102, w:40, h:14 },
+    { id:'r_labio_inf',   label:'Labio inferior',      shape:'rect',    x:80,  y:116, w:40, h:14 },
+    { id:'r_menton',      label:'Mentón',              shape:'ellipse', cx:100,cy:140, rx:24, ry:14 },
+    { id:'r_mandibula_d', label:'Mandíbula der.',      shape:'rect',    x:52,  y:108, w:26, h:36 },
+    { id:'r_mandibula_i', label:'Mandíbula izq.',      shape:'rect',    x:122, y:108, w:26, h:36 },
+    { id:'r_oreja_d',     label:'Oreja der.',          shape:'ellipse', cx:42, cy:88,  rx:10, ry:18 },
+    { id:'r_oreja_i',     label:'Oreja izq.',          shape:'ellipse', cx:158,cy:88,  rx:10, ry:18 },
+    { id:'r_cuello_a',    label:'Cuello ant.',         shape:'rect',    x:76,  y:155, w:48, h:30 },
+    { id:'r_cuello_l_d',  label:'Cuello lat. der.',    shape:'rect',    x:50,  y:148, w:28, h:34 },
+    { id:'r_cuello_l_i',  label:'Cuello lat. izq.',    shape:'rect',    x:122, y:148, w:28, h:34 },
+  ],
+  frente: [
+    // Cabeza/cara
+    { id:'f_cabeza',    label:'Cabeza',          shape:'ellipse', cx:100, cy:32,  rx:20, ry:22 },
+    { id:'f_cara',      label:'Cara',             shape:'ellipse', cx:100, cy:35,  rx:14, ry:15 },
+    { id:'f_cuello',    label:'Cuello',           shape:'rect',    x:88,  y:55,  w:24, h:16 },
+    // Tronco
+    { id:'f_pecho_d',   label:'Pecho der.',       shape:'rect',    x:60,  y:78,  w:36, h:30 },
+    { id:'f_pecho_i',   label:'Pecho izq.',       shape:'rect',    x:104, y:78,  w:36, h:30 },
+    { id:'f_abdomen',   label:'Abdomen',          shape:'rect',    x:72,  y:110, w:56, h:32 },
+    { id:'f_pelvis',    label:'Pelvis',           shape:'rect',    x:68,  y:143, w:64, h:26 },
+    { id:'f_ingle_d',   label:'Ingle der.',       shape:'rect',    x:68,  y:168, w:28, h:18 },
+    { id:'f_ingle_i',   label:'Ingle izq.',       shape:'rect',    x:104, y:168, w:28, h:18 },
+    // Hombros
+    { id:'f_hombro_d',  label:'Hombro der.',      shape:'ellipse', cx:58, cy:82,  rx:16, ry:11 },
+    { id:'f_hombro_i',  label:'Hombro izq.',      shape:'ellipse', cx:142,cy:82,  rx:16, ry:11 },
+    // Brazos der
+    { id:'f_brazo_d',   label:'Brazo der.',       shape:'rect',    x:34,  y:90,  w:20, h:36 },
+    { id:'f_codo_d',    label:'Codo der.',        shape:'ellipse', cx:40, cy:132, rx:11, ry:9 },
+    { id:'f_antebrazo_d',label:'Antebrazo der.',  shape:'rect',    x:28,  y:140, w:20, h:32 },
+    { id:'f_muneca_d',  label:'Muñeca/mano der.', shape:'ellipse', cx:36, cy:181, rx:13, ry:11 },
+    // Brazos izq
+    { id:'f_brazo_i',   label:'Brazo izq.',       shape:'rect',    x:146, y:90,  w:20, h:36 },
+    { id:'f_codo_i',    label:'Codo izq.',        shape:'ellipse', cx:160,cy:132, rx:11, ry:9 },
+    { id:'f_antebrazo_i',label:'Antebrazo izq.',  shape:'rect',    x:152, y:140, w:20, h:32 },
+    { id:'f_muneca_i',  label:'Muñeca/mano izq.', shape:'ellipse', cx:164,cy:181, rx:13, ry:11 },
+    // Piernas der
+    { id:'f_muslo_d',   label:'Muslo der.',       shape:'rect',    x:68,  y:190, w:28, h:50 },
+    { id:'f_rodilla_d', label:'Rodilla der.',     shape:'ellipse', cx:82, cy:248, rx:17, ry:12 },
+    { id:'f_pierna_d',  label:'Pierna der.',      shape:'rect',    x:66,  y:260, w:28, h:46 },
+    { id:'f_tobillo_d', label:'Tobillo/pie der.', shape:'ellipse', cx:80, cy:313, rx:18, ry:10 },
+    // Piernas izq
+    { id:'f_muslo_i',   label:'Muslo izq.',       shape:'rect',    x:104, y:190, w:28, h:50 },
+    { id:'f_rodilla_i', label:'Rodilla izq.',     shape:'ellipse', cx:118,cy:248, rx:17, ry:12 },
+    { id:'f_pierna_i',  label:'Pierna izq.',      shape:'rect',    x:106, y:260, w:28, h:46 },
+    { id:'f_tobillo_i', label:'Tobillo/pie izq.', shape:'ellipse', cx:120,cy:313, rx:18, ry:10 },
+  ],
+  espalda: [
+    { id:'e_cabeza',    label:'Cabeza (post.)',   shape:'ellipse', cx:100, cy:32,  rx:20, ry:22 },
+    { id:'e_cuello',    label:'Cuello (post.)',   shape:'rect',    x:88,  y:55,  w:24, h:16 },
+    { id:'e_hombro_d',  label:'Hombro der.',      shape:'ellipse', cx:58, cy:82,  rx:16, ry:11 },
+    { id:'e_hombro_i',  label:'Hombro izq.',      shape:'ellipse', cx:142,cy:82,  rx:16, ry:11 },
+    { id:'e_esc_d',     label:'Escápula der.',    shape:'ellipse', cx:78, cy:100, rx:16, ry:20 },
+    { id:'e_esc_i',     label:'Escápula izq.',    shape:'ellipse', cx:122,cy:100, rx:16, ry:20 },
+    { id:'e_dorsal',    label:'Espalda alta',     shape:'rect',    x:72,  y:78,  w:56, h:32 },
+    { id:'e_lumbar',    label:'Zona lumbar',      shape:'rect',    x:72,  y:115, w:56, h:32 },
+    { id:'f_gluteo_d',  label:'Glúteo der.',      shape:'ellipse', cx:78, cy:162, rx:24, ry:22 },
+    { id:'f_gluteo_i',  label:'Glúteo izq.',      shape:'ellipse', cx:122,cy:162, rx:24, ry:22 },
+    { id:'e_brazo_d',   label:'Brazo der.',       shape:'rect',    x:34,  y:90,  w:20, h:36 },
+    { id:'e_codo_d',    label:'Codo der.',        shape:'ellipse', cx:40, cy:132, rx:11, ry:9 },
+    { id:'e_antebrazo_d',label:'Antebrazo der.',  shape:'rect',    x:28,  y:140, w:20, h:32 },
+    { id:'e_brazo_i',   label:'Brazo izq.',       shape:'rect',    x:146, y:90,  w:20, h:36 },
+    { id:'e_codo_i',    label:'Codo izq.',        shape:'ellipse', cx:160,cy:132, rx:11, ry:9 },
+    { id:'e_antebrazo_i',label:'Antebrazo izq.',  shape:'rect',    x:152, y:140, w:20, h:32 },
+    { id:'e_muslo_d',   label:'Muslo post. der.', shape:'rect',    x:68,  y:190, w:28, h:50 },
+    { id:'e_corva_d',   label:'Corva der.',       shape:'ellipse', cx:82, cy:248, rx:17, ry:12 },
+    { id:'e_pierna_d',  label:'Pierna post. der.',shape:'rect',    x:66,  y:260, w:28, h:46 },
+    { id:'e_talon_d',   label:'Talón der.',       shape:'ellipse', cx:80, cy:313, rx:18, ry:10 },
+    { id:'e_muslo_i',   label:'Muslo post. izq.', shape:'rect',    x:104, y:190, w:28, h:50 },
+    { id:'e_corva_i',   label:'Corva izq.',       shape:'ellipse', cx:118,cy:248, rx:17, ry:12 },
+    { id:'e_pierna_i',  label:'Pierna post. izq.',shape:'rect',    x:106, y:260, w:28, h:46 },
+    { id:'e_talon_i',   label:'Talón izq.',       shape:'ellipse', cx:120,cy:313, rx:18, ry:10 },
+  ]
+};
+
+const SILUETA_FRENTE = `
+  <!-- Silueta clínica - vista frontal -->
+  <!-- Cabeza -->
+  <ellipse cx="100" cy="32" rx="22" ry="26" fill="#f0e6dc" stroke="#8a7060" stroke-width="1"/>
+  <!-- Orejas -->
+  <ellipse cx="78" cy="32" rx="4" ry="6" fill="#e8d5c4" stroke="#8a7060" stroke-width="0.8"/>
+  <ellipse cx="122" cy="32" rx="4" ry="6" fill="#e8d5c4" stroke="#8a7060" stroke-width="0.8"/>
+  <!-- Cabello -->
+  <path d="M78 14 Q100 6 122 14 Q126 20 124 28 Q118 12 100 10 Q82 12 76 28 Q74 20 78 14Z" fill="#5c4033" opacity="0.6"/>
+  <!-- Cara — ojos nariz boca -->
+  <ellipse cx="93" cy="30" rx="2.5" ry="2" fill="#5c4033" opacity="0.5"/>
+  <ellipse cx="107" cy="30" rx="2.5" ry="2" fill="#5c4033" opacity="0.5"/>
+  <path d="M97 36 Q100 39 103 36" stroke="#8a7060" stroke-width="0.8" fill="none" opacity="0.5"/>
+  <path d="M99 33 L100 35 L101 33" stroke="#8a7060" stroke-width="0.7" fill="none" opacity="0.4"/>
+  <!-- Cuello -->
+  <rect x="88" y="57" width="24" height="17" rx="4" fill="#ead6c6" stroke="#8a7060" stroke-width="0.8"/>
+  <!-- Clavículas -->
+  <path d="M88 73 Q74 76 64 82" stroke="#8a7060" stroke-width="1" fill="none" opacity="0.5"/>
+  <path d="M112 73 Q126 76 136 82" stroke="#8a7060" stroke-width="1" fill="none" opacity="0.5"/>
+  <!-- Torso -->
+  <path d="M64 78 Q56 84 55 120 L55 170 Q56 185 68 190 L100 192 L132 190 Q144 185 145 170 L145 120 Q144 84 136 78 Z" fill="#f0e6dc" stroke="#8a7060" stroke-width="1"/>
+  <!-- Esternón -->
+  <line x1="100" y1="74" x2="100" y2="165" stroke="#8a7060" stroke-width="0.6" stroke-dasharray="3,3" opacity="0.35"/>
+  <!-- Costillas indicativas -->
+  <path d="M90 90 Q80 94 72 92" stroke="#8a7060" stroke-width="0.5" fill="none" opacity="0.25"/>
+  <path d="M90 98 Q80 102 73 100" stroke="#8a7060" stroke-width="0.5" fill="none" opacity="0.25"/>
+  <path d="M110 90 Q120 94 128 92" stroke="#8a7060" stroke-width="0.5" fill="none" opacity="0.25"/>
+  <path d="M110 98 Q120 102 127 100" stroke="#8a7060" stroke-width="0.5" fill="none" opacity="0.25"/>
+  <!-- Ombligo -->
+  <circle cx="100" cy="136" r="2.5" fill="#d4b8a0" opacity="0.6"/>
+  <!-- Hombro izq -->
+  <ellipse cx="57" cy="84" rx="18" ry="12" fill="#ecd8c8" stroke="#8a7060" stroke-width="0.8"/>
+  <!-- Hombro der -->
+  <ellipse cx="143" cy="84" rx="18" ry="12" fill="#ecd8c8" stroke="#8a7060" stroke-width="0.8"/>
+  <!-- Brazo izq -->
+  <path d="M41 92 Q31 108 30 140 Q29 158 36 162 L50 160 L52 128 L48 96Z" fill="#f0e6dc" stroke="#8a7060" stroke-width="0.8"/>
+  <!-- Brazo der -->
+  <path d="M159 92 Q169 108 170 140 Q171 158 164 162 L150 160 L148 128 L152 96Z" fill="#f0e6dc" stroke="#8a7060" stroke-width="0.8"/>
+  <!-- Codo izq -->
+  <ellipse cx="40" cy="133" rx="12" ry="10" fill="#e0ccba" stroke="#8a7060" stroke-width="0.8"/>
+  <!-- Codo der -->
+  <ellipse cx="160" cy="133" rx="12" ry="10" fill="#e0ccba" stroke="#8a7060" stroke-width="0.8"/>
+  <!-- Antebrazo izq -->
+  <path d="M30 142 Q26 165 28 182 L44 182 L48 162 L50 142Z" fill="#f0e6dc" stroke="#8a7060" stroke-width="0.8"/>
+  <!-- Antebrazo der -->
+  <path d="M170 142 Q174 165 172 182 L156 182 L152 162 L150 142Z" fill="#f0e6dc" stroke="#8a7060" stroke-width="0.8"/>
+  <!-- Mano izq -->
+  <ellipse cx="36" cy="191" rx="14" ry="12" fill="#e8d5c4" stroke="#8a7060" stroke-width="0.8"/>
+  <!-- Mano der -->
+  <ellipse cx="164" cy="191" rx="14" ry="12" fill="#e8d5c4" stroke="#8a7060" stroke-width="0.8"/>
+  <!-- Pelvis/cadera -->
+  <path d="M55 170 Q54 192 68 200 L100 202 L132 200 Q146 192 145 170Z" fill="#e8d5c4" stroke="#8a7060" stroke-width="0.8"/>
+  <!-- Muslo izq -->
+  <path d="M68 200 Q60 228 62 262 L90 262 L92 230 L100 202Z" fill="#f0e6dc" stroke="#8a7060" stroke-width="0.8"/>
+  <!-- Muslo der -->
+  <path d="M132 200 Q140 228 138 262 L110 262 L108 230 L100 202Z" fill="#f0e6dc" stroke="#8a7060" stroke-width="0.8"/>
+  <!-- Rodilla izq -->
+  <ellipse cx="76" cy="260" rx="18" ry="13" fill="#e0ccba" stroke="#8a7060" stroke-width="0.8"/>
+  <!-- Rodilla der -->
+  <ellipse cx="124" cy="260" rx="18" ry="13" fill="#e0ccba" stroke="#8a7060" stroke-width="0.8"/>
+  <!-- Pierna izq -->
+  <path d="M60 270 Q57 295 59 316 L94 316 L94 272 L76 270Z" fill="#f0e6dc" stroke="#8a7060" stroke-width="0.8"/>
+  <!-- Pierna der -->
+  <path d="M140 270 Q143 295 141 316 L106 316 L106 272 L124 270Z" fill="#f0e6dc" stroke="#8a7060" stroke-width="0.8"/>
+  <!-- Pie izq -->
+  <ellipse cx="77" cy="319" rx="20" ry="9" fill="#e8d5c4" stroke="#8a7060" stroke-width="0.8"/>
+  <!-- Pie der -->
+  <ellipse cx="123" cy="319" rx="20" ry="9" fill="#e8d5c4" stroke="#8a7060" stroke-width="0.8"/>
+`;
+
+const SILUETA_ESPALDA = `
+  <!-- Silueta clínica - vista posterior -->
+  <!-- Cabeza -->
+  <ellipse cx="100" cy="32" rx="22" ry="26" fill="#e0ccba" stroke="#8a7060" stroke-width="1"/>
+  <!-- Orejas -->
+  <ellipse cx="78" cy="32" rx="4" ry="6" fill="#d8c0a8" stroke="#8a7060" stroke-width="0.8"/>
+  <ellipse cx="122" cy="32" rx="4" ry="6" fill="#d8c0a8" stroke="#8a7060" stroke-width="0.8"/>
+  <!-- Cabello posterior -->
+  <path d="M78 14 Q100 6 122 14 L122 56 Q100 60 78 56Z" fill="#5c4033" opacity="0.55"/>
+  <!-- Cuello -->
+  <rect x="88" y="57" width="24" height="17" rx="4" fill="#d8c0a8" stroke="#8a7060" stroke-width="0.8"/>
+  <!-- Trapecio -->
+  <path d="M88 74 Q74 76 64 82 Q74 80 88 78Z" fill="#d0b8a0" stroke="#8a7060" stroke-width="0.5" opacity="0.6"/>
+  <path d="M112 74 Q126 76 136 82 Q126 80 112 78Z" fill="#d0b8a0" stroke="#8a7060" stroke-width="0.5" opacity="0.6"/>
+  <!-- Torso posterior -->
+  <path d="M64 78 Q56 84 55 120 L55 186 Q56 196 100 198 Q144 196 145 186 L145 120 Q144 84 136 78Z" fill="#e8d5c4" stroke="#8a7060" stroke-width="1"/>
+  <!-- Columna vertebral -->
+  <line x1="100" y1="75" x2="100" y2="186" stroke="#8a7060" stroke-width="1.2" opacity="0.45"/>
+  <circle cx="100" cy="84" r="1.8" fill="#8a7060" opacity="0.4"/>
+  <circle cx="100" cy="94" r="1.8" fill="#8a7060" opacity="0.4"/>
+  <circle cx="100" cy="104" r="1.8" fill="#8a7060" opacity="0.4"/>
+  <circle cx="100" cy="114" r="1.8" fill="#8a7060" opacity="0.4"/>
+  <circle cx="100" cy="124" r="1.8" fill="#8a7060" opacity="0.4"/>
+  <circle cx="100" cy="134" r="1.8" fill="#8a7060" opacity="0.4"/>
+  <circle cx="100" cy="144" r="1.8" fill="#8a7060" opacity="0.4"/>
+  <circle cx="100" cy="154" r="1.8" fill="#8a7060" opacity="0.4"/>
+  <circle cx="100" cy="164" r="1.8" fill="#8a7060" opacity="0.4"/>
+  <circle cx="100" cy="174" r="1.8" fill="#8a7060" opacity="0.4"/>
+  <!-- Escápula izq -->
+  <path d="M65 84 Q80 88 84 112 Q74 118 65 110 Q60 100 65 84Z" fill="#dcc8b0" stroke="#8a7060" stroke-width="0.7" opacity="0.75"/>
+  <!-- Escápula der -->
+  <path d="M135 84 Q120 88 116 112 Q126 118 135 110 Q140 100 135 84Z" fill="#dcc8b0" stroke="#8a7060" stroke-width="0.7" opacity="0.75"/>
+  <!-- Hombros -->
+  <ellipse cx="57" cy="84" rx="18" ry="12" fill="#dcc8b0" stroke="#8a7060" stroke-width="0.8"/>
+  <ellipse cx="143" cy="84" rx="18" ry="12" fill="#dcc8b0" stroke="#8a7060" stroke-width="0.8"/>
+  <!-- Brazos izq/der -->
+  <path d="M41 92 Q31 108 30 140 Q29 158 36 162 L50 160 L52 128 L48 96Z" fill="#e8d5c4" stroke="#8a7060" stroke-width="0.8"/>
+  <path d="M159 92 Q169 108 170 140 Q171 158 164 162 L150 160 L148 128 L152 96Z" fill="#e8d5c4" stroke="#8a7060" stroke-width="0.8"/>
+  <!-- Codos -->
+  <ellipse cx="40" cy="133" rx="12" ry="10" fill="#d8c0a8" stroke="#8a7060" stroke-width="0.8"/>
+  <ellipse cx="160" cy="133" rx="12" ry="10" fill="#d8c0a8" stroke="#8a7060" stroke-width="0.8"/>
+  <!-- Antebrazos -->
+  <path d="M30 142 Q26 165 28 182 L44 182 L48 162 L50 142Z" fill="#e8d5c4" stroke="#8a7060" stroke-width="0.8"/>
+  <path d="M170 142 Q174 165 172 182 L156 182 L152 162 L150 142Z" fill="#e8d5c4" stroke="#8a7060" stroke-width="0.8"/>
+  <!-- Manos -->
+  <ellipse cx="36" cy="191" rx="14" ry="12" fill="#e0ccba" stroke="#8a7060" stroke-width="0.8"/>
+  <ellipse cx="164" cy="191" rx="14" ry="12" fill="#e0ccba" stroke="#8a7060" stroke-width="0.8"/>
+  <!-- Glúteos -->
+  <ellipse cx="78" cy="196" rx="26" ry="24" fill="#dcc8b0" stroke="#8a7060" stroke-width="0.8"/>
+  <ellipse cx="122" cy="196" rx="26" ry="24" fill="#dcc8b0" stroke="#8a7060" stroke-width="0.8"/>
+  <line x1="100" y1="183" x2="100" y2="220" stroke="#8a7060" stroke-width="0.6" opacity="0.4"/>
+  <!-- Muslos post -->
+  <path d="M54 208 Q50 236 52 264 L90 264 L92 236 L78 212Z" fill="#e8d5c4" stroke="#8a7060" stroke-width="0.8"/>
+  <path d="M146 208 Q150 236 148 264 L110 264 L108 236 L122 212Z" fill="#e8d5c4" stroke="#8a7060" stroke-width="0.8"/>
+  <!-- Corvas -->
+  <ellipse cx="71" cy="264" rx="18" ry="12" fill="#d8c0a8" stroke="#8a7060" stroke-width="0.8"/>
+  <ellipse cx="129" cy="264" rx="18" ry="12" fill="#d8c0a8" stroke="#8a7060" stroke-width="0.8"/>
+  <!-- Piernas post -->
+  <path d="M55 273 Q53 296 55 316 L88 316 L88 275 L71 273Z" fill="#e8d5c4" stroke="#8a7060" stroke-width="0.8"/>
+  <path d="M145 273 Q147 296 145 316 L112 316 L112 275 L129 273Z" fill="#e8d5c4" stroke="#8a7060" stroke-width="0.8"/>
+  <!-- Talones -->
+  <ellipse cx="72" cy="319" rx="20" ry="9" fill="#d8c0a8" stroke="#8a7060" stroke-width="0.8"/>
+  <ellipse cx="128" cy="319" rx="20" ry="9" fill="#d8c0a8" stroke="#8a7060" stroke-width="0.8"/>
+`;
+
+const SILUETA_ROSTRO = `
+  <!-- ══ ROSTRO ANATÓMICO DETALLADO ══ -->
+  <!-- Cuello -->
+  <path d="M76 155 Q72 165 70 185 Q80 192 100 193 Q120 192 130 185 Q128 165 124 155 Z" fill="#f0e2d0" stroke="#9a7a60" stroke-width="0.9"/>
+  <!-- Músculo esternocleidomastoideo der -->
+  <path d="M74 152 Q64 160 58 178" stroke="#c4a882" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.5"/>
+  <!-- Músculo esternocleidomastoideo izq -->
+  <path d="M126 152 Q136 160 142 178" stroke="#c4a882" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.5"/>
+  <!-- Clavícula der -->
+  <path d="M70 185 Q82 182 100 183" stroke="#b89880" stroke-width="1.2" fill="none" opacity="0.55"/>
+  <!-- Clavícula izq -->
+  <path d="M130 185 Q118 182 100 183" stroke="#b89880" stroke-width="1.2" fill="none" opacity="0.55"/>
+
+  <!-- Orejas -->
+  <!-- Oreja der: hélix, antihélix, lóbulo, trago -->
+  <path d="M36 70 Q28 76 26 88 Q26 102 34 112 Q40 120 46 116 Q50 112 50 105 Q44 110 40 104 Q34 96 34 88 Q34 78 40 72 Z" fill="#e8d0b8" stroke="#9a7a60" stroke-width="0.9"/>
+  <path d="M40 76 Q36 84 36 92 Q36 102 40 108" stroke="#c4a882" stroke-width="1" fill="none" opacity="0.6"/>
+  <path d="M43 82 Q40 88 40 94 Q40 100 44 104" stroke="#c4a882" stroke-width="0.8" fill="none" opacity="0.45"/>
+  <ellipse cx="42" cy="114" rx="5" ry="6" fill="#e8d0b8" stroke="#9a7a60" stroke-width="0.8" opacity="0.8"/><!-- lóbulo -->
+  <!-- Oreja izq: espejo -->
+  <path d="M164 70 Q172 76 174 88 Q174 102 166 112 Q160 120 154 116 Q150 112 150 105 Q156 110 160 104 Q166 96 166 88 Q166 78 160 72 Z" fill="#e8d0b8" stroke="#9a7a60" stroke-width="0.9"/>
+  <path d="M160 76 Q164 84 164 92 Q164 102 160 108" stroke="#c4a882" stroke-width="1" fill="none" opacity="0.6"/>
+  <path d="M157 82 Q160 88 160 94 Q160 100 156 104" stroke="#c4a882" stroke-width="0.8" fill="none" opacity="0.45"/>
+  <ellipse cx="158" cy="114" rx="5" ry="6" fill="#e8d0b8" stroke="#9a7a60" stroke-width="0.8" opacity="0.8"/>
+
+  <!-- Cara base — forma oval con mandíbula cuadrada -->
+  <path d="M62 18 Q62 8 100 8 Q138 8 138 18 L148 62 Q154 80 152 100 Q150 120 138 136 Q124 152 100 155 Q76 152 62 136 Q50 120 48 100 Q46 80 52 62 Z" fill="#f5e8d8" stroke="#9a7a60" stroke-width="1.2"/>
+
+  <!-- Arcos superciliares / frente estructura ósea -->
+  <path d="M68 56 Q80 52 92 54" stroke="#c4a882" stroke-width="1" fill="none" opacity="0.35"/>
+  <path d="M132 56 Q120 52 108 54" stroke="#c4a882" stroke-width="1" fill="none" opacity="0.35"/>
+
+  <!-- Cabello / cuero cabelludo -->
+  <path d="M62 18 Q62 6 100 4 Q138 6 138 18 L136 10 Q118 2 100 2 Q82 2 64 10 Z" fill="#4a3428" opacity="0.75"/>
+  <!-- Entradas del cabello -->
+  <path d="M62 18 Q66 12 72 10" stroke="#4a3428" stroke-width="0.5" fill="none" opacity="0.4"/>
+  <path d="M138 18 Q134 12 128 10" stroke="#4a3428" stroke-width="0.5" fill="none" opacity="0.4"/>
+
+  <!-- Cejas — forma natural con pelos -->
+  <!-- Ceja der -->
+  <path d="M62 55 Q72 50 92 52 Q88 55 72 58 Q64 57 62 55Z" fill="#4a3428" opacity="0.7"/>
+  <path d="M63 56 Q70 52 88 53" stroke="#3a2820" stroke-width="0.5" fill="none" opacity="0.4"/>
+  <!-- Ceja izq -->
+  <path d="M138 55 Q128 50 108 52 Q112 55 128 58 Q136 57 138 55Z" fill="#4a3428" opacity="0.7"/>
+
+  <!-- Ojos — anatomía completa -->
+  <!-- Ojo der: parpado sup, inf, iris, pupila, lagrimal -->
+  <path d="M62 70 Q72 63 88 65 Q96 66 98 70 Q88 76 72 76 Q64 74 62 70Z" fill="#f5e8d8" stroke="#9a7a60" stroke-width="0.8"/>
+  <ellipse cx="80" cy="70" rx="10" ry="10" fill="#6b8fa8"/><!-- esclerótica + iris color -->
+  <ellipse cx="80" cy="70" rx="7" ry="7" fill="#3d5a72"/><!-- iris -->
+  <ellipse cx="80" cy="70" rx="4" ry="4" fill="#1a1a1a"/><!-- pupila -->
+  <circle cx="83" cy="67" r="1.5" fill="white" opacity="0.8"/><!-- reflejo -->
+  <!-- Párpado superior der -->
+  <path d="M62 70 Q72 62 88 64 Q96 65 98 70" stroke="#9a7a60" stroke-width="1.2" fill="none"/>
+  <!-- Párpado inferior der -->
+  <path d="M62 70 Q72 76 88 76 Q96 75 98 70" stroke="#b89880" stroke-width="0.8" fill="none"/>
+  <!-- Lagrimal der -->
+  <ellipse cx="63" cy="70" rx="3" ry="4" fill="#e8c8b0" stroke="#b89880" stroke-width="0.5" opacity="0.7"/>
+  <!-- Pestañas sup der -->
+  <path d="M65 67 Q66 64 67 63" stroke="#1a1a1a" stroke-width="0.7" fill="none"/>
+  <path d="M72 64 Q73 61 74 60" stroke="#1a1a1a" stroke-width="0.7" fill="none"/>
+  <path d="M79 63 Q80 60 80 59" stroke="#1a1a1a" stroke-width="0.7" fill="none"/>
+  <path d="M86 64 Q87 61 88 61" stroke="#1a1a1a" stroke-width="0.7" fill="none"/>
+  <path d="M92 66 Q94 64 95 64" stroke="#1a1a1a" stroke-width="0.7" fill="none"/>
+
+  <!-- Ojo izq: espejo -->
+  <path d="M138 70 Q128 63 112 65 Q104 66 102 70 Q112 76 128 76 Q136 74 138 70Z" fill="#f5e8d8" stroke="#9a7a60" stroke-width="0.8"/>
+  <ellipse cx="120" cy="70" rx="10" ry="10" fill="#6b8fa8"/>
+  <ellipse cx="120" cy="70" rx="7" ry="7" fill="#3d5a72"/>
+  <ellipse cx="120" cy="70" rx="4" ry="4" fill="#1a1a1a"/>
+  <circle cx="123" cy="67" r="1.5" fill="white" opacity="0.8"/>
+  <path d="M138 70 Q128 62 112 64 Q104 65 102 70" stroke="#9a7a60" stroke-width="1.2" fill="none"/>
+  <path d="M138 70 Q128 76 112 76 Q104 75 102 70" stroke="#b89880" stroke-width="0.8" fill="none"/>
+  <ellipse cx="137" cy="70" rx="3" ry="4" fill="#e8c8b0" stroke="#b89880" stroke-width="0.5" opacity="0.7"/>
+  <path d="M135 67 Q134 64 133 63" stroke="#1a1a1a" stroke-width="0.7" fill="none"/>
+  <path d="M128 64 Q127 61 126 60" stroke="#1a1a1a" stroke-width="0.7" fill="none"/>
+  <path d="M121 63 Q120 60 120 59" stroke="#1a1a1a" stroke-width="0.7" fill="none"/>
+  <path d="M114 64 Q113 61 112 61" stroke="#1a1a1a" stroke-width="0.7" fill="none"/>
+  <path d="M108 66 Q106 64 105 64" stroke="#1a1a1a" stroke-width="0.7" fill="none"/>
+
+  <!-- Nariz — anatomía detallada -->
+  <!-- Puente -->
+  <path d="M96 64 Q94 76 90 90 Q88 96 88 102" stroke="#c4a882" stroke-width="0.8" fill="none" opacity="0.5"/>
+  <path d="M104 64 Q106 76 110 90 Q112 96 112 102" stroke="#c4a882" stroke-width="0.8" fill="none" opacity="0.5"/>
+  <!-- Punta y alas -->
+  <path d="M88 102 Q84 106 82 110 Q86 114 100 114 Q114 114 118 110 Q116 106 112 102 Q108 100 100 100 Q92 100 88 102Z" fill="#ecd6c0" stroke="#9a7a60" stroke-width="0.9"/>
+  <!-- Ala der -->
+  <path d="M82 108 Q80 112 83 116" stroke="#b89880" stroke-width="0.8" fill="none"/>
+  <!-- Ala izq -->
+  <path d="M118 108 Q120 112 117 116" stroke="#b89880" stroke-width="0.8" fill="none"/>
+  <!-- Fosas nasales -->
+  <ellipse cx="92" cy="110" rx="5" ry="4" fill="#d4b89c" stroke="#9a7a60" stroke-width="0.7"/>
+  <ellipse cx="108" cy="110" rx="5" ry="4" fill="#d4b89c" stroke="#9a7a60" stroke-width="0.7"/>
+  <!-- Filtrum -->
+  <path d="M94 114 Q97 118 100 118 Q103 118 106 114" stroke="#b89880" stroke-width="0.7" fill="none" opacity="0.6"/>
+  <!-- Líneas nasogenianas -->
+  <path d="M82 110 Q78 118 80 132" stroke="#c4a882" stroke-width="0.8" fill="none" opacity="0.4"/>
+  <path d="M118 110 Q122 118 120 132" stroke="#c4a882" stroke-width="0.8" fill="none" opacity="0.4"/>
+
+  <!-- Boca — labios con volumen -->
+  <!-- Bermellón labio superior -->
+  <path d="M82 118 Q88 114 94 118 Q100 122 106 118 Q112 114 118 118 Q110 128 100 128 Q90 128 82 118Z" fill="#d4927a" stroke="#b07060" stroke-width="0.8"/>
+  <!-- Arco de cupido -->
+  <path d="M90 118 Q95 115 100 118 Q105 115 110 118" stroke="#a06050" stroke-width="0.8" fill="none"/>
+  <!-- Labio inferior -->
+  <path d="M82 118 Q88 134 100 136 Q112 134 118 118 Q110 128 100 128 Q90 128 82 118Z" fill="#d4927a" stroke="#b07060" stroke-width="0.8" opacity="0.9"/>
+  <!-- Línea de la boca -->
+  <path d="M82 118 Q100 122 118 118" stroke="#8a4a3a" stroke-width="0.9" fill="none"/>
+  <!-- Volumen labio inferior -->
+  <path d="M88 126 Q100 131 112 126" stroke="#c08070" stroke-width="0.6" fill="none" opacity="0.5"/>
+  <!-- Comisuras -->
+  <circle cx="82" cy="118" r="1.5" fill="#c07060" opacity="0.5"/>
+  <circle cx="118" cy="118" r="1.5" fill="#c07060" opacity="0.5"/>
+
+  <!-- Mentón -->
+  <path d="M86 136 Q100 148 114 136" stroke="#b89880" stroke-width="0.7" fill="none" opacity="0.4"/>
+  <!-- Hoyuelo mentón -->
+  <ellipse cx="100" cy="143" rx="5" ry="3" fill="#d8c0a8" opacity="0.35"/>
+
+  <!-- Pómulos — estructura ósea visible -->
+  <path d="M52 90 Q58 84 70 82" stroke="#c4a882" stroke-width="0.7" fill="none" opacity="0.3"/>
+  <path d="M148 90 Q142 84 130 82" stroke="#c4a882" stroke-width="0.7" fill="none" opacity="0.3"/>
+
+  <!-- Surco nasolabial -->
+  <path d="M80 108 Q76 116 80 128" stroke="#c4a882" stroke-width="0.7" fill="none" opacity="0.35"/>
+  <path d="M120 108 Q124 116 120 128" stroke="#c4a882" stroke-width="0.7" fill="none" opacity="0.35"/>
+`;
+
+function setZoneTipo(btn) {
+  document.querySelectorAll('.mapa-zone-type').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  zonaTipoActual = { color: btn.dataset.color, label: btn.dataset.label };
+}
+
+function cambiarVistaBody(vista, btn) {
+  document.querySelectorAll('.mapa-view-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  mapaVistaActual = vista;
+  renderMapaClinico();
+}
+
+function initMapa() {
+  mapaVistaActual = 'frente';
+  document.querySelectorAll('.mapa-view-btn').forEach((b,i)=>b.classList.toggle('active',i===0));
+  renderMapaClinico();
+  cargarHistorialMapas();
+}
+
+function buildZonasOverlay(vista) {
+  const zonas = ZONAS_DEF[vista] || [];
+  return zonas.map(z => {
+    const marcada = zonasMarcadas[z.id];
+    const fillColor = marcada ? marcada.color : 'transparent';
+    const fillOpacity = marcada ? '0.35' : '0';
+    const strokeColor = marcada ? marcada.color : 'transparent';
+    let shapeEl = '';
+    if (z.shape === 'ellipse') {
+      shapeEl = `<ellipse cx="${z.cx}" cy="${z.cy}" rx="${z.rx}" ry="${z.ry}"
+        fill="${fillColor}" fill-opacity="${fillOpacity}"
+        stroke="${strokeColor}" stroke-opacity="${marcada?0.8:0}" stroke-width="2"/>`;
+    } else {
+      shapeEl = `<rect x="${z.x}" y="${z.y}" width="${z.w}" height="${z.h}" rx="4"
+        fill="${fillColor}" fill-opacity="${fillOpacity}"
+        stroke="${strokeColor}" stroke-opacity="${marcada?0.8:0}" stroke-width="2"/>`;
+    }
+    return `<g class="zona-clinica${marcada?' marcada':''}" data-id="${z.id}" data-label="${z.label}" onclick="toggleZona('${z.id}','${z.label}')">
+      ${shapeEl}
+    </g>`;
+  }).join('');
+}
+
+function renderMapaClinico() {
+  const inner = document.getElementById('mapa-clinico-inner');
+  if (!inner) return;
+
+  if (mapaVistaActual === 'ambos') {
+    inner.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <div style="text-align:center;font-size:11px;font-weight:500;color:var(--text-soft);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Frente</div>
+          <svg viewBox="0 0 200 335" xmlns="http://www.w3.org/2000/svg" style="width:100%;border:1px solid var(--border);border-radius:8px">
+            ${SILUETA_FRENTE}
+            ${buildZonasOverlay('frente')}
+          </svg>
+        </div>
+        <div>
+          <div style="text-align:center;font-size:11px;font-weight:500;color:var(--text-soft);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Espalda</div>
+          <svg viewBox="0 0 200 335" xmlns="http://www.w3.org/2000/svg" style="width:100%;border:1px solid var(--border);border-radius:8px">
+            ${SILUETA_ESPALDA}
+            ${buildZonasOverlay('espalda')}
+          </svg>
+        </div>
+      </div>`;
+  } else if (mapaVistaActual === 'rostro') {
+    inner.innerHTML = `
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:340px;display:block;margin:0 auto;border-radius:8px">
+        ${SILUETA_ROSTRO}
+        ${buildZonasOverlay('rostro')}
+      </svg>`;
+  } else {
+    const silueta = mapaVistaActual === 'frente' ? SILUETA_FRENTE : SILUETA_ESPALDA;
+    inner.innerHTML = `
+      <svg viewBox="0 0 200 335" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:320px;display:block;margin:0 auto;border-radius:8px">
+        ${silueta}
+        ${buildZonasOverlay(mapaVistaActual)}
+      </svg>`;
+  }
+  renderZonasMarcadas();
+}
+
+function toggleZona(zonaId, label) {
+  if (zonasMarcadas[zonaId]) {
+    delete zonasMarcadas[zonaId];
+  } else {
+    zonasMarcadas[zonaId] = { color: zonaTipoActual.color, label, tipo: zonaTipoActual.label };
+  }
+  renderMapaClinico();
+}
+
+function renderZonasMarcadas() {
+  const el = document.getElementById('mapa-zonas-marcadas');
+  if (!el) return;
+  const keys = Object.keys(zonasMarcadas);
+  if (!keys.length) { el.innerHTML = ''; return; }
+
+  // Agrupar por tipo
+  const porTipo = {};
+  keys.forEach(id => {
+    const z = zonasMarcadas[id];
+    if (!porTipo[z.tipo]) porTipo[z.tipo] = [];
+    porTipo[z.tipo].push({ id, ...z });
+  });
+
+  el.innerHTML = `
+    <div style="background:white;border:1.5px solid var(--border);border-radius:var(--radius);padding:12px;box-shadow:var(--shadow-sm)">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-soft);margin-bottom:8px;font-weight:500">
+        Zonas marcadas (${keys.length})
+      </div>
+      ${Object.entries(porTipo).map(([tipo, zonas]) => `
+        <div style="margin-bottom:8px">
+          <div style="font-size:11px;color:var(--text-soft);margin-bottom:4px">${tipo}</div>
+          <div class="zonas-grid">
+            ${zonas.map(z => `
+              <div class="zona-chip" style="background:${z.color}18;border-color:${z.color}60;color:${z.color}">
+                <div style="width:7px;height:7px;border-radius:50%;background:${z.color};flex-shrink:0"></div>
+                ${z.label}
+                <button class="zona-chip-del" style="color:${z.color}" onclick="toggleZona('${z.id}','${z.label}')">×</button>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `).join('')}
+    </div>`;
+}
+
+function limpiarMapaClinico() {
+  if (!Object.keys(zonasMarcadas).length) return;
+  if (!confirm('¿Borrar todas las zonas marcadas?')) return;
+  zonasMarcadas = {};
+  renderMapaClinico();
+}
+
+async function guardarMapaClinico() {
+  if (!Object.keys(zonasMarcadas).length) { toast('Marca al menos una zona antes de guardar'); return; }
+  const notas = document.getElementById('mapa-notas')?.value || '';
+
+  // Generar imagen PNG del SVG actual
+  const svgEl = document.querySelector('#mapa-clinico-inner svg');
+  let dataUrl = null;
+  if (svgEl) {
+    const svgStr = new XMLSerializer().serializeToString(svgEl);
+    const blob = new Blob([svgStr], {type:'image/svg+xml'});
+    const url = URL.createObjectURL(blob);
+    const isRostroSave = mapaVistaActual === 'rostro';
+    dataUrl = await new Promise(res => {
+      const img = new Image();
+      img.onload = () => {
+        const c = document.createElement('canvas');
+        const sW=400, sH=isRostroSave?400:670;
+        c.width=sW; c.height=sH;
+        const ctx=c.getContext('2d');
+        ctx.fillStyle='white'; ctx.fillRect(0,0,sW,sH);
+        ctx.drawImage(img,0,0,sW,sH);
+        res(c.toDataURL('image/png'));
+        URL.revokeObjectURL(url);
+      };
+      img.src = url;
+    });
+  }
+
+  await txPut('mapas', {
+    id: 'mapa_'+Date.now(),
+    pacienteId: pacienteActualId,
+    fecha: new Date().toISOString().split('T')[0],
+    vista: mapaVistaActual,
+    zonas: { ...zonasMarcadas },
+    notas,
+    dataUrl,
+    created_at: new Date().toISOString()
+  });
+  toast('✓ Mapa guardado');
+  cargarHistorialMapas();
+}
+
+async function exportarMapaPNG() {
+  const svgEl = document.querySelector('#mapa-clinico-inner svg');
+  if (!svgEl) { toast('Primero selecciona una vista'); return; }
+  const isRostro = mapaVistaActual === 'rostro';
+  const svgStr = new XMLSerializer().serializeToString(svgEl);
+  const blob = new Blob([svgStr], {type:'image/svg+xml'});
+  const url = URL.createObjectURL(blob);
+  const img = new Image();
+  img.onload = () => {
+    const cW = 400, cH = isRostro ? 400 : 670;
+    const c=document.createElement('canvas'); c.width=cW; c.height=cH;
+    const ctx=c.getContext('2d');
+    ctx.fillStyle='white'; ctx.fillRect(0,0,cW,cH);
+    ctx.drawImage(img,0,0,cW,cH);
+    const a=document.createElement('a');
+    a.download=`mapa_${mapaVistaActual}_${pacienteActualId}_${new Date().toISOString().split('T')[0]}.png`;
+    a.href=c.toDataURL('image/png'); a.click();
+    URL.revokeObjectURL(url);
+  };
+  img.src=url;
+}
+
+async function cargarHistorialMapas() {
+  const mapas = (await txGet('mapas','pacienteId',pacienteActualId))
+    .sort((a,b)=>b.created_at.localeCompare(a.created_at)).slice(0,8);
+  const el = document.getElementById('mapa-historial');
+  if (!el || !mapas.length) { if(el) el.innerHTML=''; return; }
+  el.innerHTML = `
+    <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-soft);margin-bottom:8px;font-weight:500">Mapas guardados</div>
+    <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;scrollbar-width:none">
+      ${mapas.map(m => {
+        const fecha = new Date(m.fecha+'T12:00:00').toLocaleDateString('es-CO',{day:'2-digit',month:'short'});
+        const nZonas = Object.keys(m.zonas||{}).length;
+        return `<div style="flex-shrink:0;text-align:center;cursor:pointer" onclick="cargarMapaGuardado('${m.id}')">
+          ${m.dataUrl ? `<img src="${m.dataUrl}" style="width:54px;height:90px;object-fit:cover;border-radius:8px;border:1.5px solid var(--border)">` : `<div style="width:54px;height:90px;border-radius:8px;border:1.5px solid var(--border);background:var(--teal-pale);display:flex;align-items:center;justify-content:center;font-size:20px">🗺️</div>`}
+          <div style="font-size:10px;color:var(--text-soft);margin-top:3px">${m.vista}</div>
+          <div style="font-size:10px;color:var(--text-soft)">${fecha} · ${nZonas}z</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+async function cargarMapaGuardado(mapaId) {
+  const mapas = await txGet('mapas','pacienteId',pacienteActualId);
+  const m = mapas.find(x=>x.id===mapaId);
+  if (!m) return;
+  zonasMarcadas = { ...(m.zonas||{}) };
+  if (m.notas && document.getElementById('mapa-notas')) {
+    document.getElementById('mapa-notas').value = m.notas;
+  }
+  // Cambiar vista si es necesario
+  if (m.vista !== 'ambos' && m.vista !== mapaVistaActual) {
+    mapaVistaActual = m.vista;
+    document.querySelectorAll('.mapa-view-btn').forEach(b => {
+      b.classList.toggle('active', b.textContent.toLowerCase().includes(m.vista));
+    });
+  }
+  renderMapaClinico();
+  toast('Mapa cargado · ' + Object.keys(zonasMarcadas).length + ' zonas');
+}
+
+// stubs para compatibilidad con código antiguo
+function setMapaTool() {}
+function setMapaColor() {}
+function setMapaSize() {}
+function limpiarMapa() { limpiarMapaClinico(); }
+function guardarMapa() { guardarMapaClinico(); }
+function descargarMapa() { exportarMapaPNG(); }
+
+
+// CONSENTIMIENTO INFORMADO + FIRMA
+// ══════════════════════════════════════
+let firmaCtx = null;
+let firmaIsDrawing = false;
+let firmaTieneTrazos = false;
+
+async function renderConsentimiento() {
+  const p = pacientes.find(x=>x.id===pacienteActualId);
+  if (!p) return;
+  const consentimientos = await txGet('consentimientos','pacienteId',pacienteActualId);
+  const existing = consentimientos.find(c=>c.pacienteId===pacienteActualId);
+  const el = document.getElementById('consent-content');
+
+  if (existing) {
+    el.innerHTML = `
+      <div class="consent-status consent-ok">✓ Consentimiento firmado el ${new Date(existing.fecha_firma).toLocaleDateString('es-CO',{day:'2-digit',month:'long',year:'numeric'})}</div>
+      <div class="consent-card" style="margin-top:14px">
+        <h3>Firma del paciente</h3>
+        <div class="consent-firmado-wrap">
+          <img class="consent-firma-img" src="${existing.firma_base64}" alt="Firma">
+          <p style="font-size:12px;color:var(--text-soft)">Firmado por: ${p.nombre}<br>${p.tipo_doc||'CC'} ${p.cedula}</p>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-ghost" style="width:auto;padding:10px 16px;font-size:13px" onclick="eliminarConsentimiento('${existing.id}')">Actualizar consentimiento</button>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  const hoy = new Date().toLocaleDateString('es-CO',{day:'2-digit',month:'long',year:'numeric'});
+  el.innerHTML = `
+    <div class="consent-status consent-pending">⚠ Pendiente de firma</div>
+
+    <div class="consent-card" style="margin-top:14px">
+      <h3>Consentimiento Informado</h3>
+      <div class="consent-text">
+        <p>Yo, <strong>${p.nombre}</strong>, identificado(a) con ${p.tipo_doc||'CC'} número <strong>${p.cedula}</strong>, en pleno uso de mis facultades mentales, mediante este documento manifiesto mi consentimiento para recibir tratamiento fisioterapéutico a cargo de la fisioterapeuta <strong>Geraldine Castillo Torres</strong>, CC 1026584622, registrada ante el COLFI (Acto Administrativo 22915).</p>
+        <p>He sido informado(a) sobre el diagnóstico, los procedimientos terapéuticos propuestos, los beneficios esperados, los posibles riesgos, y las alternativas de tratamiento disponibles. Se me ha dado la oportunidad de hacer preguntas, las cuales han sido resueltas satisfactoriamente.</p>
+      </div>
+      <div class="consent-checks">
+        <label class="consent-check"><input type="checkbox" id="ch1"><span>Autorizo la realización de los procedimientos fisioterapéuticos necesarios para mi tratamiento.</span></label>
+        <label class="consent-check"><input type="checkbox" id="ch2"><span>Autorizo el registro fotográfico (antes/después) con fines clínicos y de seguimiento, con estricta confidencialidad.</span></label>
+        <label class="consent-check"><input type="checkbox" id="ch3"><span>He leído y comprendo este documento. Fui informado(a) sobre los procedimientos, riesgos y beneficios.</span></label>
+        <label class="consent-check"><input type="checkbox" id="ch4"><span>Entiendo que puedo retirar mi consentimiento en cualquier momento sin que esto afecte mi atención.</span></label>
+      </div>
+    </div>
+
+    <div class="consent-card">
+      <h3>Firma del paciente</h3>
+      <p style="font-size:13px;color:var(--text-soft);margin-bottom:12px">Firme directamente en el recuadro usando su dedo o el lápiz de la pantalla</p>
+      <div class="firma-area-wrap" id="firma-area-wrap">
+        <canvas id="firma-canvas" height="140"></canvas>
+        <div class="firma-placeholder" id="firma-placeholder">Firme aquí →</div>
+      </div>
+      <div class="firma-toolbar">
+        <span class="firma-hint">Fecha: ${hoy}</span>
+        <button class="mapa-tool-btn" onclick="limpiarFirma()">🗑️ Borrar firma</button>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px">
+      <button class="btn btn-primary" onclick="guardarConsentimiento()">Guardar consentimiento firmado</button>
+    </div>
+  `;
+
+  // Inicializar canvas firma
+  setTimeout(() => {
+    const canvas = document.getElementById('firma-canvas');
+    if (!canvas) return;
+    canvas.width = canvas.parentElement.clientWidth;
+    firmaCtx = canvas.getContext('2d');
+    firmaTieneTrazos = false;
+    firmaCtx.fillStyle = 'white';
+    firmaCtx.fillRect(0,0,canvas.width,canvas.height);
+
+    canvas.addEventListener('mousedown', firmaStart);
+    canvas.addEventListener('mousemove', firmaMove);
+    canvas.addEventListener('mouseup', firmaEndEvt);
+    canvas.addEventListener('mouseleave', firmaEndEvt);
+    canvas.addEventListener('touchstart', firmaTouchStart, {passive:false});
+    canvas.addEventListener('touchmove', firmaTouchMove, {passive:false});
+    canvas.addEventListener('touchend', firmaEndEvt);
+  }, 100);
+}
+
+function firmaStart(e) {
+  firmaIsDrawing=true;
+  firmaTieneTrazos=true;
+  document.getElementById('firma-placeholder').style.opacity='0';
+  const r=this.getBoundingClientRect();
+  firmaCtx.beginPath();
+  firmaCtx.moveTo(e.clientX-r.left, e.clientY-r.top);
+}
+function firmaMove(e) {
+  if(!firmaIsDrawing) return;
+  const r=this.getBoundingClientRect();
+  firmaCtx.lineTo(e.clientX-r.left, e.clientY-r.top);
+  firmaCtx.strokeStyle='#112e29';
+  firmaCtx.lineWidth=2;
+  firmaCtx.lineCap='round';
+  firmaCtx.stroke();
+}
+function firmaEndEvt() { firmaIsDrawing=false; firmaCtx && firmaCtx.beginPath(); }
+function firmaTouchStart(e) {
+  e.preventDefault();
+  firmaTieneTrazos=true;
+  document.getElementById('firma-placeholder').style.opacity='0';
+  const t=e.touches[0];
+  const r=e.target.getBoundingClientRect();
+  firmaCtx.beginPath();
+  firmaCtx.moveTo(t.clientX-r.left, t.clientY-r.top);
+  firmaIsDrawing=true;
+}
+function firmaTouchMove(e) {
+  e.preventDefault();
+  if(!firmaIsDrawing) return;
+  const t=e.touches[0];
+  const r=e.target.getBoundingClientRect();
+  firmaCtx.lineTo(t.clientX-r.left, t.clientY-r.top);
+  firmaCtx.strokeStyle='#112e29';
+  firmaCtx.lineWidth=2;
+  firmaCtx.lineCap='round';
+  firmaCtx.stroke();
+}
+function limpiarFirma() {
+  if(!firmaCtx) return;
+  const c=document.getElementById('firma-canvas');
+  firmaCtx.clearRect(0,0,c.width,c.height);
+  firmaCtx.fillStyle='white';
+  firmaCtx.fillRect(0,0,c.width,c.height);
+  firmaTieneTrazos=false;
+  document.getElementById('firma-placeholder').style.opacity='1';
+}
+
+async function guardarConsentimiento() {
+  const checks = ['ch1','ch2','ch3','ch4'].map(id=>document.getElementById(id)?.checked);
+  if (checks.some(c=>!c)) { toast('Debes marcar todas las autorizaciones'); return; }
+  if (!firmaTieneTrazos) { toast('El paciente debe firmar'); return; }
+  const canvas = document.getElementById('firma-canvas');
+  const firma = canvas.toDataURL('image/png');
+  const p = pacientes.find(x=>x.id===pacienteActualId);
+  await txPut('consentimientos', {
+    id: 'cons_'+Date.now(),
+    pacienteId: pacienteActualId,
+    fecha_firma: new Date().toISOString(),
+    firma_base64: firma,
+    autorizaciones: { fotos:true, procedimientos:true, info_leida:true, retiro:true },
+    created_at: new Date().toISOString()
+  });
+  toast('✓ Consentimiento guardado');
+  renderConsentimiento();
+}
+
+async function eliminarConsentimiento(id) {
+  if (!confirm('¿Actualizar el consentimiento? Se eliminará la firma actual.')) return;
+  await txDelete('consentimientos', id);
+  renderConsentimiento();
+}
+
+// ══════════════════════════════════════
+// CERTIFICADO DE ALTA + PDF
+// ══════════════════════════════════════
+async function renderCertificado() {
+  const p = pacientes.find(x=>x.id===pacienteActualId);
+  if (!p) return;
+  const sesiones = await txGet('sesiones','pacienteId',pacienteActualId);
+  const consentimientos = await txGet('consentimientos','pacienteId',pacienteActualId);
+  const tieneFirma = consentimientos.length > 0;
+  const el = document.getElementById('cert-content');
+
+  const hoy = new Date().toLocaleDateString('es-CO',{day:'2-digit',month:'long',year:'numeric'});
+  const numSesiones = sesiones.length;
+  const primeraSesion = sesiones.length ? new Date(sesiones.sort((a,b)=>a.fecha.localeCompare(b.fecha))[0].fecha+'T12:00:00').toLocaleDateString('es-CO',{day:'2-digit',month:'long',year:'numeric'}) : '—';
+  const ultimaSesion = sesiones.length ? new Date(sesiones.sort((a,b)=>b.fecha.localeCompare(a.fecha))[0].fecha+'T12:00:00').toLocaleDateString('es-CO',{day:'2-digit',month:'long',year:'numeric'}) : '—';
+
+  // Firma PROFESIONAL — guardada en IndexedDB
+  const firmaProfData = await getConfig('firma_profesional');
+  const logoKinara = await getConfig('logo');
+
+  el.innerHTML = `
+    <div id="cert-preview-wrap">
+      <div class="cert-preview" id="cert-doc">
+        <div class="cert-header-row">
+          <div class="cert-logo-circle" id="cert-logo-wrap">
+            ${logoKinara
+              ? `<img src="${logoKinara}" style="width:52px;height:52px;border-radius:50%;object-fit:cover;">`
+              : `<svg viewBox="0 0 44 44" fill="none" width="36" height="36">
+                  <path d="M22 4 C12 4 4 12 4 22 C4 32 12 40 22 40" stroke="#4ec9b0" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.85"/>
+                  <path d="M22 8 C14 8 8 14 8 22 C8 30 14 36 22 36" stroke="#4ec9b0" stroke-width="1.2" stroke-linecap="round" fill="none" opacity="0.45"/>
+                  <ellipse cx="24" cy="11" rx="4.5" ry="5" fill="white" opacity="0.9"/>
+                  <path d="M19.5 10 Q16 14 15 20 Q14.5 24 16 26" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.7"/>
+                  <path d="M20 16 Q17 18 16 22 Q15.5 26 17 30 Q19 33 24 33 Q29 33 31 30 Q32.5 26 32 22 Q31 18 28 16 Q26 15 24 15.5 Q22 15 20 16Z" fill="white" opacity="0.85"/>
+                  <circle cx="24" cy="18" r="1.4" fill="#E8B84B"/>
+                  <circle cx="24" cy="21.5" r="1.2" fill="#E8B84B"/>
+                  <circle cx="24" cy="24.5" r="1.0" fill="#E8B84B"/>
+                  <circle cx="24" cy="27" r="0.85" fill="#E8B84B"/>
+                  <path d="M33 7 L34 9.5 L36.5 10.5 L34 11.5 L33 14 L32 11.5 L29.5 10.5 L32 9.5 Z" fill="#E8B84B"/>
+                </svg>`}
+          </div>
+          <div class="cert-marca">
+            <h1>KINARA</h1>
+            <p>Geraldine Castillo Torres · Fisioterapeuta</p>
+            <p>CC 1026584622 · COLFI Acto 22915</p>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:10px;color:var(--text-soft)">Fecha</div>
+            <div style="font-size:13px;font-weight:500;color:var(--text-dark)">${hoy}</div>
+          </div>
+        </div>
+
+        <div class="cert-title">
+          <h2>Certificado de Alta Fisioterapéutica</h2>
+          <p>Documento oficial de finalización de tratamiento</p>
+        </div>
+
+        <div class="cert-body">
+          La fisioterapeuta <strong>Geraldine Castillo Torres</strong>, identificada con Cédula de Ciudadanía N° <strong>1026584622</strong>, registrada ante el Colegio Colombiano de Fisioterapeutas (COLFI) con Acto Administrativo <strong>22915</strong>, con tarjeta profesional vigente en el ReTHUS desde el 21 de agosto de 2025, certifica que el/la paciente:
+        </div>
+
+        <div class="cert-datos">
+          <div class="cert-dato-row"><span class="cert-dato-key">Nombre completo:</span><span class="cert-dato-val">${p.nombre}</span></div>
+          <div class="cert-dato-row"><span class="cert-dato-key">Identificación:</span><span class="cert-dato-val">${p.tipo_doc||'CC'} ${p.cedula}</span></div>
+          <div class="cert-dato-row"><span class="cert-dato-key">Diagnóstico:</span><span class="cert-dato-val">${p.diagnostico||'—'}</span></div>
+          <div class="cert-dato-row"><span class="cert-dato-key">Primera sesión:</span><span class="cert-dato-val">${primeraSesion}</span></div>
+          <div class="cert-dato-row"><span class="cert-dato-key">Última sesión:</span><span class="cert-dato-val">${ultimaSesion}</span></div>
+          <div class="cert-dato-row"><span class="cert-dato-key">Total sesiones:</span><span class="cert-dato-val">${numSesiones} sesiones</span></div>
+        </div>
+
+        <div class="cert-body">
+          Ha completado satisfactoriamente el plan de rehabilitación fisioterapéutica, alcanzando los objetivos terapéuticos planteados al inicio del tratamiento. El/la paciente se encuentra en condiciones de reintegrarse a sus actividades cotidianas de acuerdo con las indicaciones entregadas.
+          <br><br>
+          Se emite el presente certificado a solicitud del/la interesado(a) para los fines legales y pertinentes que estime convenientes.
+        </div>
+
+        <div class="cert-firma-row">
+          <div class="cert-firma-block">
+            ${firmaProfData
+              ? `<img class="cert-firma-img" src="${firmaProfData}" alt="Firma profesional">`
+              : `<div style="height:50px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px"><span style="font-size:11px;color:var(--text-soft);font-style:italic">Sin firma registrada</span></div>`}
+            <div class="cert-firma-line">
+              <div class="cert-firma-name">Geraldine Castillo Torres</div>
+              <div class="cert-firma-title">Fisioterapeuta</div>
+              <div class="cert-firma-reg">CC 1026584622 · COLFI 22915</div>
+              <div class="cert-firma-reg">ReTHUS vigente desde 2025-08-21</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="cert-qr">
+          Documento generado por KINARA · Sistema de Gestión Clínica · ${new Date().getFullYear()}
+        </div>
+      </div>
+    </div>
+
+    <!-- Configuración del profesional -->
+    <div style="background:var(--teal-pale);border:1.5px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-soft);font-weight:500;margin-bottom:10px">Configuración del certificado</div>
+
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">Logo KINARA (PNG/JPG)</label>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          ${logoKinara ? `<img src="${logoKinara}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:1.5px solid var(--border)">` : '<div style="width:44px;height:44px;border-radius:50%;background:var(--teal-light);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--teal-dark)">🖼️</div>'}
+          <button class="mapa-tool-btn" onclick="document.getElementById('logo-upload-input').click()">
+            ${logoKinara ? '🔄 Cambiar logo' : '⬆️ Subir logo'}
+          </button>
+          ${logoKinara ? `<button class="mapa-tool-btn" style="color:var(--danger);border-color:#f1c0bc" onclick="quitarConfig('logo')">Quitar</button>` : ''}
+        </div>
+        <input type="file" id="logo-upload-input" accept="image/*" style="display:none" onchange="subirLogo(this.files[0])">
+        <div style="font-size:11px;color:var(--text-soft);margin-top:4px">Se guarda en el dispositivo. Aparece en todos los certificados y el header.</div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">Firma de Geraldine (profesional)</label>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+          ${firmaProfData ? `<img src="${firmaProfData}" style="height:40px;border:1.5px solid var(--border);border-radius:6px;background:white;padding:2px">` : '<span style="font-size:12px;color:var(--text-soft)">Sin firma registrada</span>'}
+          <button class="mapa-tool-btn" onclick="toggleFirmaProf()">
+            ${firmaProfData ? '✏️ Actualizar firma' : '✍️ Registrar firma'}
+          </button>
+          ${firmaProfData ? `<button class="mapa-tool-btn" style="color:var(--danger);border-color:#f1c0bc" onclick="quitarConfig('firma_profesional')">Quitar</button>` : ''}
+        </div>
+        <div id="firma-prof-area" style="display:none">
+          <p style="font-size:12px;color:var(--text-soft);margin-bottom:8px">Firma de Geraldine Castillo Torres — profesional</p>
+          <div class="firma-area-wrap" id="firma-prof-wrap">
+            <canvas id="firma-prof-canvas" height="120"></canvas>
+            <div class="firma-placeholder" id="firma-prof-placeholder">Firme aquí →</div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button class="mapa-tool-btn" onclick="limpiarFirmaProf()">🗑️ Borrar</button>
+            <button class="mapa-tool-btn" onclick="guardarFirmaProf()" style="background:var(--teal-light);border-color:var(--teal-mid);color:var(--teal-dark)">💾 Guardar firma</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button class="btn btn-primary" onclick="generarPDF()">⬇️ Descargar certificado PDF</button>
+      ${p.estado!=='Alta' ? `<button class="btn btn-gold" onclick="darDeAlta()">Dar de alta al paciente</button>` : `<div class="consent-status consent-ok" style="justify-content:center">✓ Paciente dado de alta</div>`}
+      <button class="btn btn-ghost" onclick="imprimirCertificado()">🖨️ Imprimir</button>
+    </div>
+  `;
+
+  // Inicializar canvas firma profesional si está visible
+  inicializarFirmaProf();
+}
+
+// ══════════════════════════════════════
+// LOGO Y FIRMA PROFESIONAL
+// ══════════════════════════════════════
+function subirLogo(file) {
+  if (!file) return;
+  if (file.size > 2*1024*1024) { toast('Imagen muy grande (máx 2MB)'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = async () => {
+      const size = Math.min(img.width, img.height);
+      const canvas = document.createElement('canvas');
+      canvas.width = 200; canvas.height = 200;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img,(img.width-size)/2,(img.height-size)/2,size,size,0,0,200,200);
+      const dataUrl = canvas.toDataURL('image/png', 0.9);
+      await setConfig('logo', dataUrl);
+      actualizarLogoHeader(dataUrl);
+      renderCertificado();
+      toast('✓ Logo guardado');
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function actualizarLogoHeader(dataUrl) {
+  const el = document.querySelector('.header-logo-icon');
+  if (!el) return;
+  const img = document.createElement('img');
+  img.className = 'header-logo-icon';
+  img.src = dataUrl;
+  img.style.cssText = 'width:34px;height:34px;border-radius:50%;object-fit:cover;';
+  el.parentElement.replaceChild(img, el);
+}
+
+let firmaProfCtx = null, firmaProfDrawing = false, firmaProfTrazos = false;
+
+function toggleFirmaProf() {
+  const area = document.getElementById('firma-prof-area');
+  if (!area) return;
+  const vis = area.style.display !== 'none';
+  area.style.display = vis ? 'none' : 'block';
+  if (!vis) setTimeout(inicializarFirmaProf, 80);
+}
+
+function inicializarFirmaProf() {
+  const canvas = document.getElementById('firma-prof-canvas');
+  const wrap = document.getElementById('firma-prof-wrap');
+  if (!canvas || !wrap) return;
+  canvas.width = wrap.clientWidth || 280;
+  firmaProfCtx = canvas.getContext('2d');
+  firmaProfTrazos = false;
+  firmaProfCtx.fillStyle = 'white';
+  firmaProfCtx.fillRect(0,0,canvas.width,canvas.height);
+  canvas.addEventListener('mousedown', fpStart);
+  canvas.addEventListener('mousemove', fpMove);
+  canvas.addEventListener('mouseup', fpEnd);
+  canvas.addEventListener('mouseleave', fpEnd);
+  canvas.addEventListener('touchstart', fpTouchStart, {passive:false});
+  canvas.addEventListener('touchmove', fpTouchMove, {passive:false});
+  canvas.addEventListener('touchend', fpEnd);
+}
+function fpStart(e) {
+  firmaProfDrawing=true; firmaProfTrazos=true;
+  const ph=document.getElementById('firma-prof-placeholder');
+  if(ph) ph.style.opacity='0';
+  const r=this.getBoundingClientRect();
+  firmaProfCtx.beginPath(); firmaProfCtx.moveTo(e.clientX-r.left,e.clientY-r.top);
+}
+function fpMove(e) {
+  if(!firmaProfDrawing) return;
+  const r=this.getBoundingClientRect();
+  firmaProfCtx.lineTo(e.clientX-r.left,e.clientY-r.top);
+  firmaProfCtx.strokeStyle='#0f2e28'; firmaProfCtx.lineWidth=2; firmaProfCtx.lineCap='round'; firmaProfCtx.stroke();
+}
+function fpEnd() { firmaProfDrawing=false; firmaProfCtx&&firmaProfCtx.beginPath(); }
+function fpTouchStart(e) {
+  e.preventDefault(); firmaProfDrawing=true; firmaProfTrazos=true;
+  const ph=document.getElementById('firma-prof-placeholder'); if(ph) ph.style.opacity='0';
+  const t=e.touches[0],r=e.target.getBoundingClientRect();
+  firmaProfCtx.beginPath(); firmaProfCtx.moveTo(t.clientX-r.left,t.clientY-r.top);
+}
+function fpTouchMove(e) {
+  e.preventDefault(); if(!firmaProfDrawing) return;
+  const t=e.touches[0],r=e.target.getBoundingClientRect();
+  firmaProfCtx.lineTo(t.clientX-r.left,t.clientY-r.top);
+  firmaProfCtx.strokeStyle='#0f2e28'; firmaProfCtx.lineWidth=2; firmaProfCtx.lineCap='round'; firmaProfCtx.stroke();
+}
+function limpiarFirmaProf() {
+  if(!firmaProfCtx) return;
+  const c=document.getElementById('firma-prof-canvas');
+  firmaProfCtx.clearRect(0,0,c.width,c.height);
+  firmaProfCtx.fillStyle='white'; firmaProfCtx.fillRect(0,0,c.width,c.height);
+  firmaProfTrazos=false;
+  const ph=document.getElementById('firma-prof-placeholder'); if(ph) ph.style.opacity='1';
+}
+async function guardarFirmaProf() {
+  if(!firmaProfTrazos) { toast('Dibuja la firma primero'); return; }
+  const canvas=document.getElementById('firma-prof-canvas');
+  await setConfig('firma_profesional', canvas.toDataURL('image/png'));
+  toast('✓ Firma profesional guardada');
+  const area=document.getElementById('firma-prof-area'); if(area) area.style.display='none';
+  renderCertificado();
+}
+
+
+async function darDeAlta() {
+  const p = pacientes.find(x=>x.id===pacienteActualId);
+  if (!p) return;
+  if (!confirm(`¿Confirmas el alta de ${p.nombre}?`)) return;
+  p.estado = 'Alta';
+  p.fecha_alta = new Date().toISOString();
+  p.updated_at = new Date().toISOString();
+  await txPut('pacientes', p);
+  await cargarLista();
+  // Actualizar header ficha
+  document.getElementById('ficha-status').textContent = 'Alta';
+  toast('✓ Paciente dado de alta');
+  renderCertificado();
+}
+
+function imprimirCertificado() {
+  const contenido = document.getElementById('cert-doc').innerHTML;
+  const ventana = window.open('', '_blank', 'width=800,height=900');
+  ventana.document.write(`<!DOCTYPE html><html><head>
+    <meta charset="UTF-8">
+    <title>Certificado de Alta - KINARA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+      body{font-family:'DM Sans',sans-serif;padding:32px;max-width:680px;margin:0 auto;color:#112e29}
+      .cert-header-row{display:flex;align-items:center;gap:14px;margin-bottom:16px;padding-bottom:14px;border-bottom:2px solid #d4ece8}
+      .cert-logo-circle{width:52px;height:52px;border-radius:50%;background:#1a5c52;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+      .cert-marca h1{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:#1a5c52;letter-spacing:.06em}
+      .cert-marca p{font-size:11px;color:#7aa39d}
+      .cert-title{text-align:center;margin:14px 0}
+      .cert-title h2{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:#1a5c52}
+      .cert-title p{font-size:12px;color:#7aa39d}
+      .cert-body{font-size:13px;line-height:1.8;margin:14px 0;text-align:justify}
+      .cert-body strong{font-weight:500;color:#1a5c52}
+      .cert-datos{background:#eef7f6;border-radius:8px;padding:12px 14px;margin:12px 0}
+      .cert-dato-row{display:flex;gap:8px;font-size:12px;padding:3px 0}
+      .cert-dato-key{color:#7aa39d;width:120px;flex-shrink:0}
+      .cert-dato-val{color:#112e29;font-weight:500}
+      .cert-firma-row{display:flex;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid #cce4e1}
+      .cert-firma-block{text-align:center}
+      .cert-firma-img{height:50px;margin-bottom:4px;display:block}
+      .cert-firma-line{width:180px;border-top:1px solid #112e29;padding-top:6px}
+      .cert-firma-name{font-size:12px;font-weight:500}
+      .cert-firma-title,.cert-firma-reg{font-size:11px;color:#7aa39d}
+      .cert-qr{font-size:10px;color:#7aa39d;text-align:center;margin-top:12px;padding-top:10px;border-top:1px solid #cce4e1}
+    </style></head><body>${contenido}<script>window.onload=()=>{window.print();window.close()}<\/script></body></html>`);
+  ventana.document.close();
+}
+
+async function generarPDF() {
+  // Cargar jsPDF desde CDN
+  if (!window.jspdf) {
+    toast('Cargando generador PDF...');
+    await new Promise((res,rej)=>{
+      const s=document.createElement('script');
+      s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+      s.onload=res; s.onerror=rej;
+      document.head.appendChild(s);
+    });
+  }
+  const {jsPDF} = window.jspdf;
+  const p = pacientes.find(x=>x.id===pacienteActualId);
+  const sesiones = await txGet('sesiones','pacienteId',pacienteActualId);
+  const consentimientos = await txGet('consentimientos','pacienteId',pacienteActualId);
+  const firmaData = await getConfig('firma_profesional');  // Firma de GERALDINE, no del paciente
+  const hoy = new Date().toLocaleDateString('es-CO',{day:'2-digit',month:'long',year:'numeric'});
+  const numSesiones = sesiones.length;
+  const sorted = sesiones.sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  const primeraSesion = sorted.length ? new Date(sorted[0].fecha+'T12:00:00').toLocaleDateString('es-CO',{day:'2-digit',month:'long',year:'numeric'}) : '—';
+  const ultimaSesion = sorted.length ? new Date(sorted[sorted.length-1].fecha+'T12:00:00').toLocaleDateString('es-CO',{day:'2-digit',month:'long',year:'numeric'}) : '—';
+
+  const doc = new jsPDF({ unit:'mm', format:'a4', orientation:'portrait' });
+  const W=210, M=20;
+
+  // Fondo header
+  doc.setFillColor(26,92,82);
+  doc.rect(0,0,W,38,'F');
+
+  // Título en header
+  doc.setTextColor(255,255,255);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(22);
+  doc.text('KINARA', M, 18);
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(10);
+  doc.text('Geraldine Castillo Torres · Fisioterapeuta', M, 25);
+  doc.text('CC 1026584622 · COLFI 22915 · ReTHUS vigente', M, 31);
+
+  // Fecha
+  doc.setFontSize(9);
+  doc.text(hoy, W-M, 25, {align:'right'});
+
+  // Línea dorada
+  doc.setDrawColor(232,184,75);
+  doc.setLineWidth(1);
+  doc.line(M, 42, W-M, 42);
+
+  // Título documento
+  doc.setTextColor(26,92,82);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(16);
+  doc.text('Certificado de Alta Fisioterapéutica', W/2, 52, {align:'center'});
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(9);
+  doc.setTextColor(122,163,157);
+  doc.text('Documento oficial de finalización de tratamiento', W/2, 58, {align:'center'});
+
+  // Cuerpo
+  doc.setTextColor(17,46,41);
+  doc.setFontSize(10);
+  let y = 68;
+  const body1 = `La suscrita fisioterapeuta Geraldine Castillo Torres, identificada con CC N° 1026584622, registrada ante el Colegio Colombiano de Fisioterapeutas (COLFI) con Acto Administrativo 22915, certifica que el/la paciente:`;
+  const lines1 = doc.splitTextToSize(body1, W-2*M);
+  doc.text(lines1, M, y);
+  y += lines1.length * 6 + 4;
+
+  // Caja datos
+  doc.setFillColor(238,247,246);
+  doc.roundedRect(M, y, W-2*M, 40, 3, 3, 'F');
+  doc.setDrawColor(204,228,225);
+  doc.roundedRect(M, y, W-2*M, 40, 3, 3, 'S');
+  y += 7;
+  const datos = [
+    ['Nombre completo:', p.nombre],
+    ['Identificación:', `${p.tipo_doc||'CC'} ${p.cedula}`],
+    ['Diagnóstico:', p.diagnostico||'—'],
+    ['Primera sesión:', primeraSesion],
+    ['Última sesión:', ultimaSesion],
+    ['Total sesiones:', `${numSesiones} sesiones`]
+  ];
+  datos.forEach(([k,v]) => {
+    doc.setFont('helvetica','normal'); doc.setTextColor(122,163,157); doc.setFontSize(9);
+    doc.text(k, M+4, y);
+    doc.setFont('helvetica','bold'); doc.setTextColor(17,46,41);
+    doc.text(v, M+52, y);
+    y += 6;
+  });
+  y += 6;
+
+  const body2 = `Ha completado satisfactoriamente el plan de rehabilitación fisioterapéutica, alcanzando los objetivos terapéuticos planteados al inicio del tratamiento. El/la paciente se encuentra en condiciones de reintegrarse a sus actividades cotidianas de acuerdo con las indicaciones entregadas.\n\nSe emite el presente certificado a solicitud del/la interesado(a) para los fines legales y pertinentes que estime convenientes.`;
+  doc.setFont('helvetica','normal'); doc.setTextColor(17,46,41); doc.setFontSize(10);
+  const lines2 = doc.splitTextToSize(body2, W-2*M);
+  doc.text(lines2, M, y);
+  y += lines2.length * 5.5 + 10;
+
+  // Firma
+  if (firmaData) {
+    try {
+      doc.addImage(firmaData, 'PNG', W-M-50, y, 50, 22);
+    } catch(e) {}
+  }
+  y += 26;
+  doc.setDrawColor(17,46,41); doc.setLineWidth(0.5);
+  doc.line(W-M-55, y, W-M, y);
+  y += 5;
+  doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(17,46,41);
+  doc.text('Geraldine Castillo Torres', W-M, y, {align:'right'});
+  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(122,163,157);
+  doc.text('Fisioterapeuta · CC 1026584622', W-M, y+5, {align:'right'});
+  doc.text('COLFI 22915 · ReTHUS vigente 2025-08-21', W-M, y+10, {align:'right'});
+
+  // Footer
+  doc.setFontSize(8); doc.setTextColor(170,195,192);
+  doc.text(`Documento generado por KINARA · ${new Date().getFullYear()}`, W/2, 285, {align:'center'});
+
+  doc.save(`certificado_alta_${p.nombre.replace(/ /g,'_')}.pdf`);
+  toast('✓ PDF descargado');
+}
+
+
+
+// ══════════════════════════════════════
+// HELPERS UI
+// ══════════════════════════════════════
+function mostrarView(id) {
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+function volverLista() { mostrarView('view-lista'); }
+function abrirModal(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow='hidden'; }
+function cerrarModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow=''; }
+function toast(msg) {
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),2800);
+}
+function toggleChip(el) { el.classList.toggle('selected'); }
+function toggleMenu() { document.getElementById('menu-overlay').classList.add('open'); document.body.style.overflow='hidden'; }
+function cerrarMenu() { document.getElementById('menu-overlay').classList.remove('open'); document.body.style.overflow=''; }
+
+document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{
+  if(e.target===o){o.classList.remove('open');document.body.style.overflow='';}
+}));
+
+// ══════════════════════════════════════
+// DOLOR SCALE
+// ══════════════════════════════════════
+function buildDolorScale() {
+  const el = document.getElementById('dolor-scale');
+  for(let i=0;i<=10;i++){
+    const b=document.createElement('button');
+    b.className='dolor-btn'; b.dataset.v=i; b.textContent=i; b.type='button';
+    b.onclick=()=>{document.querySelectorAll('.dolor-btn').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');dolorSeleccionado=i;};
+    el.appendChild(b);
+  }
+  el.querySelector('[data-v="0"]').classList.add('selected');
+}
+
+// ══════════════════════════════════════
+// OFFLINE
+// ══════════════════════════════════════
+window.addEventListener('online',()=>{
+  document.body.classList.remove('offline');
+  document.getElementById('sync-status').innerHTML='<span class="sync-dot"></span>Online';
+});
+window.addEventListener('offline',()=>{
+  document.body.classList.add('offline');
+  document.getElementById('sync-status').innerHTML='<span style="color:#f39c12">⚠</span> Offline';
+});
+
+// ══════════════════════════════════════
+// PWA INSTALL
+// ══════════════════════════════════════
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstall = e;
+  document.getElementById('install-banner').classList.add('show');
+});
+document.getElementById('install-btn').addEventListener('click', async () => {
+  if (!deferredInstall) return;
+  deferredInstall.prompt();
+  const { outcome } = await deferredInstall.userChoice;
+  if (outcome === 'accepted') toast('✓ KINARA instalada');
+  deferredInstall = null;
+  document.getElementById('install-banner').classList.remove('show');
+});
+
+// ══════════════════════════════════════
+// SERVICE WORKER
+// ══════════════════════════════════════
+if ('serviceWorker' in navigator) {
+  // En producción (GitHub Pages) usa sw.js; en local (file://) usa blob fallback
+  if (location.protocol === 'https:' || location.protocol === 'http:') {
+    navigator.serviceWorker.register('./sw.js')
+      .then(() => console.log('SW registrado (archivo)'))
+      .catch(e => console.warn('SW archivo falló, usando fallback', e));
+  } else {
+    // Fallback para file:// protocol
+    const swCode = `
+const CACHE='kinara-v6';const URLS=['./'];
+self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(URLS))));
+self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('./')))));
+self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));`.trim();
+    const blob = new Blob([swCode], {type:'application/javascript'});
+    navigator.serviceWorker.register(URL.createObjectURL(blob)).then(()=>console.log('SW registrado (blob)')).catch(()=>{});
+  }
+}
+
+// ══════════════════════════════════════
+// CONSTANTES
+// ══════════════════════════════════════
+const TIPOS_SERVICIO_LABEL = {
+  general: 'Fisioterapia general',
+  ortopedico: 'Ortopédico',
+  geriatrico: 'Geriátrico',
+  pediatrico: 'Pediátrico',
+  respiratorio: 'Respiratorio',
+  dermatofuncional: 'Dermatofuncional',
+  sueroterapia: 'Sueroterapia / Detox',
+  alta_muscular: 'Alta muscular'
+};
+
+// ══════════════════════════════════════
+// CONFIGURACIÓN — logo/firma en IndexedDB
+// ══════════════════════════════════════
+async function getConfig(clave) {
+  try {
+    const tx = DB.transaction('configuracion','readonly');
+    const req = tx.objectStore('configuracion').get(clave);
+    return new Promise(r => { req.onsuccess = () => r(req.result?.valor || null); req.onerror = () => r(null); });
+  } catch(e) { return null; }
+}
+async function setConfig(clave, valor) {
+  await txPut('configuracion', { clave, valor });
+}
+async function quitarConfig(clave) {
+  await txDelete('configuracion', clave);
+  renderCertificado();
+}
+
+async function migrarLocalStorageAIndexedDB() {
+  // Migrar logo
+  const logo = localStorage.getItem('kinara_logo');
+  if (logo) {
+    const existente = await getConfig('logo');
+    if (!existente) {
+      await setConfig('logo', logo);
+      console.log('Logo migrado a IndexedDB');
+    }
+    localStorage.removeItem('kinara_logo');
+  }
+  // Migrar firma profesional
+  const firma = localStorage.getItem('kinara_firma_profesional');
+  if (firma) {
+    const existente = await getConfig('firma_profesional');
+    if (!existente) {
+      await setConfig('firma_profesional', firma);
+      console.log('Firma profesional migrada a IndexedDB');
+    }
+    localStorage.removeItem('kinara_firma_profesional');
+  }
+}
+
+// ══════════════════════════════════════
+// EXPORT / IMPORT — Backup completo
+// ══════════════════════════════════════
+async function exportarDatos() {
+  cerrarMenu();
+  toast('Preparando copia de seguridad...');
+  try {
+    const stores = ['pacientes','sesiones','fotos','mapas','consentimientos','evaluaciones','configuracion'];
+    const backup = { version: 6, fecha: new Date().toISOString(), stores: {} };
+    for (const store of stores) {
+      try { backup.stores[store] = await txGet(store); } catch(e) { backup.stores[store] = []; }
+    }
+    const totalRegistros = Object.values(backup.stores).reduce((s,a) => s + a.length, 0);
+    const json = JSON.stringify(backup, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const a = document.createElement('a');
+    const fecha = new Date().toISOString().split('T')[0];
+    a.download = `kinara_backup_${fecha}.json`;
+    a.href = URL.createObjectURL(blob);
+    a.click();
+    URL.revokeObjectURL(a.href);
+    toast(`✓ Backup descargado · ${totalRegistros} registros`);
+  } catch(e) {
+    toast('Error al exportar: ' + e.message);
+  }
+}
+
+async function importarDatos(file) {
+  cerrarMenu();
+  if (!file) return;
+  if (!confirm('⚠️ ATENCIÓN: Importar reemplazará TODOS los datos actuales. ¿Hiciste una copia de seguridad antes?\n\nEsta acción no se puede deshacer.')) return;
+
+  toast('Importando datos...');
+  try {
+    const text = await file.text();
+    const backup = JSON.parse(text);
+
+    if (!backup.stores || !backup.stores.pacientes) {
+      toast('Archivo de backup no válido');
+      return;
+    }
+
+    const stores = ['pacientes','sesiones','fotos','mapas','consentimientos','evaluaciones','configuracion'];
+    let totalImportado = 0;
+
+    for (const store of stores) {
+      const datos = backup.stores[store];
+      if (!datos || !datos.length) continue;
+      try {
+        // Limpiar store existente
+        await new Promise((res, rej) => {
+          const tx = DB.transaction(store, 'readwrite');
+          const req = tx.objectStore(store).clear();
+          req.onsuccess = () => res();
+          req.onerror = () => rej(req.error);
+        });
+        // Importar registros
+        for (const item of datos) {
+          await txPut(store, item);
+          totalImportado++;
+        }
+      } catch(e) { console.warn('Error importando ' + store, e); }
+    }
+
+    await cargarLista();
+    toast(`✓ Importación completada · ${totalImportado} registros restaurados`);
+    document.getElementById('import-file-input').value = '';
+  } catch(e) {
+    toast('Error al importar: ' + e.message);
+  }
+}
+
+async function limpiarDatosDemo() {
+  cerrarMenu();
+  const demoIds = ['demo1','demo2','demo3'];
+  const existentes = pacientes.filter(p => demoIds.includes(p.id));
+  if (!existentes.length) { toast('No hay datos de ejemplo para eliminar'); return; }
+  if (!confirm(`¿Eliminar ${existentes.length} paciente(s) de ejemplo y sus datos asociados?`)) return;
+
+  for (const pid of demoIds) {
+    try {
+      await txDelete('pacientes', pid);
+      // Eliminar sesiones, fotos, mapas, consentimientos, evaluaciones relacionadas
+      for (const store of ['sesiones','fotos','mapas','consentimientos','evaluaciones']) {
+        const items = await txGet(store, 'pacienteId', pid);
+        for (const item of items) await txDelete(store, item.id);
+      }
+    } catch(e) {}
+  }
+  await cargarLista();
+  toast('✓ Datos de ejemplo eliminados');
+}
+
+// ══════════════════════════════════════
+// EVALUACIÓN CLÍNICA
+// ══════════════════════════════════════
+let evalActual = {}; // Estado temporal de la evaluación en curso
+
+async function renderEvaluacion() {
+  const p = pacientes.find(x => x.id === pacienteActualId);
+  if (!p) return;
+  const el = document.getElementById('eval-content');
+  const tipoServicio = p.tipo_servicio || 'general';
+  const evals = (await txGet('evaluaciones','pacienteId',pacienteActualId))
+    .sort((a,b) => b.created_at.localeCompare(a.created_at));
+
+  evalActual = {};
+
+  let html = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+      <span style="font-size:14px;font-weight:500;color:var(--teal-dark)">Evaluación clínica</span>
+      <span style="font-size:12px;color:var(--text-soft);background:var(--teal-pale);padding:3px 10px;border-radius:12px">${TIPOS_SERVICIO_LABEL[tipoServicio]}</span>
+    </div>
+
+    <!-- SIGNOS VITALES -->
+    <div class="eval-card">
+      <div class="eval-card-title" onclick="toggleEvalCard(this)">
+        <span class="arrow open">▶</span> 🩺 Signos vitales
+      </div>
+      <div class="eval-card-body open">
+        <div class="eval-vital-grid">
+          <div class="eval-vital-item">
+            <label class="eval-vital-label">FC (bpm)</label>
+            <input class="eval-vital-input" id="ev-fc" type="number" placeholder="72" min="30" max="220">
+          </div>
+          <div class="eval-vital-item">
+            <label class="eval-vital-label">FR (rpm)</label>
+            <input class="eval-vital-input" id="ev-fr" type="number" placeholder="16" min="5" max="60">
+          </div>
+          <div class="eval-vital-item">
+            <label class="eval-vital-label">PA sistólica</label>
+            <input class="eval-vital-input" id="ev-pa-s" type="number" placeholder="120" min="60" max="250">
+          </div>
+          <div class="eval-vital-item">
+            <label class="eval-vital-label">PA diastólica</label>
+            <input class="eval-vital-input" id="ev-pa-d" type="number" placeholder="80" min="30" max="150">
+          </div>
+          <div class="eval-vital-item">
+            <label class="eval-vital-label">Temperatura (°C)</label>
+            <input class="eval-vital-input" id="ev-temp" type="number" step="0.1" placeholder="36.5" min="34" max="42">
+          </div>
+          <div class="eval-vital-item">
+            <label class="eval-vital-label">SpO2 (%)</label>
+            <input class="eval-vital-input" id="ev-spo2" type="number" placeholder="97" min="50" max="100">
+          </div>
+          <div class="eval-vital-item">
+            <label class="eval-vital-label">Peso (kg)</label>
+            <input class="eval-vital-input" id="ev-peso" type="number" step="0.1" placeholder="70" min="1" max="300" oninput="calcularIMC()">
+          </div>
+          <div class="eval-vital-item">
+            <label class="eval-vital-label">Talla (cm)</label>
+            <input class="eval-vital-input" id="ev-talla" type="number" placeholder="170" min="30" max="250" oninput="calcularIMC()">
+          </div>
+        </div>
+        <div class="eval-imc-display" id="ev-imc-display" style="display:none">
+          <div class="eval-imc-valor" id="ev-imc-valor">—</div>
+          <div class="eval-imc-label" id="ev-imc-label">IMC</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EVALUACIÓN GENERAL -->
+    <div class="eval-card">
+      <div class="eval-card-title" onclick="toggleEvalCard(this)">
+        <span class="arrow">▶</span> 🔍 Evaluación fisioterapéutica general
+      </div>
+      <div class="eval-card-body">
+        <div class="form-group">
+          <label class="form-label">Inspección</label>
+          <textarea class="form-control" id="ev-inspeccion" rows="2" placeholder="Observaciones visuales: postura, edemas, deformidades, coloración..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Palpación</label>
+          <textarea class="form-control" id="ev-palpacion" rows="2" placeholder="Hallazgos palpatórios: puntos dolorosos, contracturas, temperatura local..."></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Postura</label>
+            <select class="select-control" id="ev-postura">
+              <option value="">— Seleccionar —</option>
+              <option value="buena">Buena</option>
+              <option value="regular">Regular</option>
+              <option value="mala">Mala / alterada</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Marcha</label>
+            <select class="select-control" id="ev-marcha">
+              <option value="">— Seleccionar —</option>
+              <option value="normal">Normal</option>
+              <option value="antalgica">Antálgica</option>
+              <option value="ataxica">Atáxica</option>
+              <option value="espastica">Espástica</option>
+              <option value="no_aplica">No aplica</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notas de postura/marcha</label>
+          <textarea class="form-control" id="ev-postura-notas" rows="2" placeholder="Observaciones adicionales..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- DIAGNÓSTICO Y PLAN -->
+    <div class="eval-card">
+      <div class="eval-card-title" onclick="toggleEvalCard(this)">
+        <span class="arrow">▶</span> 📝 Diagnóstico, pronóstico y plan
+      </div>
+      <div class="eval-card-body">
+        <div class="form-group">
+          <label class="form-label">Diagnóstico fisioterapéutico (CIF)</label>
+          <textarea class="form-control" id="ev-diag-fisio" rows="2" placeholder="Deficiencias, limitaciones y restricciones..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Diagnóstico médico (CIE-10)</label>
+          <input class="form-control" id="ev-diag-medico" type="text" placeholder="Ej: M54.5 — Lumbago no especificado">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Pronóstico</label>
+            <select class="select-control" id="ev-pronostico">
+              <option value="">— Seleccionar —</option>
+              <option value="favorable">Favorable</option>
+              <option value="reservado">Reservado</option>
+              <option value="desfavorable">Desfavorable</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Frecuencia sesiones</label>
+            <input class="form-control" id="ev-frecuencia" type="text" placeholder="Ej: 3 veces/semana">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Objetivo general</label>
+          <textarea class="form-control" id="ev-objetivo" rows="2" placeholder="Objetivo principal del tratamiento..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Plan de tratamiento / modalidades</label>
+          <textarea class="form-control" id="ev-plan" rows="2" placeholder="Modalidades terapéuticas, precauciones, contraindicaciones..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- TESTS POR SERVICIO -->
+    <div id="eval-tests-container"></div>
+
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px">
+      <button class="btn btn-primary" onclick="guardarEvaluacion()">💾 Guardar evaluación</button>
+    </div>
+  `;
+
+  // Historial de evaluaciones
+  if (evals.length) {
+    html += `
+      <div style="margin-top:20px">
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-soft);font-weight:500;margin-bottom:10px">
+          Evaluaciones anteriores (${evals.length})
+        </div>
+        ${evals.map(ev => {
+          const fecha = new Date(ev.created_at).toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'});
+          const sv = ev.signos_vitales || {};
+          const imc = sv.imc ? `IMC ${sv.imc}` : '';
+          const diag = ev.diagnostico_fisio ? ev.diagnostico_fisio.slice(0,60)+'...' : '';
+          const hasTox = ev.tests?.toxicidad;
+          return `<div class="eval-historial-item" onclick="cargarEvaluacionGuardada('${ev.id}')">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:13px;font-weight:500;color:var(--teal-dark)">${fecha}</span>
+              <span style="font-size:11px;color:var(--text-soft)">${TIPOS_SERVICIO_LABEL[ev.tipo_servicio]||''}</span>
+            </div>
+            ${sv.fc ? `<div style="font-size:12px;color:var(--text-soft);margin-top:4px">FC:${sv.fc} FR:${sv.fr||'-'} PA:${sv.pa_sistolica||'-'}/${sv.pa_diastolica||'-'} ${imc}</div>` : ''}
+            ${hasTox ? `<div style="font-size:12px;margin-top:4px"><span style="padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;color:white;background:${hasTox.interpretacion?.color||'#999'}">${hasTox.interpretacion?.nivel||''} · ${hasTox.total} pts</span></div>` : ''}
+            ${diag ? `<div style="font-size:12px;color:var(--text-mid);margin-top:4px">${diag}</div>` : ''}
+          </div>`;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  el.innerHTML = html;
+
+  // Renderizar tests específicos por servicio
+  renderTestsPorServicio(tipoServicio);
+}
+
+function toggleEvalCard(titleEl) {
+  const arrow = titleEl.querySelector('.arrow');
+  const body = titleEl.nextElementSibling;
+  arrow.classList.toggle('open');
+  body.classList.toggle('open');
+}
+
+function calcularIMC() {
+  const peso = parseFloat(document.getElementById('ev-peso')?.value);
+  const tallaCm = parseFloat(document.getElementById('ev-talla')?.value);
+  const display = document.getElementById('ev-imc-display');
+  const valorEl = document.getElementById('ev-imc-valor');
+  const labelEl = document.getElementById('ev-imc-label');
+  if (!peso || !tallaCm || !display) return;
+  const tallaM = tallaCm / 100;
+  const imc = (peso / (tallaM * tallaM)).toFixed(1);
+  let cat = 'Peso normal';
+  if (imc < 18.5) cat = 'Bajo peso';
+  else if (imc >= 25 && imc < 30) cat = 'Sobrepeso';
+  else if (imc >= 30) cat = 'Obesidad';
+  valorEl.textContent = imc;
+  labelEl.textContent = `IMC · ${cat}`;
+  display.style.display = 'block';
+}
+
+function renderTestsPorServicio(tipo) {
+  const container = document.getElementById('eval-tests-container');
+  if (!container) return;
+
+  if (tipo === 'sueroterapia') {
+    container.innerHTML = renderCuestionarioToxicidad();
+  } else {
+    container.innerHTML = `
+      <div class="eval-card">
+        <div class="eval-card-title" onclick="toggleEvalCard(this)">
+          <span class="arrow">▶</span> 🧪 Tests específicos — ${TIPOS_SERVICIO_LABEL[tipo]}
+        </div>
+        <div class="eval-card-body">
+          <div style="background:var(--gold-pale);padding:12px;border-radius:8px;font-size:13px;color:var(--gold-dark);line-height:1.5">
+            <strong>Próximamente:</strong> Tests estandarizados para ${TIPOS_SERVICIO_LABEL[tipo]}. Por ahora, registre observaciones en el campo de notas a continuación.
+          </div>
+          <div class="form-group" style="margin-top:10px">
+            <label class="form-label">Notas de evaluación específica</label>
+            <textarea class="form-control" id="ev-tests-notas" rows="3" placeholder="Resultados de tests aplicados manualmente..."></textarea>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+}
+
+async function guardarEvaluacion() {
+  const p = pacientes.find(x => x.id === pacienteActualId);
+  if (!p) return;
+
+  const signos = {
+    fc: parseFloat(document.getElementById('ev-fc')?.value) || null,
+    fr: parseFloat(document.getElementById('ev-fr')?.value) || null,
+    pa_sistolica: parseFloat(document.getElementById('ev-pa-s')?.value) || null,
+    pa_diastolica: parseFloat(document.getElementById('ev-pa-d')?.value) || null,
+    temperatura: parseFloat(document.getElementById('ev-temp')?.value) || null,
+    spo2: parseFloat(document.getElementById('ev-spo2')?.value) || null,
+    peso: parseFloat(document.getElementById('ev-peso')?.value) || null,
+    talla: parseFloat(document.getElementById('ev-talla')?.value) || null,
+  };
+  if (signos.peso && signos.talla) {
+    const tallaM = signos.talla / 100;
+    signos.imc = parseFloat((signos.peso / (tallaM * tallaM)).toFixed(1));
+  }
+
+  const tests = {};
+  // Toxicidad
+  if (p.tipo_servicio === 'sueroterapia') {
+    const toxData = recogerDatosToxicidad();
+    if (toxData) tests.toxicidad = toxData;
+  }
+  // Notas de tests genéricos
+  const notasTests = document.getElementById('ev-tests-notas')?.value?.trim();
+  if (notasTests) tests.notas = notasTests;
+
+  const evaluacion = {
+    id: 'eval_' + Date.now(),
+    pacienteId: pacienteActualId,
+    tipo_servicio: p.tipo_servicio || 'general',
+    fecha: new Date().toISOString().split('T')[0],
+    signos_vitales: signos,
+    evaluacion_general: {
+      inspeccion: document.getElementById('ev-inspeccion')?.value?.trim() || '',
+      palpacion: document.getElementById('ev-palpacion')?.value?.trim() || '',
+      postura: { nivel: document.getElementById('ev-postura')?.value || '', notas: document.getElementById('ev-postura-notas')?.value?.trim() || '' },
+      marcha: { tipo: document.getElementById('ev-marcha')?.value || '' }
+    },
+    tests,
+    diagnostico_fisio: document.getElementById('ev-diag-fisio')?.value?.trim() || '',
+    diagnostico_medico: document.getElementById('ev-diag-medico')?.value?.trim() || '',
+    pronostico: { nivel: document.getElementById('ev-pronostico')?.value || '' },
+    objetivos: { general: document.getElementById('ev-objetivo')?.value?.trim() || '' },
+    plan_tratamiento: {
+      frecuencia: document.getElementById('ev-frecuencia')?.value?.trim() || '',
+      modalidades: document.getElementById('ev-plan')?.value?.trim() || ''
+    },
+    created_at: new Date().toISOString()
+  };
+
+  await txPut('evaluaciones', evaluacion);
+  toast('✓ Evaluación guardada');
+  renderEvaluacion();
+}
+
+async function cargarEvaluacionGuardada(evalId) {
+  const evals = await txGet('evaluaciones','pacienteId',pacienteActualId);
+  const ev = evals.find(x => x.id === evalId);
+  if (!ev) return;
+
+  // Cargar signos vitales
+  const sv = ev.signos_vitales || {};
+  if (sv.fc) document.getElementById('ev-fc').value = sv.fc;
+  if (sv.fr) document.getElementById('ev-fr').value = sv.fr;
+  if (sv.pa_sistolica) document.getElementById('ev-pa-s').value = sv.pa_sistolica;
+  if (sv.pa_diastolica) document.getElementById('ev-pa-d').value = sv.pa_diastolica;
+  if (sv.temperatura) document.getElementById('ev-temp').value = sv.temperatura;
+  if (sv.spo2) document.getElementById('ev-spo2').value = sv.spo2;
+  if (sv.peso) document.getElementById('ev-peso').value = sv.peso;
+  if (sv.talla) document.getElementById('ev-talla').value = sv.talla;
+  if (sv.peso && sv.talla) calcularIMC();
+
+  // Cargar evaluación general
+  const eg = ev.evaluacion_general || {};
+  if (eg.inspeccion) document.getElementById('ev-inspeccion').value = eg.inspeccion;
+  if (eg.palpacion) document.getElementById('ev-palpacion').value = eg.palpacion;
+  if (eg.postura?.nivel) document.getElementById('ev-postura').value = eg.postura.nivel;
+  if (eg.postura?.notas) document.getElementById('ev-postura-notas').value = eg.postura.notas;
+  if (eg.marcha?.tipo) document.getElementById('ev-marcha').value = eg.marcha.tipo;
+
+  // Cargar diagnóstico y plan
+  if (ev.diagnostico_fisio) document.getElementById('ev-diag-fisio').value = ev.diagnostico_fisio;
+  if (ev.diagnostico_medico) document.getElementById('ev-diag-medico').value = ev.diagnostico_medico;
+  if (ev.pronostico?.nivel) document.getElementById('ev-pronostico').value = ev.pronostico.nivel;
+  if (ev.objetivos?.general) document.getElementById('ev-objetivo').value = ev.objetivos.general;
+  if (ev.plan_tratamiento?.frecuencia) document.getElementById('ev-frecuencia').value = ev.plan_tratamiento.frecuencia;
+  if (ev.plan_tratamiento?.modalidades) document.getElementById('ev-plan').value = ev.plan_tratamiento.modalidades;
+
+  // Cargar tests toxicidad si aplica
+  if (ev.tests?.toxicidad) {
+    cargarDatosToxicidad(ev.tests.toxicidad);
+  }
+  if (ev.tests?.notas && document.getElementById('ev-tests-notas')) {
+    document.getElementById('ev-tests-notas').value = ev.tests.notas;
+  }
+
+  const fecha = new Date(ev.created_at).toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'});
+  toast(`Evaluación del ${fecha} cargada`);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ══════════════════════════════════════
+// CUESTIONARIO DE TOXICIDAD
+// ══════════════════════════════════════
+const CUESTIONARIO_TOXICIDAD = {
+  categorias: [
+    {
+      nombre: 'Emociones', color: '#e91e90',
+      items: ['Irritabilidad','Nerviosismo','Inestabilidad de estado de ánimo','Llanto frecuente','Comportamiento agresivo','Ansiedad','Miedo','Confusión','Depresión','Ideación suicida']
+    },
+    {
+      nombre: 'Mente y Cerebro', color: '#66bb6a',
+      items: ['Hiperactividad','Tartamudeos o dificultad para el habla','Dificultad para concentrarse','Trastornos del sueño / insomnio','Dificultad para tomar decisiones','Cefalea / dolor de cabeza','Mala memoria','Mala coordinación','Comportamiento compulsivo','Trastorno del sueño intenso / somnolencia','Pérdida de la memoria']
+    },
+    {
+      nombre: 'Articular-Muscular', color: '#42a5f5',
+      items: ['Dolor muscular o articular','Tendinitis (codo de tenista)','Gota','Artritis','Fibromialgia']
+    },
+    {
+      nombre: 'Metabolismo', color: '#4caf50',
+      items: ['Sensación de frío','Hipoglucemia','Ansiedad de comer alimentos específicos','Retención de líquidos (edemas)','Celulitis','Obesidad']
+    },
+    {
+      nombre: 'Oído-Nariz-Garganta', color: '#ffb74d',
+      items: ['Aumento de salivación','Resfriados a repetición','Sinusitis','Dolor de garganta','Infecciones de oído','Fiebre de heno (rinitis alérgica)','Pérdida del olfato (anosmia)','Tos']
+    },
+    {
+      nombre: 'Aparato Digestivo', color: '#fdd835',
+      items: ['Heces blandas','Reflujo / acidez estomacal','Gastritis','Estreñimiento','Meteorismo (gases)','Dolor abdominal','Intolerancia a algunos alimentos','Náuseas o vómitos','Diarrea']
+    },
+    {
+      nombre: 'Riñón', color: '#26a69a',
+      items: ['Poliuria (necesidad de levantarse a orinar)','IVU / cistitis','Cálculos renales','Hematuria','Oliguria (disminución del volumen urinario)']
+    },
+    {
+      nombre: 'Piel', color: '#f48fb1',
+      items: ['Diaforesis (sudoración)','Exantemas cutáneos','Manchas marrones en manos y cara','Forúnculos (purulentos)','Papilomas cutáneos (verrugas pequeñas)','Acné','Eccema','Golpes de calor','Verrugas de gran tamaño']
+    }
+  ]
+};
+
+let toxicidadRespuestas = {}; // { 'cat_item': valor }
+
+function renderCuestionarioToxicidad() {
+  toxicidadRespuestas = {};
+  let html = `
+    <div class="eval-card">
+      <div class="eval-card-title" onclick="toggleEvalCard(this)">
+        <span class="arrow open">▶</span> 🧪 Cuestionario de Toxicidad (Detox)
+      </div>
+      <div class="eval-card-body open">
+        <div style="background:var(--teal-pale);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:var(--text-mid);line-height:1.5">
+          <strong style="color:var(--teal-dark)">Escala:</strong> 0 = Nunca · 1 = Ocasional · 2 = Ocasional intenso · 3 = Frecuente no intenso · 4 = Frecuente intenso
+        </div>
+        <div class="quest-container">`;
+
+  CUESTIONARIO_TOXICIDAD.categorias.forEach((cat, ci) => {
+    html += `
+      <div class="quest-cat" id="quest-cat-${ci}">
+        <div class="quest-cat-header" onclick="toggleQuestCat(${ci})">
+          <span class="quest-cat-dot" style="background:${cat.color}"></span>
+          <span class="quest-cat-name">${cat.nombre}</span>
+          <span class="quest-cat-score" id="quest-score-${ci}">0</span>
+          <span class="quest-cat-arrow" id="quest-arrow-${ci}">▶</span>
+        </div>
+        <div class="quest-cat-body" id="quest-body-${ci}">
+          ${cat.items.map((item, ii) => {
+            const key = `${ci}_${ii}`;
+            return `<div class="quest-item">
+              <span class="quest-item-label">${item}</span>
+              <div class="quest-radios">
+                ${[0,1,2,3,4].map(v => {
+                  const bg = v === 0 ? '#ccc' : v <= 2 ? cat.color+'90' : cat.color;
+                  return `<button class="quest-radio" data-key="${key}" data-val="${v}" onclick="selToxicidad('${key}',${v},this,${ci})" style="font-size:11px">${v}</button>`;
+                }).join('')}
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+  });
+
+  html += `
+        </div>
+        <div class="quest-resultado" id="quest-resultado" style="display:none">
+          <div class="quest-total-num" id="quest-total-num">0</div>
+          <div class="quest-total-label">puntos totales</div>
+          <div class="quest-nivel" id="quest-nivel">—</div>
+          <div class="quest-recomendacion" id="quest-recomendacion"></div>
+        </div>
+      </div>
+    </div>`;
+
+  return html;
+}
+
+function toggleQuestCat(ci) {
+  const body = document.getElementById('quest-body-' + ci);
+  const arrow = document.getElementById('quest-arrow-' + ci);
+  body.classList.toggle('open');
+  arrow.classList.toggle('open');
+}
+
+function selToxicidad(key, val, btn, catIdx) {
+  // Deseleccionar otros del mismo item
+  const radios = btn.parentElement.querySelectorAll('.quest-radio');
+  radios.forEach(r => {
+    r.classList.remove('selected');
+    r.style.background = '';
+    r.style.color = '';
+  });
+  btn.classList.add('selected');
+  const cat = CUESTIONARIO_TOXICIDAD.categorias[catIdx];
+  btn.style.background = val === 0 ? '#bbb' : cat.color;
+  btn.style.color = 'white';
+  btn.style.borderColor = 'transparent';
+
+  toxicidadRespuestas[key] = val;
+  actualizarScoresToxicidad();
+}
+
+function actualizarScoresToxicidad() {
+  let totalGeneral = 0;
+  let itemsRespondidos = 0;
+
+  CUESTIONARIO_TOXICIDAD.categorias.forEach((cat, ci) => {
+    let subtotal = 0;
+    cat.items.forEach((item, ii) => {
+      const val = toxicidadRespuestas[`${ci}_${ii}`];
+      if (val !== undefined) {
+        subtotal += val;
+        itemsRespondidos++;
+      }
+    });
+    totalGeneral += subtotal;
+    const scoreEl = document.getElementById('quest-score-' + ci);
+    if (scoreEl) scoreEl.textContent = subtotal;
+  });
+
+  const resultado = document.getElementById('quest-resultado');
+  if (resultado && itemsRespondidos > 0) {
+    resultado.style.display = 'block';
+    document.getElementById('quest-total-num').textContent = totalGeneral;
+    document.getElementById('quest-total-num').style.color =
+      totalGeneral < 50 ? '#42a5f5' : totalGeneral <= 100 ? '#4caf50' : '#f44336';
+
+    let nivel, nivelColor, recom;
+    if (totalGeneral < 50) {
+      nivel = 'BAJO'; nivelColor = '#42a5f5';
+      recom = 'Se recomiendan 1 a 2 sesiones de sueroterapia detox.';
+    } else if (totalGeneral <= 100) {
+      nivel = 'MEDIO'; nivelColor = '#4caf50';
+      recom = 'Se recomiendan 2 a 3 sesiones de sueroterapia detox. Una vez por semana.';
+    } else {
+      nivel = 'ALTO'; nivelColor = '#f44336';
+      recom = 'Se recomiendan 4 sesiones de sueroterapia detox. Una vez por semana (excepto si >90 kg o muy sintomático).';
+    }
+
+    const nivelEl = document.getElementById('quest-nivel');
+    nivelEl.textContent = nivel;
+    nivelEl.style.background = nivelColor;
+    document.getElementById('quest-recomendacion').textContent = recom;
+  }
+}
+
+function recogerDatosToxicidad() {
+  if (!Object.keys(toxicidadRespuestas).length) return null;
+  let total = 0;
+  const porCategoria = {};
+  CUESTIONARIO_TOXICIDAD.categorias.forEach((cat, ci) => {
+    let subtotal = 0;
+    const respuestas = {};
+    cat.items.forEach((item, ii) => {
+      const val = toxicidadRespuestas[`${ci}_${ii}`];
+      if (val !== undefined) { subtotal += val; respuestas[item] = val; }
+    });
+    porCategoria[cat.nombre] = { subtotal, respuestas };
+    total += subtotal;
+  });
+
+  let nivel, color;
+  if (total < 50) { nivel = 'BAJO'; color = '#42a5f5'; }
+  else if (total <= 100) { nivel = 'MEDIO'; color = '#4caf50'; }
+  else { nivel = 'ALTO'; color = '#f44336'; }
+
+  return { total, porCategoria, interpretacion: { nivel, color }, fecha: new Date().toISOString() };
+}
+
+function cargarDatosToxicidad(toxData) {
+  if (!toxData || !toxData.porCategoria) return;
+  CUESTIONARIO_TOXICIDAD.categorias.forEach((cat, ci) => {
+    const catData = toxData.porCategoria[cat.nombre];
+    if (!catData) return;
+    cat.items.forEach((item, ii) => {
+      const val = catData.respuestas?.[item];
+      if (val !== undefined) {
+        const key = `${ci}_${ii}`;
+        toxicidadRespuestas[key] = val;
+        const btn = document.querySelector(`.quest-radio[data-key="${key}"][data-val="${val}"]`);
+        if (btn) {
+          btn.classList.add('selected');
+          btn.style.background = val === 0 ? '#bbb' : cat.color;
+          btn.style.color = 'white';
+          btn.style.borderColor = 'transparent';
+        }
+      }
+    });
+  });
+  actualizarScoresToxicidad();
+}
+
+// ══════════════════════════════════════
+// INIT
+// ══════════════════════════════════════
+(async () => {
+  await initDB();
+  await migrarLocalStorageAIndexedDB();
+  // Cargar logo en header si existe
+  const logoGuardado = await getConfig('logo');
+  if (logoGuardado) actualizarLogoHeader(logoGuardado);
+  buildDolorScale();
+  await cargarLista();
+
+  const todos = await txGet('pacientes');
+  if (!todos.length) {
+    const demos = [
+      { id:'demo1', nombre:'Ana María Torres', cedula:'1045678901', tipo_doc:'CC', tipo_servicio:'ortopedico', fecha_nac:'1985-03-15', sexo:'F', telefono:'311 234 5678', correo:'ana.torres@gmail.com', motivo:'Dolor lumbar crónico', diagnostico:'Lumbalgia mecánica', medicamentos:'Ibuprofeno 400mg', alergias:'Ninguna', antecedentes:'Cirugía de hernia discal 2019', estado:'Activo', fecha_registro:new Date(Date.now()-30*86400000).toISOString(), updated_at:new Date().toISOString() },
+      { id:'demo2', nombre:'Carlos Ramírez Vega', cedula:'79234512', tipo_doc:'CC', tipo_servicio:'ortopedico', fecha_nac:'1990-07-22', sexo:'M', telefono:'315 876 4321', correo:'c.ramirez@hotmail.com', motivo:'Rehabilitación post-quirúrgica rodilla', diagnostico:'Meniscopatía post-operatoria', medicamentos:'Colágeno hidrolizado', alergias:'Penicilina', antecedentes:'Artroscopía rodilla ene 2026', estado:'Activo', fecha_registro:new Date(Date.now()-15*86400000).toISOString(), updated_at:new Date().toISOString() },
+      { id:'demo3', nombre:'Lucía Fernández', cedula:'52901234', tipo_doc:'CC', tipo_servicio:'sueroterapia', fecha_nac:'1978-11-08', sexo:'F', telefono:'320 111 9988', correo:'lu.fernandez@gmail.com', motivo:'Dolor cervical y contracturas', diagnostico:'Cervicalgia tensional', medicamentos:'Ninguno', alergias:'AINES', antecedentes:'Hipotiroidismo', estado:'Alta', fecha_registro:new Date(Date.now()-60*86400000).toISOString(), updated_at:new Date().toISOString() }
+    ];
+    for (const d of demos) await txPut('pacientes',d);
+    await txPut('sesiones',{id:'s_d1',pacienteId:'demo1',fecha:'2026-03-10',hora:'09:00',tipo:'Terapia manual',dolor:6,notas:'Mejora leve en movilidad lumbar.',areas:'Lumbar / espalda',created_at:new Date().toISOString()});
+    await txPut('sesiones',{id:'s_d2',pacienteId:'demo1',fecha:'2026-03-06',hora:'09:00',tipo:'Electroterapia',dolor:7,notas:'Primera sesión. Tensión alta en paravertebrales.',areas:'Lumbar / espalda',created_at:new Date().toISOString()});
+    await txPut('sesiones',{id:'s_d3',pacienteId:'demo2',fecha:'2026-03-11',hora:'11:00',tipo:'Ejercicio terapéutico',dolor:4,notas:'Gana rango articular. Toleró bien el protocolo.',areas:'Rodilla',created_at:new Date().toISOString()});
+    await cargarLista();
+  }
+})();
+</script>
+</body>
+</html>
