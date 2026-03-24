@@ -1105,6 +1105,10 @@ function ckSingle(input, groupId) {
   input.checked = true;
   input.closest('.ck-item').classList.add('checked');
 }
+function toggleDescInput(fieldId) {
+  const f = document.getElementById(fieldId);
+  if (f) f.style.display = 'block';
+}
 // Muestra/oculta campo "Otro" al marcar checkbox
 function toggleOtroField(input, fieldId) {
   const field = document.getElementById(fieldId);
@@ -3125,16 +3129,18 @@ async function renderEvaluacion() {
         <div class="form-group">
           <label class="form-label">Postura</label>
           <div class="ck-group" id="ev-postura">
-            <label class="ck-item"><input type="checkbox" onchange="ckSingle(this,'ev-postura')"><span>Normal</span></label>
-            <label class="ck-item"><input type="checkbox" onchange="ckSingle(this,'ev-postura')"><span>Alterada</span></label>
+            <label class="ck-item"><input type="checkbox" onchange="ckSingle(this,'ev-postura');toggleDescInput('ev-postura-desc')"><span>Normal</span></label>
+            <label class="ck-item"><input type="checkbox" onchange="ckSingle(this,'ev-postura');toggleDescInput('ev-postura-desc')"><span>Alterada</span></label>
           </div>
+          <input class="form-control" id="ev-postura-desc" type="text" placeholder="Descripción..." style="margin-top:6px;display:none">
         </div>
         <div class="form-group">
           <label class="form-label">Marcha</label>
           <div class="ck-group" id="ev-marcha">
-            <label class="ck-item"><input type="checkbox" onchange="ckSingle(this,'ev-marcha')"><span>Normal</span></label>
-            <label class="ck-item"><input type="checkbox" onchange="ckSingle(this,'ev-marcha')"><span>Alterada</span></label>
+            <label class="ck-item"><input type="checkbox" onchange="ckSingle(this,'ev-marcha');toggleDescInput('ev-marcha-desc')"><span>Normal</span></label>
+            <label class="ck-item"><input type="checkbox" onchange="ckSingle(this,'ev-marcha');toggleDescInput('ev-marcha-desc')"><span>Alterada</span></label>
           </div>
+          <input class="form-control" id="ev-marcha-desc" type="text" placeholder="Descripción..." style="margin-top:6px;display:none">
         </div>
       </div>
     </div>
@@ -3320,7 +3326,8 @@ async function guardarEvaluacion() {
       dolor_eva: parseFloat(document.getElementById('ev-dolor-eva')?.value) || null,
       fuerza_daniels: document.getElementById('ev-fuerza-daniels')?.value?.trim() || '',
       rom: getChecked('ev-rom'), rom_zona: document.getElementById('ev-rom-zona')?.value?.trim() || '',
-      postura: getChecked('ev-postura'), marcha: getChecked('ev-marcha')
+      postura: getChecked('ev-postura'), postura_desc: document.getElementById('ev-postura-desc')?.value?.trim() || '',
+      marcha: getChecked('ev-marcha'), marcha_desc: document.getElementById('ev-marcha-desc')?.value?.trim() || ''
     },
     tests,
     diagnostico_fisio: document.getElementById('ev-diag-fisio')?.value?.trim() || '',
