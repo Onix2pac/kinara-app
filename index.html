@@ -15,32 +15,41 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --teal-dark:   #1e6b5e;
-    --teal:        #2e8b7a;
-    --teal-mid:    #48b09c;
-    --teal-light:  #c8ebe4;
-    --teal-pale:   #eaf7f4;
-    --gold:        #E8B84B;
-    --gold-dark:   #c49a30;
-    --gold-pale:   #fdf4e0;
-    --text-dark:   #0f2e28;
-    --text-mid:    #3a6b62;
-    --text-soft:   #74a89f;
-    --bg:          #f2fbf8;
+    /* Emerald & Gold Premium Palette */
+    --teal-dark:   #0d3d34;
+    --teal:        #186354;
+    --teal-mid:    #2a8f7c;
+    --teal-light:  #b5e2d8;
+    --teal-pale:   #e8f6f3;
+    --gold:        #D4AF37;
+    --gold-dark:   #AA8C2C;
+    --gold-pale:   #F9F6EB;
+    --text-dark:   #112A25;
+    --text-mid:    #3c5c55;
+    --text-soft:   #7d9d96;
+    --bg:          #F2F8F7;
     --white:       #ffffff;
-    --border:      #b8dfd8;
-    --danger:      #c0392b;
-    --shadow-sm:   0 1px 4px rgba(30,107,94,.08);
-    --shadow-md:   0 4px 16px rgba(30,107,94,.13);
-    --shadow-lg:   0 12px 40px rgba(30,107,94,.18);
-    --radius:      14px;
-    --radius-sm:   8px;
+    --border:      rgba(42, 143, 124, 0.18);
+    --danger:      #E63946;
+    
+    /* Layered Smooth Shadows (Apple/Premium style) */
+    --shadow-sm:   0 2px 8px rgba(13, 61, 52, 0.04), 0 1px 2px rgba(13, 61, 52, 0.02);
+    --shadow-md:   0 8px 24px rgba(13, 61, 52, 0.08), 0 2px 8px rgba(13, 61, 52, 0.04);
+    --shadow-lg:   0 24px 48px rgba(13, 61, 52, 0.12), 0 8px 16px rgba(13, 61, 52, 0.06);
+    --shadow-glow: 0 0 16px rgba(42, 143, 124, 0.25);
+    
+    --radius:      16px;
+    --radius-sm:   10px;
+    
+    /* Glassmorphism Variables */
+    --glass-bg:    rgba(255, 255, 255, 0.75);
+    --glass-dark:  rgba(13, 61, 52, 0.85);
   }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text-dark); min-height: 100vh; overflow-x: hidden; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); background-image: radial-gradient(circle at 100% 0%, var(--teal-pale) 0%, transparent 40%), radial-gradient(circle at 0% 100%, var(--gold-pale) 0%, transparent 40%); color: var(--text-dark); min-height: 100vh; overflow-x: hidden; }
 
   /* ── HEADER ── */
-  .app-header { background: var(--teal-dark); padding: 0 20px; height: 60px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 12px rgba(0,0,0,.25); }
+  .app-header { background: var(--glass-dark); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.1); padding: 0 20px; height: 60px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 20px rgba(0,0,0,.15); }
   .header-brand { display: flex; align-items: center; gap: 10px; }
   .header-logo-icon { width: 34px; height: 34px; }
   .header-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; color: white; letter-spacing: .08em; }
@@ -55,14 +64,15 @@
 
   /* ── LISTA PACIENTES ── */
   .list-container { padding: 20px 16px 100px; max-width: 680px; margin: 0 auto; }
-  .search-bar { position: relative; margin-bottom: 20px; }
-  .search-bar input { width: 100%; padding: 13px 16px 13px 44px; border: 1.5px solid var(--border); border-radius: var(--radius); background: white; font-family: 'DM Sans',sans-serif; font-size: 15px; color: var(--text-dark); outline: none; box-shadow: var(--shadow-sm); transition: border-color .2s, box-shadow .2s; }
-  .search-bar input:focus { border-color: var(--teal-mid); box-shadow: 0 0 0 3px rgba(61,155,138,.15); }
-  .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-soft); font-size: 18px; pointer-events: none; }
-  .section-label { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-soft); font-weight: 500; margin-bottom: 10px; padding-left: 2px; }
-  .patient-list { display: flex; flex-direction: column; gap: 10px; }
-  .patient-card { background: white; border: 1.5px solid var(--border); border-radius: var(--radius); padding: 14px 16px; display: flex; align-items: center; gap: 14px; cursor: pointer; box-shadow: var(--shadow-sm); transition: transform .15s, box-shadow .15s, border-color .15s; }
-  .patient-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--teal-mid); }
+  .search-bar { position: relative; margin-bottom: 24px; }
+  .search-bar input { width: 100%; padding: 14px 16px 14px 44px; border: 1px solid var(--white); border-bottom: 1px solid var(--border); border-radius: 20px; background: rgba(255,255,255,0.8); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); font-family: 'DM Sans',sans-serif; font-size: 15px; color: var(--text-dark); outline: none; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02), var(--shadow-sm); transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .search-bar input:focus { background: var(--white); border-color: var(--teal-mid); box-shadow: var(--shadow-glow); transform: translateY(-1px); }
+  .search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--teal-mid); font-size: 18px; pointer-events: none; transition: color 0.3s; }
+  .search-bar input:focus + .search-icon { color: var(--teal-dark); }
+  .section-label { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--teal-mid); font-weight: 600; margin-bottom: 12px; padding-left: 2px; }
+  .patient-list { display: flex; flex-direction: column; gap: 12px; }
+  .patient-card { background: var(--glass-bg); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid var(--white); border-bottom: 1px solid rgba(42,143,124,0.1); border-radius: var(--radius); padding: 16px; display: flex; align-items: center; gap: 14px; cursor: pointer; box-shadow: var(--shadow-sm); transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .patient-card:hover { transform: translateY(-3px) scale(1.01); box-shadow: var(--shadow-md), var(--shadow-glow); border-color: rgba(42, 143, 124, 0.4); }
   .patient-avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--teal-light); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond',serif; font-size: 18px; font-weight: 600; color: var(--teal-dark); flex-shrink: 0; }
   .patient-info { flex: 1; min-width: 0; }
   .patient-name { font-size: 15px; font-weight: 500; color: var(--text-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -79,44 +89,47 @@
   .stat-label { font-size: 11px; color: var(--text-soft); margin-top: 4px; text-transform: uppercase; letter-spacing: .06em; }
 
   /* ── FAB ── */
-  .fab { position: fixed; bottom: 28px; right: 20px; background: var(--gold); color: var(--teal-dark); border: none; width: 58px; height: 58px; border-radius: 50%; font-size: 26px; cursor: pointer; box-shadow: 0 6px 20px rgba(232,184,75,.5); display: flex; align-items: center; justify-content: center; transition: transform .2s, box-shadow .2s; z-index: 90; }
-  .fab:hover { transform: scale(1.08); box-shadow: 0 8px 28px rgba(232,184,75,.6); }
-  .fab:active { transform: scale(.96); }
+  .fab { position: fixed; bottom: 28px; right: 20px; background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: var(--white); border: none; width: 62px; height: 62px; border-radius: 50%; font-size: 28px; cursor: pointer; box-shadow: 0 6px 20px rgba(212,175,55,.35), inset 0 2px 4px rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); z-index: 90; text-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+  .fab:hover { transform: translateY(-6px) scale(1.05); box-shadow: 0 12px 28px rgba(212,175,55,.45), inset 0 2px 4px rgba(255,255,255,0.5); }
+  .fab:active { transform: scale(.92); box-shadow: 0 4px 12px rgba(212,175,55,.3); }
 
   /* ── FICHA ── */
   .ficha-container { padding: 0 0 100px; max-width: 680px; margin: 0 auto; }
-  .ficha-hero { background: linear-gradient(135deg, var(--teal-dark) 0%, var(--teal) 100%); padding: 24px 20px 20px; display: flex; align-items: center; gap: 16px; }
-  .ficha-avatar { width: 60px; height: 60px; border-radius: 50%; background: rgba(255,255,255,.15); border: 2px solid rgba(255,255,255,.3); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond',serif; font-size: 26px; font-weight: 600; color: white; flex-shrink: 0; }
-  .ficha-hero-info h2 { font-family: 'Cormorant Garamond',serif; font-size: 24px; font-weight: 600; color: white; line-height: 1.2; }
-  .ficha-hero-info p { font-size: 13px; color: var(--teal-light); margin-top: 4px; }
-  .ficha-status { margin-top: 6px; display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; background: rgba(255,255,255,.15); color: white; }
-  .ficha-tabs { display: flex; background: white; border-bottom: 1.5px solid var(--border); padding: 0 4px; overflow-x: auto; scrollbar-width: none; }
+  .ficha-hero { background: linear-gradient(135deg, var(--teal-dark) 0%, var(--teal) 100%); position: relative; overflow: hidden; padding: 24px 20px 20px; display: flex; align-items: center; gap: 16px; box-shadow: inset 0 -1px 0 rgba(0,0,0,0.1); }
+  .ficha-hero::after { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 80% -20%, rgba(255,255,255,0.15) 0%, transparent 50%); pointer-events: none; }
+  .ficha-avatar { width: 64px; height: 64px; border-radius: 50%; background: rgba(255,255,255,.1); border: 2px solid rgba(255,255,255,.4); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond',serif; font-size: 28px; font-weight: 600; color: white; flex-shrink: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+  .ficha-hero-info { position: relative; z-index: 1; }
+  .ficha-hero-info h2 { font-family: 'Cormorant Garamond',serif; font-size: 26px; font-weight: 600; color: white; line-height: 1.2; text-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+  .ficha-hero-info p { font-size: 13px; color: var(--teal-light); margin-top: 4px; font-weight: 500; }
+  .ficha-status { margin-top: 8px; display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; background: rgba(255,255,255,.15); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); color: white; border: 1px solid rgba(255,255,255,0.2); }
+  .ficha-tabs { display: flex; background: var(--glass-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid rgba(42,143,124,0.15); padding: 0 8px; overflow-x: auto; scrollbar-width: none; position: sticky; top: 60px; z-index: 95; }
   .ficha-tabs::-webkit-scrollbar { display: none; }
-  .ficha-tab { padding: 14px 14px; font-size: 12px; font-weight: 500; color: var(--text-soft); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; transition: color .2s, border-color .2s; }
+  .ficha-tab { padding: 16px 14px; font-size: 13px; font-weight: 600; color: var(--text-soft); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; transition: color .2s, border-color .2s; }
   .ficha-tab.active { color: var(--teal-dark); border-bottom-color: var(--teal); }
   .ficha-section { padding: 20px 16px; }
 
   /* ── FORMS ── */
-  .form-group { margin-bottom: 16px; }
-  .form-label { display: block; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-soft); font-weight: 500; margin-bottom: 6px; }
-  .form-control { width: 100%; padding: 11px 14px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); background: white; font-family: 'DM Sans',sans-serif; font-size: 15px; color: var(--text-dark); outline: none; transition: border-color .2s, box-shadow .2s; }
-  .form-control:focus { border-color: var(--teal-mid); box-shadow: 0 0 0 3px rgba(61,155,138,.12); }
+  .form-group { margin-bottom: 18px; }
+  .form-label { display: block; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-mid); font-weight: 600; margin-bottom: 8px; }
+  .form-control { width: 100%; padding: 13px 16px; border: 1px solid var(--white); border-bottom: 1px solid var(--border); border-radius: var(--radius-sm); background: rgba(255,255,255,0.7); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); font-family: 'DM Sans',sans-serif; font-size: 15px; color: var(--text-dark); outline: none; transition: all .3s cubic-bezier(0.2, 0.8, 0.2, 1); box-shadow: inset 0 2px 4px rgba(13,61,52,0.02); }
+  .form-control:focus { background: var(--white); border-color: var(--teal-mid); box-shadow: var(--shadow-glow); transform: translateY(-1px); }
   textarea.form-control { resize: vertical; min-height: 80px; }
-  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .select-control { width: 100%; padding: 11px 14px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); background: white; font-family: 'DM Sans',sans-serif; font-size: 15px; color: var(--text-dark); outline: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237aa39d' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; }
-  .select-control:focus { border-color: var(--teal-mid); box-shadow: 0 0 0 3px rgba(61,155,138,.12); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .select-control { width: 100%; padding: 13px 16px; border: 1px solid var(--white); border-bottom: 1px solid var(--border); border-radius: var(--radius-sm); background: rgba(255,255,255,0.7); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); font-family: 'DM Sans',sans-serif; font-size: 15px; color: var(--text-dark); outline: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%232a8f7c' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; transition: all .3s; }
+  .select-control:focus { background: var(--white); border-color: var(--teal-mid); box-shadow: var(--shadow-glow); transform: translateY(-1px); }
 
   /* ── INFO CARDS ── */
-  .info-card { background: white; border: 1.5px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow-sm); }
-  .info-card-title { font-size: 13px; font-weight: 500; color: var(--teal-dark); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
-  .info-row { display: flex; align-items: flex-start; padding: 6px 0; border-bottom: 1px solid var(--teal-pale); }
+  .info-card { background: var(--glass-bg); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid var(--white); border-bottom: 1px solid rgba(42,143,124,0.1); border-radius: var(--radius); padding: 20px; margin-bottom: 14px; box-shadow: var(--shadow-sm); transition: transform .2s, box-shadow .2s; }
+  .info-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+  .info-card-title { font-size: 14px; font-weight: 600; color: var(--teal-dark); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; letter-spacing: 0.02em; }
+  .info-row { display: flex; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid rgba(42,143,124,0.08); }
   .info-row:last-child { border-bottom: none; }
-  .info-key { font-size: 12px; color: var(--text-soft); width: 130px; flex-shrink: 0; }
-  .info-val { font-size: 13px; color: var(--text-dark); flex: 1; }
+  .info-key { font-size: 13px; color: var(--text-mid); font-weight: 500; width: 130px; flex-shrink: 0; }
+  .info-val { font-size: 14px; color: var(--text-dark); flex: 1; }
 
   /* ── SESIONES ── */
-  .session-item { background: white; border: 1.5px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; box-shadow: var(--shadow-sm); cursor: pointer; transition: border-color .15s, transform .15s; }
-  .session-item:hover { border-color: var(--teal-mid); transform: translateY(-1px); }
+  .session-item { background: var(--glass-bg); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid var(--white); border-bottom: 1px solid rgba(42,143,124,0.1); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow-sm); cursor: pointer; transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .session-item:hover { border-color: rgba(42, 143, 124, 0.4); transform: translateY(-3px) scale(1.01); box-shadow: var(--shadow-md), var(--shadow-glow); }
   .session-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
   .session-num { font-size: 12px; font-weight: 500; color: var(--teal-mid); text-transform: uppercase; letter-spacing: .06em; }
   .session-date { font-size: 12px; color: var(--text-soft); }
@@ -180,21 +193,24 @@
   .visor-info { color: rgba(255,255,255,.6); font-size: 13px; margin-top: 8px; text-align: center; }
 
   /* ── MODAL / DRAWER ── */
-  .modal-overlay { position: fixed; inset: 0; background: rgba(10,30,28,.5); z-index: 200; display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .25s; backdrop-filter: blur(3px); }
+  .modal-overlay { position: fixed; inset: 0; background: rgba(13,45,39,.6); z-index: 200; display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .3s ease; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
   .modal-overlay.open { opacity: 1; pointer-events: all; }
-  .modal-drawer { background: white; border-radius: 20px 20px 0 0; padding: 24px 20px 40px; width: 100%; max-width: 680px; max-height: 90vh; overflow-y: auto; transform: translateY(100%); transition: transform .3s cubic-bezier(.32,.72,0,1); }
+  .modal-drawer { background: rgba(251,255,254,0.95); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-top: 1px solid rgba(255,255,255,0.7); border-radius: 28px 28px 0 0; padding: 24px 20px 40px; width: 100%; max-width: 680px; max-height: 92vh; overflow-y: auto; transform: translateY(100%); transition: transform .4s cubic-bezier(0.2, 0.8, 0.2, 1); box-shadow: 0 -10px 40px rgba(0,0,0,.15); }
   .modal-overlay.open .modal-drawer { transform: translateY(0); }
-  .modal-handle { width: 36px; height: 4px; border-radius: 2px; background: var(--border); margin: 0 auto 20px; }
-  .modal-title { font-family: 'Cormorant Garamond',serif; font-size: 22px; font-weight: 600; color: var(--teal-dark); margin-bottom: 20px; }
+  .modal-handle { width: 44px; height: 5px; border-radius: 3px; background: rgba(42,143,124,0.3); margin: 0 auto 24px; transition: background .2s; cursor: grab; }
+  .modal-handle:hover { background: rgba(42,143,124,0.5); }
+  .modal-title { font-family: 'Cormorant Garamond',serif; font-size: 24px; font-weight: 600; color: var(--teal-dark); margin-bottom: 24px; letter-spacing: 0.02em; }
 
   /* ── BUTTONS ── */
-  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 12px 22px; border-radius: var(--radius-sm); font-family: 'DM Sans',sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; border: none; transition: transform .15s, box-shadow .15s; }
-  .btn:active { transform: scale(.97); }
-  .btn-primary { background: var(--teal); color: white; box-shadow: 0 3px 12px rgba(42,122,111,.3); width: 100%; padding: 14px; }
-  .btn-primary:hover { box-shadow: 0 5px 18px rgba(42,122,111,.4); }
-  .btn-gold { background: var(--gold); color: var(--teal-dark); box-shadow: 0 3px 12px rgba(232,184,75,.3); width: 100%; padding: 14px; font-weight: 600; }
-  .btn-ghost { background: transparent; color: var(--text-soft); border: 1.5px solid var(--border); width: 100%; padding: 13px; }
-  .btn-danger { background: var(--danger); color: white; box-shadow: 0 3px 12px rgba(192,57,43,.3); width: 100%; padding: 14px; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 24px; border-radius: var(--radius-sm); font-family: 'DM Sans',sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; border: none; transition: all .3s cubic-bezier(0.2, 0.8, 0.2, 1); text-transform: uppercase; letter-spacing: 0.04em; }
+  .btn:active { transform: scale(.96); }
+  .btn-primary { background: linear-gradient(135deg, var(--teal), var(--teal-dark)); color: white; box-shadow: 0 4px 12px rgba(24,99,84,.25), inset 0 2px 4px rgba(255,255,255,0.15); width: 100%; border: 1px solid rgba(255,255,255,0.1); }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(24,99,84,.35), inset 0 2px 4px rgba(255,255,255,0.2); }
+  .btn-gold { background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: var(--white); box-shadow: 0 4px 12px rgba(212,175,55,.3), inset 0 2px 4px rgba(255,255,255,0.2); width: 100%; text-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+  .btn-gold:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(212,175,55,.4), inset 0 2px 4px rgba(255,255,255,0.3); }
+  .btn-ghost { background: rgba(255,255,255,0.5); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); color: var(--teal-dark); border: 1px solid var(--border); width: 100%; }
+  .btn-ghost:hover { background: var(--white); border-color: var(--teal-mid); box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+  .btn-danger { background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; box-shadow: 0 4px 12px rgba(192,57,43,.3); width: 100%; border: 1px solid rgba(255,255,255,0.1); }
 
   /* ── DOLOR SCALE ── */
   .dolor-scale { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
@@ -647,6 +663,7 @@
     </div>
     <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
       <button class="btn btn-primary" onclick="guardarPaciente()">Guardar paciente</button>
+      <button class="btn btn-ghost" onclick="limpiarFormularioPaciente()" style="border-color:var(--teal-light);color:var(--text-soft)">🧹 Limpiar formulario</button>
       <button class="btn btn-ghost" onclick="cerrarModal('modal-paciente')">Cancelar</button>
     </div>
   </div>
@@ -930,7 +947,14 @@ function toast(msg) { const el=document.getElementById('toast'); el.textContent=
 function toggleChip(el) { el.classList.toggle('selected'); }
 function toggleMenu() { document.getElementById('menu-overlay').classList.add('open'); document.body.style.overflow='hidden'; }
 function cerrarMenu() { document.getElementById('menu-overlay').classList.remove('open'); document.body.style.overflow=''; }
-document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{ if(e.target===o){o.classList.remove('open');document.body.style.overflow='';} }));
+document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{ 
+  if(e.target===o){
+    // Evitar q modales importantes se cierren con click por fuera
+    if(o.id === 'modal-paciente' || o.id === 'modal-sesion') return; 
+    o.classList.remove('open');
+    document.body.style.overflow='';
+  } 
+}));
 
 function selEvol(el, val) {
   document.querySelectorAll('.evol-check').forEach(c=>c.classList.remove('selected'));
@@ -1104,10 +1128,6 @@ function ckSingle(input, groupId) {
   group.querySelectorAll('.ck-item').forEach(item => { item.classList.remove('checked'); item.querySelector('input').checked = false; });
   input.checked = true;
   input.closest('.ck-item').classList.add('checked');
-}
-function toggleDescInput(fieldId) {
-  const f = document.getElementById(fieldId);
-  if (f) f.style.display = 'block';
 }
 // Muestra/oculta campo "Otro" al marcar checkbox
 function toggleOtroField(input, fieldId) {
@@ -1379,14 +1399,19 @@ document.getElementById('visor-overlay').addEventListener('click', e => { if (e.
 // ══════════════════════════════════════
 // MODAL PACIENTE — v7 con campos expandidos
 // ══════════════════════════════════════
-function abrirNuevoPaciente() {
-  editandoPacienteId = null;
-  document.getElementById('modal-paciente-title').textContent = 'Nuevo paciente';
-  ['np-nombre','np-cedula','np-telefono','np-correo','np-motivo','np-diagnostico','np-medicamentos','np-alergias','np-antecedentes','np-direccion','np-eps','np-ocupacion','np-responsable','np-tel-responsable'].forEach(id => { const e=document.getElementById(id); if(e) e.value=''; });
-  document.getElementById('np-sexo').value='';
+function limpiarFormularioPaciente() {
+  ['np-nombre','np-cedula','np-telefono','np-correo','np-motivo','np-diagnostico','np-medicamentos','np-alergias','np-antecedentes','np-direccion','np-eps','np-ocupacion','np-responsable','np-tel-responsable','np-fecha-nac','np-sexo'].forEach(id => { const e=document.getElementById(id); if(e) e.value=''; });
   document.getElementById('np-tipo-doc').value='CC';
   document.getElementById('np-tipo-servicio').value='general';
-  document.getElementById('np-fecha-nac').value='';
+  if (editandoPacienteId === null) toast('Formulario limpiado');
+}
+
+function abrirNuevoPaciente() {
+  if (editandoPacienteId !== null) {
+    limpiarFormularioPaciente(); // Venía de editar, limpiamos todo
+  }
+  editandoPacienteId = null;
+  document.getElementById('modal-paciente-title').textContent = 'Nuevo paciente';
   abrirModal('modal-paciente');
 }
 function editarPacienteActual() {
@@ -1447,6 +1472,7 @@ async function guardarPaciente() {
   cerrarModal('modal-paciente');
   toast(editandoPacienteId ? '✓ Paciente actualizado' : '✓ Paciente registrado');
   if (editandoPacienteId) await abrirFicha(id);
+  if (!editandoPacienteId) limpiarFormularioPaciente(); // Limpiamos tras guardar exitosamente
 }
 
 // ══════════════════════════════════════
@@ -1642,266 +1668,188 @@ const ZONAS_DEF = {
 };
 
 const SILUETA_FRENTE = `
-  <!-- Silueta clínica - vista frontal -->
-  <!-- Cabeza -->
-  <ellipse cx="100" cy="32" rx="22" ry="26" fill="#f0e6dc" stroke="#8a7060" stroke-width="1"/>
-  <!-- Orejas -->
-  <ellipse cx="78" cy="32" rx="4" ry="6" fill="#e8d5c4" stroke="#8a7060" stroke-width="0.8"/>
-  <ellipse cx="122" cy="32" rx="4" ry="6" fill="#e8d5c4" stroke="#8a7060" stroke-width="0.8"/>
-  <!-- Cabello -->
-  <path d="M78 14 Q100 6 122 14 Q126 20 124 28 Q118 12 100 10 Q82 12 76 28 Q74 20 78 14Z" fill="#5c4033" opacity="0.6"/>
-  <!-- Cara — ojos nariz boca -->
-  <ellipse cx="93" cy="30" rx="2.5" ry="2" fill="#5c4033" opacity="0.5"/>
-  <ellipse cx="107" cy="30" rx="2.5" ry="2" fill="#5c4033" opacity="0.5"/>
-  <path d="M97 36 Q100 39 103 36" stroke="#8a7060" stroke-width="0.8" fill="none" opacity="0.5"/>
-  <path d="M99 33 L100 35 L101 33" stroke="#8a7060" stroke-width="0.7" fill="none" opacity="0.4"/>
-  <!-- Cuello -->
-  <rect x="88" y="57" width="24" height="17" rx="4" fill="#ead6c6" stroke="#8a7060" stroke-width="0.8"/>
-  <!-- Clavículas -->
-  <path d="M88 73 Q74 76 64 82" stroke="#8a7060" stroke-width="1" fill="none" opacity="0.5"/>
-  <path d="M112 73 Q126 76 136 82" stroke="#8a7060" stroke-width="1" fill="none" opacity="0.5"/>
-  <!-- Torso -->
-  <path d="M64 78 Q56 84 55 120 L55 170 Q56 185 68 190 L100 192 L132 190 Q144 185 145 170 L145 120 Q144 84 136 78 Z" fill="#f0e6dc" stroke="#8a7060" stroke-width="1"/>
-  <!-- Esternón -->
-  <line x1="100" y1="74" x2="100" y2="165" stroke="#8a7060" stroke-width="0.6" stroke-dasharray="3,3" opacity="0.35"/>
-  <!-- Costillas indicativas -->
-  <path d="M90 90 Q80 94 72 92" stroke="#8a7060" stroke-width="0.5" fill="none" opacity="0.25"/>
-  <path d="M90 98 Q80 102 73 100" stroke="#8a7060" stroke-width="0.5" fill="none" opacity="0.25"/>
-  <path d="M110 90 Q120 94 128 92" stroke="#8a7060" stroke-width="0.5" fill="none" opacity="0.25"/>
-  <path d="M110 98 Q120 102 127 100" stroke="#8a7060" stroke-width="0.5" fill="none" opacity="0.25"/>
-  <!-- Ombligo -->
-  <circle cx="100" cy="136" r="2.5" fill="#d4b8a0" opacity="0.6"/>
-  <!-- Hombro izq -->
-  <ellipse cx="57" cy="84" rx="18" ry="12" fill="#ecd8c8" stroke="#8a7060" stroke-width="0.8"/>
-  <!-- Hombro der -->
-  <ellipse cx="143" cy="84" rx="18" ry="12" fill="#ecd8c8" stroke="#8a7060" stroke-width="0.8"/>
-  <!-- Brazo izq -->
-  <path d="M41 92 Q31 108 30 140 Q29 158 36 162 L50 160 L52 128 L48 96Z" fill="#f0e6dc" stroke="#8a7060" stroke-width="0.8"/>
-  <!-- Brazo der -->
-  <path d="M159 92 Q169 108 170 140 Q171 158 164 162 L150 160 L148 128 L152 96Z" fill="#f0e6dc" stroke="#8a7060" stroke-width="0.8"/>
-  <!-- Codo izq -->
-  <ellipse cx="40" cy="133" rx="12" ry="10" fill="#e0ccba" stroke="#8a7060" stroke-width="0.8"/>
-  <!-- Codo der -->
-  <ellipse cx="160" cy="133" rx="12" ry="10" fill="#e0ccba" stroke="#8a7060" stroke-width="0.8"/>
-  <!-- Antebrazo izq -->
-  <path d="M30 142 Q26 165 28 182 L44 182 L48 162 L50 142Z" fill="#f0e6dc" stroke="#8a7060" stroke-width="0.8"/>
-  <!-- Antebrazo der -->
-  <path d="M170 142 Q174 165 172 182 L156 182 L152 162 L150 142Z" fill="#f0e6dc" stroke="#8a7060" stroke-width="0.8"/>
-  <!-- Mano izq -->
-  <ellipse cx="36" cy="191" rx="14" ry="12" fill="#e8d5c4" stroke="#8a7060" stroke-width="0.8"/>
-  <!-- Mano der -->
-  <ellipse cx="164" cy="191" rx="14" ry="12" fill="#e8d5c4" stroke="#8a7060" stroke-width="0.8"/>
-  <!-- Pelvis/cadera -->
-  <path d="M55 170 Q54 192 68 200 L100 202 L132 200 Q146 192 145 170Z" fill="#e8d5c4" stroke="#8a7060" stroke-width="0.8"/>
-  <!-- Muslo izq -->
-  <path d="M68 200 Q60 228 62 262 L90 262 L92 230 L100 202Z" fill="#f0e6dc" stroke="#8a7060" stroke-width="0.8"/>
-  <!-- Muslo der -->
-  <path d="M132 200 Q140 228 138 262 L110 262 L108 230 L100 202Z" fill="#f0e6dc" stroke="#8a7060" stroke-width="0.8"/>
-  <!-- Rodilla izq -->
-  <ellipse cx="76" cy="260" rx="18" ry="13" fill="#e0ccba" stroke="#8a7060" stroke-width="0.8"/>
-  <!-- Rodilla der -->
-  <ellipse cx="124" cy="260" rx="18" ry="13" fill="#e0ccba" stroke="#8a7060" stroke-width="0.8"/>
-  <!-- Pierna izq -->
-  <path d="M60 270 Q57 295 59 316 L94 316 L94 272 L76 270Z" fill="#f0e6dc" stroke="#8a7060" stroke-width="0.8"/>
-  <!-- Pierna der -->
-  <path d="M140 270 Q143 295 141 316 L106 316 L106 272 L124 270Z" fill="#f0e6dc" stroke="#8a7060" stroke-width="0.8"/>
-  <!-- Pie izq -->
-  <ellipse cx="77" cy="319" rx="20" ry="9" fill="#e8d5c4" stroke="#8a7060" stroke-width="0.8"/>
-  <!-- Pie der -->
-  <ellipse cx="123" cy="319" rx="20" ry="9" fill="#e8d5c4" stroke="#8a7060" stroke-width="0.8"/>
+  <!-- ══ SILUETA ANATÓMICA PREMIUM - FRENTE ══ -->
+  <defs>
+    <linearGradient id="bodySkin" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2e8b7a" stop-opacity="0.1"/>
+      <stop offset="50%" stop-color="#1e6b5e" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#0f2e28" stop-opacity="0.05"/>
+    </linearGradient>
+    <filter id="bodyGlow" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Contorno Principal Unificado -->
+  <path d="
+    M100 12 
+    C 118 12, 122 28, 118 40
+    C 114 48, 110 52, 112 55
+    C 125 58, 142 65, 146 75
+    C 150 85, 148 95, 145 105
+    C 140 125, 150 145, 154 165
+    C 156 175, 160 185, 158 195
+    C 156 200, 150 200, 148 190
+    C 145 170, 138 140, 134 140
+    C 130 145, 136 170, 134 190
+    C 132 210, 126 230, 128 255
+    C 130 280, 128 310, 132 320
+    C 134 325, 120 325, 118 315
+    C 115 300, 110 270, 108 240
+    C 106 210, 102 180, 100 175
+    C 98 180, 94 210, 92 240
+    C 90 270, 85 300, 82 315
+    C 80 325, 66 325, 68 320
+    C 72 310, 70 280, 72 255
+    C 74 230, 68 210, 66 190
+    C 64 170, 70 145, 66 140
+    C 62 140, 55 170, 52 190
+    C 50 200, 44 200, 42 195
+    C 40 185, 44 175, 46 165
+    C 50 145, 60 125, 55 105
+    C 52 95, 50 85, 54 75
+    C 58 65, 75 58, 88 55
+    C 90 52, 86 48, 82 40
+    C 78 28, 82 12, 100 12 Z" 
+    fill="url(#bodySkin)" stroke="var(--teal)" stroke-width="1.5" stroke-linejoin="round" filter="url(#bodyGlow)"/>
+
+  <!-- Líneas Anatómicas Internas (Teal Soft) -->
+  <g stroke="var(--teal)" stroke-width="0.8" fill="none" opacity="0.4">
+    <!-- Pectorales -->
+    <path d="M 88 55 C 80 80, 65 85, 55 85"/>
+    <path d="M 112 55 C 120 80, 135 85, 145 85"/>
+    <path d="M 100 65 V 105"/>
+    <path d="M 60 105 C 80 115, 95 110, 100 105"/>
+    <path d="M 140 105 C 120 115, 105 110, 100 105"/>
+    <!-- Abdomen -->
+    <path d="M 72 125 C 85 130, 95 125, 100 120" opacity="0.6"/>
+    <path d="M 128 125 C 115 130, 105 125, 100 120" opacity="0.6"/>
+    <path d="M 100 105 V 165"/>
+    <ellipse cx="100" cy="140" rx="2" ry="3" fill="var(--teal)"/>
+    <!-- Cadera/Ingle -->
+    <path d="M 66 170 C 80 185, 95 180, 100 175"/>
+    <path d="M 134 170 C 120 185, 105 180, 100 175"/>
+    <!-- Articulaciones (Hombros, Codos, Rodillas) -->
+    <path d="M 52 135 C 56 138, 56 142, 52 145" opacity="0.5"/>
+    <path d="M 148 135 C 144 138, 144 142, 148 145" opacity="0.5"/>
+    <path d="M 74 245 C 80 248, 84 248, 80 255" opacity="0.5"/>
+    <path d="M 126 245 C 120 248, 116 248, 120 255" opacity="0.5"/>
+    <!-- Rostro Wireframe -->
+    <path d="M 90 35 C 100 40, 110 35, 110 35" opacity="0.3"/>
+    <path d="M 100 25 V 45" opacity="0.3"/>
+  </g>
 `;
 
 const SILUETA_ESPALDA = `
-  <!-- Silueta clínica - vista posterior -->
-  <!-- Cabeza -->
-  <ellipse cx="100" cy="32" rx="22" ry="26" fill="#e0ccba" stroke="#8a7060" stroke-width="1"/>
-  <!-- Orejas -->
-  <ellipse cx="78" cy="32" rx="4" ry="6" fill="#d8c0a8" stroke="#8a7060" stroke-width="0.8"/>
-  <ellipse cx="122" cy="32" rx="4" ry="6" fill="#d8c0a8" stroke="#8a7060" stroke-width="0.8"/>
-  <!-- Cabello posterior -->
-  <path d="M78 14 Q100 6 122 14 L122 56 Q100 60 78 56Z" fill="#5c4033" opacity="0.55"/>
-  <!-- Cuello -->
-  <rect x="88" y="57" width="24" height="17" rx="4" fill="#d8c0a8" stroke="#8a7060" stroke-width="0.8"/>
-  <!-- Trapecio -->
-  <path d="M88 74 Q74 76 64 82 Q74 80 88 78Z" fill="#d0b8a0" stroke="#8a7060" stroke-width="0.5" opacity="0.6"/>
-  <path d="M112 74 Q126 76 136 82 Q126 80 112 78Z" fill="#d0b8a0" stroke="#8a7060" stroke-width="0.5" opacity="0.6"/>
-  <!-- Torso posterior -->
-  <path d="M64 78 Q56 84 55 120 L55 186 Q56 196 100 198 Q144 196 145 186 L145 120 Q144 84 136 78Z" fill="#e8d5c4" stroke="#8a7060" stroke-width="1"/>
-  <!-- Columna vertebral -->
-  <line x1="100" y1="75" x2="100" y2="186" stroke="#8a7060" stroke-width="1.2" opacity="0.45"/>
-  <circle cx="100" cy="84" r="1.8" fill="#8a7060" opacity="0.4"/>
-  <circle cx="100" cy="94" r="1.8" fill="#8a7060" opacity="0.4"/>
-  <circle cx="100" cy="104" r="1.8" fill="#8a7060" opacity="0.4"/>
-  <circle cx="100" cy="114" r="1.8" fill="#8a7060" opacity="0.4"/>
-  <circle cx="100" cy="124" r="1.8" fill="#8a7060" opacity="0.4"/>
-  <circle cx="100" cy="134" r="1.8" fill="#8a7060" opacity="0.4"/>
-  <circle cx="100" cy="144" r="1.8" fill="#8a7060" opacity="0.4"/>
-  <circle cx="100" cy="154" r="1.8" fill="#8a7060" opacity="0.4"/>
-  <circle cx="100" cy="164" r="1.8" fill="#8a7060" opacity="0.4"/>
-  <circle cx="100" cy="174" r="1.8" fill="#8a7060" opacity="0.4"/>
-  <!-- Escápula izq -->
-  <path d="M65 84 Q80 88 84 112 Q74 118 65 110 Q60 100 65 84Z" fill="#dcc8b0" stroke="#8a7060" stroke-width="0.7" opacity="0.75"/>
-  <!-- Escápula der -->
-  <path d="M135 84 Q120 88 116 112 Q126 118 135 110 Q140 100 135 84Z" fill="#dcc8b0" stroke="#8a7060" stroke-width="0.7" opacity="0.75"/>
-  <!-- Hombros -->
-  <ellipse cx="57" cy="84" rx="18" ry="12" fill="#dcc8b0" stroke="#8a7060" stroke-width="0.8"/>
-  <ellipse cx="143" cy="84" rx="18" ry="12" fill="#dcc8b0" stroke="#8a7060" stroke-width="0.8"/>
-  <!-- Brazos izq/der -->
-  <path d="M41 92 Q31 108 30 140 Q29 158 36 162 L50 160 L52 128 L48 96Z" fill="#e8d5c4" stroke="#8a7060" stroke-width="0.8"/>
-  <path d="M159 92 Q169 108 170 140 Q171 158 164 162 L150 160 L148 128 L152 96Z" fill="#e8d5c4" stroke="#8a7060" stroke-width="0.8"/>
-  <!-- Codos -->
-  <ellipse cx="40" cy="133" rx="12" ry="10" fill="#d8c0a8" stroke="#8a7060" stroke-width="0.8"/>
-  <ellipse cx="160" cy="133" rx="12" ry="10" fill="#d8c0a8" stroke="#8a7060" stroke-width="0.8"/>
-  <!-- Antebrazos -->
-  <path d="M30 142 Q26 165 28 182 L44 182 L48 162 L50 142Z" fill="#e8d5c4" stroke="#8a7060" stroke-width="0.8"/>
-  <path d="M170 142 Q174 165 172 182 L156 182 L152 162 L150 142Z" fill="#e8d5c4" stroke="#8a7060" stroke-width="0.8"/>
-  <!-- Manos -->
-  <ellipse cx="36" cy="191" rx="14" ry="12" fill="#e0ccba" stroke="#8a7060" stroke-width="0.8"/>
-  <ellipse cx="164" cy="191" rx="14" ry="12" fill="#e0ccba" stroke="#8a7060" stroke-width="0.8"/>
-  <!-- Glúteos -->
-  <ellipse cx="78" cy="196" rx="26" ry="24" fill="#dcc8b0" stroke="#8a7060" stroke-width="0.8"/>
-  <ellipse cx="122" cy="196" rx="26" ry="24" fill="#dcc8b0" stroke="#8a7060" stroke-width="0.8"/>
-  <line x1="100" y1="183" x2="100" y2="220" stroke="#8a7060" stroke-width="0.6" opacity="0.4"/>
-  <!-- Muslos post -->
-  <path d="M54 208 Q50 236 52 264 L90 264 L92 236 L78 212Z" fill="#e8d5c4" stroke="#8a7060" stroke-width="0.8"/>
-  <path d="M146 208 Q150 236 148 264 L110 264 L108 236 L122 212Z" fill="#e8d5c4" stroke="#8a7060" stroke-width="0.8"/>
-  <!-- Corvas -->
-  <ellipse cx="71" cy="264" rx="18" ry="12" fill="#d8c0a8" stroke="#8a7060" stroke-width="0.8"/>
-  <ellipse cx="129" cy="264" rx="18" ry="12" fill="#d8c0a8" stroke="#8a7060" stroke-width="0.8"/>
-  <!-- Piernas post -->
-  <path d="M55 273 Q53 296 55 316 L88 316 L88 275 L71 273Z" fill="#e8d5c4" stroke="#8a7060" stroke-width="0.8"/>
-  <path d="M145 273 Q147 296 145 316 L112 316 L112 275 L129 273Z" fill="#e8d5c4" stroke="#8a7060" stroke-width="0.8"/>
-  <!-- Talones -->
-  <ellipse cx="72" cy="319" rx="20" ry="9" fill="#d8c0a8" stroke="#8a7060" stroke-width="0.8"/>
-  <ellipse cx="128" cy="319" rx="20" ry="9" fill="#d8c0a8" stroke="#8a7060" stroke-width="0.8"/>
+  <!-- ══ SILUETA ANATÓMICA PREMIUM - ESPALDA ══ -->
+  <!-- Contorno Principal Unificado -->
+  <path d="
+    M100 12 
+    C 118 12, 122 28, 118 40
+    C 114 48, 110 52, 112 55
+    C 125 58, 142 65, 146 75
+    C 150 85, 148 95, 145 105
+    C 140 125, 150 145, 154 165
+    C 156 175, 160 185, 158 195
+    C 156 200, 150 200, 148 190
+    C 145 170, 138 140, 134 140
+    C 130 145, 136 170, 134 190
+    C 132 210, 126 230, 128 255
+    C 130 280, 128 310, 132 320
+    C 134 325, 120 325, 118 315
+    C 115 300, 110 270, 108 240
+    C 106 210, 102 180, 100 175
+    C 98 180, 94 210, 92 240
+    C 90 270, 85 300, 82 315
+    C 80 325, 66 325, 68 320
+    C 72 310, 70 280, 72 255
+    C 74 230, 68 210, 66 190
+    C 64 170, 70 145, 66 140
+    C 62 140, 55 170, 52 190
+    C 50 200, 44 200, 42 195
+    C 40 185, 44 175, 46 165
+    C 50 145, 60 125, 55 105
+    C 52 95, 50 85, 54 75
+    C 58 65, 75 58, 88 55
+    C 90 52, 86 48, 82 40
+    C 78 28, 82 12, 100 12 Z" 
+    fill="url(#bodySkin)" stroke="var(--teal)" stroke-width="1.5" stroke-linejoin="round" filter="url(#bodyGlow)"/>
+
+  <!-- Líneas Anatómicas Internas Espalda (Teal Soft) -->
+  <g stroke="var(--teal)" stroke-width="0.8" fill="none" opacity="0.4">
+    <!-- Columna vertebral -->
+    <path d="M 100 45 V 175" stroke-dasharray="3,3" stroke-width="1.2" opacity="0.6"/>
+    <!-- Escápulas -->
+    <path d="M 100 55 C 80 65, 75 90, 85 105 Q 95 100, 100 90"/>
+    <path d="M 100 55 C 120 65, 125 90, 115 105 Q 105 100, 100 90"/>
+    <!-- Dorsales -->
+    <path d="M 85 105 C 75 125, 75 145, 100 160"/>
+    <path d="M 115 105 C 125 125, 125 145, 100 160"/>
+    <!-- Glúteos -->
+    <path d="M 66 165 C 75 200, 95 200, 100 175"/>
+    <path d="M 134 165 C 125 200, 105 200, 100 175"/>
+    <path d="M 100 175 V 190"/>
+    <!-- Pliegues corvas -->
+    <path d="M 76 250 Q 82 255, 76 260" opacity="0.5"/>
+    <path d="M 124 250 Q 118 255, 124 260" opacity="0.5"/>
+    <!-- Gemelos -->
+    <path d="M 70 260 C 85 270, 85 290, 75 300" opacity="0.3"/>
+    <path d="M 130 260 C 115 270, 115 290, 125 300" opacity="0.3"/>
+  </g>
 `;
 
 const SILUETA_ROSTRO = `
-  <!-- ══ ROSTRO ANATÓMICO DETALLADO ══ -->
-  <!-- Cuello -->
-  <path d="M76 155 Q72 165 70 185 Q80 192 100 193 Q120 192 130 185 Q128 165 124 155 Z" fill="#f0e2d0" stroke="#9a7a60" stroke-width="0.9"/>
-  <!-- Músculo esternocleidomastoideo der -->
-  <path d="M74 152 Q64 160 58 178" stroke="#c4a882" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.5"/>
-  <!-- Músculo esternocleidomastoideo izq -->
-  <path d="M126 152 Q136 160 142 178" stroke="#c4a882" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.5"/>
-  <!-- Clavícula der -->
-  <path d="M70 185 Q82 182 100 183" stroke="#b89880" stroke-width="1.2" fill="none" opacity="0.55"/>
-  <!-- Clavícula izq -->
-  <path d="M130 185 Q118 182 100 183" stroke="#b89880" stroke-width="1.2" fill="none" opacity="0.55"/>
+  <!-- ══ ROSTRO ANATÓMICO PREMIUM ══ -->
+  <!-- Silueta Cabeza y Cuello -->
+  <path d="M 100 10 
+           C 140 10, 150 40, 150 70 
+           C 150 110, 130 140, 100 150 
+           C 70 140, 50 110, 50 70 
+           C 50 40, 60 10, 100 10 Z" 
+        fill="url(#bodySkin)" stroke="var(--teal)" stroke-width="2" filter="url(#bodyGlow)"/>
+  
+  <path d="M 70 140 C 65 160, 55 180, 40 190 L 160 190 C 145 180, 135 160, 130 140" 
+        fill="url(#bodySkin)" stroke="var(--teal)" stroke-width="1.5"/>
 
-  <!-- Orejas -->
-  <!-- Oreja der: hélix, antihélix, lóbulo, trago -->
-  <path d="M36 70 Q28 76 26 88 Q26 102 34 112 Q40 120 46 116 Q50 112 50 105 Q44 110 40 104 Q34 96 34 88 Q34 78 40 72 Z" fill="#e8d0b8" stroke="#9a7a60" stroke-width="0.9"/>
-  <path d="M40 76 Q36 84 36 92 Q36 102 40 108" stroke="#c4a882" stroke-width="1" fill="none" opacity="0.6"/>
-  <path d="M43 82 Q40 88 40 94 Q40 100 44 104" stroke="#c4a882" stroke-width="0.8" fill="none" opacity="0.45"/>
-  <ellipse cx="42" cy="114" rx="5" ry="6" fill="#e8d0b8" stroke="#9a7a60" stroke-width="0.8" opacity="0.8"/><!-- lóbulo -->
-  <!-- Oreja izq: espejo -->
-  <path d="M164 70 Q172 76 174 88 Q174 102 166 112 Q160 120 154 116 Q150 112 150 105 Q156 110 160 104 Q166 96 166 88 Q166 78 160 72 Z" fill="#e8d0b8" stroke="#9a7a60" stroke-width="0.9"/>
-  <path d="M160 76 Q164 84 164 92 Q164 102 160 108" stroke="#c4a882" stroke-width="1" fill="none" opacity="0.6"/>
-  <path d="M157 82 Q160 88 160 94 Q160 100 156 104" stroke="#c4a882" stroke-width="0.8" fill="none" opacity="0.45"/>
-  <ellipse cx="158" cy="114" rx="5" ry="6" fill="#e8d0b8" stroke="#9a7a60" stroke-width="0.8" opacity="0.8"/>
+  <!-- Topografía Facial y Músculos -->
+  <g stroke="var(--teal)" stroke-width="1" fill="none" opacity="0.45">
+    <!-- Ejes simetría -->
+    <path d="M 100 10 V 150" stroke-dasharray="2,4" opacity="0.3"/>
+    
+    <!-- Cejas / Arcos superciliares -->
+    <path d="M 65 55 Q 80 45, 95 55" stroke-width="1.5"/>
+    <path d="M 135 55 Q 120 45, 105 55" stroke-width="1.5"/>
 
-  <!-- Cara base — forma oval con mandíbula cuadrada -->
-  <path d="M62 18 Q62 8 100 8 Q138 8 138 18 L148 62 Q154 80 152 100 Q150 120 138 136 Q124 152 100 155 Q76 152 62 136 Q50 120 48 100 Q46 80 52 62 Z" fill="#f5e8d8" stroke="#9a7a60" stroke-width="1.2"/>
+    <!-- Estructura del Ojo (Wireframe premium) -->
+    <!-- Ojo izquierdo (desde la vista del observador) -->
+    <path d="M 65 65 Q 80 58, 90 68 Q 80 72, 65 65 Z"/>
+    <circle cx="78" cy="65" r="4" fill="var(--teal)" opacity="0.4"/>
+    <!-- Ojo derecho -->
+    <path d="M 135 65 Q 120 58, 110 68 Q 120 72, 135 65 Z"/>
+    <circle cx="122" cy="65" r="4" fill="var(--teal)" opacity="0.4"/>
 
-  <!-- Arcos superciliares / frente estructura ósea -->
-  <path d="M68 56 Q80 52 92 54" stroke="#c4a882" stroke-width="1" fill="none" opacity="0.35"/>
-  <path d="M132 56 Q120 52 108 54" stroke="#c4a882" stroke-width="1" fill="none" opacity="0.35"/>
+    <!-- Nariz -->
+    <path d="M 95 55 C 93 80, 88 95, 88 100 Q 100 105, 112 100 C 112 95, 107 80, 105 55"/>
+    <path d="M 88 100 C 92 105, 108 105, 112 100"/>
 
-  <!-- Cabello / cuero cabelludo -->
-  <path d="M62 18 Q62 6 100 4 Q138 6 138 18 L136 10 Q118 2 100 2 Q82 2 64 10 Z" fill="#4a3428" opacity="0.75"/>
-  <!-- Entradas del cabello -->
-  <path d="M62 18 Q66 12 72 10" stroke="#4a3428" stroke-width="0.5" fill="none" opacity="0.4"/>
-  <path d="M138 18 Q134 12 128 10" stroke="#4a3428" stroke-width="0.5" fill="none" opacity="0.4"/>
+    <!-- Boca -->
+    <path d="M 80 120 C 90 116, 110 116, 120 120" stroke-width="1.5"/>
+    <path d="M 82 120 C 100 125, 118 120, 118 120"/>
 
-  <!-- Cejas — forma natural con pelos -->
-  <!-- Ceja der -->
-  <path d="M62 55 Q72 50 92 52 Q88 55 72 58 Q64 57 62 55Z" fill="#4a3428" opacity="0.7"/>
-  <path d="M63 56 Q70 52 88 53" stroke="#3a2820" stroke-width="0.5" fill="none" opacity="0.4"/>
-  <!-- Ceja izq -->
-  <path d="M138 55 Q128 50 108 52 Q112 55 128 58 Q136 57 138 55Z" fill="#4a3428" opacity="0.7"/>
+    <!-- Pómulos / Masetero -->
+    <path d="M 50 70 C 65 85, 80 100, 80 120" opacity="0.5"/>
+    <path d="M 150 70 C 135 85, 120 100, 120 120" opacity="0.5"/>
+    <path d="M 60 110 C 70 130, 85 140, 100 145" opacity="0.5"/>
+    <path d="M 140 110 C 130 130, 115 140, 100 145" opacity="0.5"/>
 
-  <!-- Ojos — anatomía completa -->
-  <!-- Ojo der: parpado sup, inf, iris, pupila, lagrimal -->
-  <path d="M62 70 Q72 63 88 65 Q96 66 98 70 Q88 76 72 76 Q64 74 62 70Z" fill="#f5e8d8" stroke="#9a7a60" stroke-width="0.8"/>
-  <ellipse cx="80" cy="70" rx="10" ry="10" fill="#6b8fa8"/><!-- esclerótica + iris color -->
-  <ellipse cx="80" cy="70" rx="7" ry="7" fill="#3d5a72"/><!-- iris -->
-  <ellipse cx="80" cy="70" rx="4" ry="4" fill="#1a1a1a"/><!-- pupila -->
-  <circle cx="83" cy="67" r="1.5" fill="white" opacity="0.8"/><!-- reflejo -->
-  <!-- Párpado superior der -->
-  <path d="M62 70 Q72 62 88 64 Q96 65 98 70" stroke="#9a7a60" stroke-width="1.2" fill="none"/>
-  <!-- Párpado inferior der -->
-  <path d="M62 70 Q72 76 88 76 Q96 75 98 70" stroke="#b89880" stroke-width="0.8" fill="none"/>
-  <!-- Lagrimal der -->
-  <ellipse cx="63" cy="70" rx="3" ry="4" fill="#e8c8b0" stroke="#b89880" stroke-width="0.5" opacity="0.7"/>
-  <!-- Pestañas sup der -->
-  <path d="M65 67 Q66 64 67 63" stroke="#1a1a1a" stroke-width="0.7" fill="none"/>
-  <path d="M72 64 Q73 61 74 60" stroke="#1a1a1a" stroke-width="0.7" fill="none"/>
-  <path d="M79 63 Q80 60 80 59" stroke="#1a1a1a" stroke-width="0.7" fill="none"/>
-  <path d="M86 64 Q87 61 88 61" stroke="#1a1a1a" stroke-width="0.7" fill="none"/>
-  <path d="M92 66 Q94 64 95 64" stroke="#1a1a1a" stroke-width="0.7" fill="none"/>
-
-  <!-- Ojo izq: espejo -->
-  <path d="M138 70 Q128 63 112 65 Q104 66 102 70 Q112 76 128 76 Q136 74 138 70Z" fill="#f5e8d8" stroke="#9a7a60" stroke-width="0.8"/>
-  <ellipse cx="120" cy="70" rx="10" ry="10" fill="#6b8fa8"/>
-  <ellipse cx="120" cy="70" rx="7" ry="7" fill="#3d5a72"/>
-  <ellipse cx="120" cy="70" rx="4" ry="4" fill="#1a1a1a"/>
-  <circle cx="123" cy="67" r="1.5" fill="white" opacity="0.8"/>
-  <path d="M138 70 Q128 62 112 64 Q104 65 102 70" stroke="#9a7a60" stroke-width="1.2" fill="none"/>
-  <path d="M138 70 Q128 76 112 76 Q104 75 102 70" stroke="#b89880" stroke-width="0.8" fill="none"/>
-  <ellipse cx="137" cy="70" rx="3" ry="4" fill="#e8c8b0" stroke="#b89880" stroke-width="0.5" opacity="0.7"/>
-  <path d="M135 67 Q134 64 133 63" stroke="#1a1a1a" stroke-width="0.7" fill="none"/>
-  <path d="M128 64 Q127 61 126 60" stroke="#1a1a1a" stroke-width="0.7" fill="none"/>
-  <path d="M121 63 Q120 60 120 59" stroke="#1a1a1a" stroke-width="0.7" fill="none"/>
-  <path d="M114 64 Q113 61 112 61" stroke="#1a1a1a" stroke-width="0.7" fill="none"/>
-  <path d="M108 66 Q106 64 105 64" stroke="#1a1a1a" stroke-width="0.7" fill="none"/>
-
-  <!-- Nariz — anatomía detallada -->
-  <!-- Puente -->
-  <path d="M96 64 Q94 76 90 90 Q88 96 88 102" stroke="#c4a882" stroke-width="0.8" fill="none" opacity="0.5"/>
-  <path d="M104 64 Q106 76 110 90 Q112 96 112 102" stroke="#c4a882" stroke-width="0.8" fill="none" opacity="0.5"/>
-  <!-- Punta y alas -->
-  <path d="M88 102 Q84 106 82 110 Q86 114 100 114 Q114 114 118 110 Q116 106 112 102 Q108 100 100 100 Q92 100 88 102Z" fill="#ecd6c0" stroke="#9a7a60" stroke-width="0.9"/>
-  <!-- Ala der -->
-  <path d="M82 108 Q80 112 83 116" stroke="#b89880" stroke-width="0.8" fill="none"/>
-  <!-- Ala izq -->
-  <path d="M118 108 Q120 112 117 116" stroke="#b89880" stroke-width="0.8" fill="none"/>
-  <!-- Fosas nasales -->
-  <ellipse cx="92" cy="110" rx="5" ry="4" fill="#d4b89c" stroke="#9a7a60" stroke-width="0.7"/>
-  <ellipse cx="108" cy="110" rx="5" ry="4" fill="#d4b89c" stroke="#9a7a60" stroke-width="0.7"/>
-  <!-- Filtrum -->
-  <path d="M94 114 Q97 118 100 118 Q103 118 106 114" stroke="#b89880" stroke-width="0.7" fill="none" opacity="0.6"/>
-  <!-- Líneas nasogenianas -->
-  <path d="M82 110 Q78 118 80 132" stroke="#c4a882" stroke-width="0.8" fill="none" opacity="0.4"/>
-  <path d="M118 110 Q122 118 120 132" stroke="#c4a882" stroke-width="0.8" fill="none" opacity="0.4"/>
-
-  <!-- Boca — labios con volumen -->
-  <!-- Bermellón labio superior -->
-  <path d="M82 118 Q88 114 94 118 Q100 122 106 118 Q112 114 118 118 Q110 128 100 128 Q90 128 82 118Z" fill="#d4927a" stroke="#b07060" stroke-width="0.8"/>
-  <!-- Arco de cupido -->
-  <path d="M90 118 Q95 115 100 118 Q105 115 110 118" stroke="#a06050" stroke-width="0.8" fill="none"/>
-  <!-- Labio inferior -->
-  <path d="M82 118 Q88 134 100 136 Q112 134 118 118 Q110 128 100 128 Q90 128 82 118Z" fill="#d4927a" stroke="#b07060" stroke-width="0.8" opacity="0.9"/>
-  <!-- Línea de la boca -->
-  <path d="M82 118 Q100 122 118 118" stroke="#8a4a3a" stroke-width="0.9" fill="none"/>
-  <!-- Volumen labio inferior -->
-  <path d="M88 126 Q100 131 112 126" stroke="#c08070" stroke-width="0.6" fill="none" opacity="0.5"/>
-  <!-- Comisuras -->
-  <circle cx="82" cy="118" r="1.5" fill="#c07060" opacity="0.5"/>
-  <circle cx="118" cy="118" r="1.5" fill="#c07060" opacity="0.5"/>
-
-  <!-- Mentón -->
-  <path d="M86 136 Q100 148 114 136" stroke="#b89880" stroke-width="0.7" fill="none" opacity="0.4"/>
-  <!-- Hoyuelo mentón -->
-  <ellipse cx="100" cy="143" rx="5" ry="3" fill="#d8c0a8" opacity="0.35"/>
-
-  <!-- Pómulos — estructura ósea visible -->
-  <path d="M52 90 Q58 84 70 82" stroke="#c4a882" stroke-width="0.7" fill="none" opacity="0.3"/>
-  <path d="M148 90 Q142 84 130 82" stroke="#c4a882" stroke-width="0.7" fill="none" opacity="0.3"/>
-
-  <!-- Surco nasolabial -->
-  <path d="M80 108 Q76 116 80 128" stroke="#c4a882" stroke-width="0.7" fill="none" opacity="0.35"/>
-  <path d="M120 108 Q124 116 120 128" stroke="#c4a882" stroke-width="0.7" fill="none" opacity="0.35"/>
+    <!-- Cuello / ECM -->
+    <path d="M 70 140 C 75 160, 90 170, 100 175"/>
+    <path d="M 130 140 C 125 160, 110 170, 100 175"/>
+  </g>
 `;
 
 function setZoneTipo(btn) {
@@ -3129,18 +3077,16 @@ async function renderEvaluacion() {
         <div class="form-group">
           <label class="form-label">Postura</label>
           <div class="ck-group" id="ev-postura">
-            <label class="ck-item"><input type="checkbox" onchange="ckSingle(this,'ev-postura');toggleDescInput('ev-postura-desc')"><span>Normal</span></label>
-            <label class="ck-item"><input type="checkbox" onchange="ckSingle(this,'ev-postura');toggleDescInput('ev-postura-desc')"><span>Alterada</span></label>
+            <label class="ck-item"><input type="checkbox" onchange="ckSingle(this,'ev-postura')"><span>Normal</span></label>
+            <label class="ck-item"><input type="checkbox" onchange="ckSingle(this,'ev-postura')"><span>Alterada</span></label>
           </div>
-          <input class="form-control" id="ev-postura-desc" type="text" placeholder="Descripción..." style="margin-top:6px;display:none">
         </div>
         <div class="form-group">
           <label class="form-label">Marcha</label>
           <div class="ck-group" id="ev-marcha">
-            <label class="ck-item"><input type="checkbox" onchange="ckSingle(this,'ev-marcha');toggleDescInput('ev-marcha-desc')"><span>Normal</span></label>
-            <label class="ck-item"><input type="checkbox" onchange="ckSingle(this,'ev-marcha');toggleDescInput('ev-marcha-desc')"><span>Alterada</span></label>
+            <label class="ck-item"><input type="checkbox" onchange="ckSingle(this,'ev-marcha')"><span>Normal</span></label>
+            <label class="ck-item"><input type="checkbox" onchange="ckSingle(this,'ev-marcha')"><span>Alterada</span></label>
           </div>
-          <input class="form-control" id="ev-marcha-desc" type="text" placeholder="Descripción..." style="margin-top:6px;display:none">
         </div>
       </div>
     </div>
@@ -3326,8 +3272,7 @@ async function guardarEvaluacion() {
       dolor_eva: parseFloat(document.getElementById('ev-dolor-eva')?.value) || null,
       fuerza_daniels: document.getElementById('ev-fuerza-daniels')?.value?.trim() || '',
       rom: getChecked('ev-rom'), rom_zona: document.getElementById('ev-rom-zona')?.value?.trim() || '',
-      postura: getChecked('ev-postura'), postura_desc: document.getElementById('ev-postura-desc')?.value?.trim() || '',
-      marcha: getChecked('ev-marcha'), marcha_desc: document.getElementById('ev-marcha-desc')?.value?.trim() || ''
+      postura: getChecked('ev-postura'), marcha: getChecked('ev-marcha')
     },
     tests,
     diagnostico_fisio: document.getElementById('ev-diag-fisio')?.value?.trim() || '',
@@ -3605,7 +3550,7 @@ if ('serviceWorker' in navigator) {
   if (location.protocol === 'https:' || location.protocol === 'http:') {
     navigator.serviceWorker.register('./sw.js').then(() => console.log('SW registrado (archivo)')).catch(e => console.warn('SW archivo falló, usando fallback', e));
   } else {
-    const swCode = `const CACHE='kinara-v8';const URLS=['./'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(URLS))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('./')))));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));`;
+    const swCode = `const CACHE='kinara-v8.1';const URLS=['./'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(URLS))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('./')))));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));`;
     const blob = new Blob([swCode], {type:'application/javascript'});
     navigator.serviceWorker.register(URL.createObjectURL(blob)).then(()=>console.log('SW registrado (blob)')).catch(()=>{});
   }
