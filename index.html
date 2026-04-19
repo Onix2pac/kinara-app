@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>KINARA v8 · Gestión de Pacientes</title>
+<title>KINARA v9 · Gestión de Pacientes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -385,6 +385,12 @@
   .ck-item input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--teal); cursor: pointer; flex-shrink: 0; }
   .ck-item span { font-size: 13px; color: var(--text-dark); line-height: 1.3; }
 
+  /* Test pediátrico: chips de radio (Ashworth, GMFM, Denver, etc.) */
+  .test-radio-item { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 40px; padding: 6px 12px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); background: white; cursor: pointer; transition: all .15s; user-select: none; -webkit-user-select: none; font-size: 13px; font-weight: 500; color: var(--text-dark); }
+  .test-radio-item:hover { border-color: var(--teal-mid); }
+  .test-radio-item.selected { background: var(--teal); color: white; border-color: var(--teal); font-weight: 600; }
+  .test-radio-item span { font-size: 13px; }
+
   /* Accordion para revisión por sistemas */
   .sys-accordion { margin-bottom: 10px; border: 1.5px solid var(--border); border-radius: var(--radius); background: white; overflow: hidden; }
   .sys-header { display: flex; align-items: center; gap: 8px; padding: 12px 14px; cursor: pointer; transition: background .15s; font-size: 14px; font-weight: 500; color: var(--text-dark); }
@@ -753,7 +759,7 @@
 <!-- ══ MENÚ LATERAL ══ -->
 <div class="menu-overlay" id="menu-overlay" onclick="if(event.target===this)cerrarMenu()">
   <div class="menu-panel">
-    <div class="menu-header"><h3>KINARA</h3><p>Gestión Clínica · v8</p></div>
+    <div class="menu-header"><h3>KINARA</h3><p>Gestión Clínica · v9</p></div>
     <div class="menu-body">
       <button class="menu-item" onclick="exportarDatos()">
         <span class="menu-item-icon">💾</span>
@@ -774,7 +780,7 @@
         <span class="menu-item-icon">✕</span><span class="menu-item-text">Cerrar menú</span>
       </button>
     </div>
-    <div class="menu-footer">KINARA v8 · Offline-first<br>Geraldine Castillo Torres · Fisioterapeuta<br>COLFI 22915 · ReTHUS 2025-08-21</div>
+    <div class="menu-footer">KINARA v9 · Offline-first<br>Geraldine Castillo Torres · Fisioterapeuta<br>COLFI 22915 · ReTHUS 2025-08-21</div>
   </div>
 </div>
 
@@ -855,6 +861,400 @@ const PRUEBAS_POR_SERVICIO = {
   alta_muscular: { icon:'🏋', label:'Descarga Muscular', items:['Escala Visual Análoga (EVA)','Palpación puntos gatillo','Acortamiento muscular','Movilidad articular'] },
   general: { icon:'🔬', label:'General', items:[] }
 };
+
+// ══════════════════════════════════════
+// TESTS PEDIÁTRICOS — v9 (formularios dinámicos)
+// ══════════════════════════════════════
+const TESTS_PEDIATRICOS = {
+  ashworth: {
+    id:'ashworth', nombre:'Escala de Ashworth Modificada', label:'Escala de Ashworth Modificada',
+    edad_rango:'Todas las edades', requiere_edad:false, tipo_input_general:'radio',
+    help:{
+      descripcion:'Evalúa el grado de espasticidad muscular mediante la resistencia al movimiento pasivo.',
+      como_aplicar:['Colocar al paciente en decúbito supino y relajado.','Movilizar la articulación lenta y pasivamente en todo su rango.','Registrar el grado según la resistencia percibida (0 a 4).'],
+      tips_clinicos:['No evaluar tras ejercicio intenso (altera el tono).','Comparar siempre con el lado contralateral.','Repetir 2-3 veces para confirmar el grado.']
+    },
+    secciones:[
+      { nombre:'Miembro superior derecho', hint:'Evaluar codo, muñeca y dedos', items:[
+        { id:'msd_codo', label:'Codo', tipo:'radio', opciones:['0','1','1+','2','3','4'] },
+        { id:'msd_muneca', label:'Muñeca', tipo:'radio', opciones:['0','1','1+','2','3','4'] },
+        { id:'msd_dedos', label:'Dedos', tipo:'radio', opciones:['0','1','1+','2','3','4'] }
+      ]},
+      { nombre:'Miembro superior izquierdo', hint:'Evaluar codo, muñeca y dedos', items:[
+        { id:'msi_codo', label:'Codo', tipo:'radio', opciones:['0','1','1+','2','3','4'] },
+        { id:'msi_muneca', label:'Muñeca', tipo:'radio', opciones:['0','1','1+','2','3','4'] },
+        { id:'msi_dedos', label:'Dedos', tipo:'radio', opciones:['0','1','1+','2','3','4'] }
+      ]},
+      { nombre:'Miembro inferior derecho', hint:'Evaluar rodilla, tobillo y cadera', items:[
+        { id:'mid_cadera', label:'Cadera (aductores)', tipo:'radio', opciones:['0','1','1+','2','3','4'] },
+        { id:'mid_rodilla', label:'Rodilla', tipo:'radio', opciones:['0','1','1+','2','3','4'] },
+        { id:'mid_tobillo', label:'Tobillo (tríceps sural)', tipo:'radio', opciones:['0','1','1+','2','3','4'] }
+      ]},
+      { nombre:'Miembro inferior izquierdo', hint:'Evaluar rodilla, tobillo y cadera', items:[
+        { id:'mii_cadera', label:'Cadera (aductores)', tipo:'radio', opciones:['0','1','1+','2','3','4'] },
+        { id:'mii_rodilla', label:'Rodilla', tipo:'radio', opciones:['0','1','1+','2','3','4'] },
+        { id:'mii_tobillo', label:'Tobillo (tríceps sural)', tipo:'radio', opciones:['0','1','1+','2','3','4'] }
+      ]}
+    ],
+    calculo:{ tipo:'clasificacion', regla:'Identificar el grado máximo encontrado y su localización.' },
+    interpretacion:[
+      { rango:'Grado 0', resultado:'Tono normal · sin espasticidad' },
+      { rango:'Grado 1', resultado:'Leve aumento al final del ROM' },
+      { rango:'Grado 1+', resultado:'Leve aumento en menos de la mitad del ROM' },
+      { rango:'Grado 2', resultado:'Aumento marcado · ROM conservado' },
+      { rango:'Grado 3', resultado:'Aumento considerable · movimiento pasivo difícil' },
+      { rango:'Grado 4', resultado:'Rigidez total · extremidad fijada' }
+    ]
+  },
+
+  gmfm: {
+    id:'gmfm', nombre:'GMFM (Gross Motor Function Measure)', label:'GMFM',
+    edad_rango:'5 meses – 16 años', requiere_edad:false, tipo_input_general:'radio',
+    help:{
+      descripcion:'Evalúa cambios en la función motora gruesa. Versión resumida clínica por dimensiones A-E.',
+      como_aplicar:['Observar ejecución del movimiento sin asistencia física.','Puntuar: 0 no inicia · 1 inicia (&lt;10%) · 2 completa parcial · 3 completa todo el ítem.','Calcular porcentaje por dimensión y total.'],
+      tips_clinicos:['Permitir varios intentos antes de puntuar.','No dar ayuda física · verbal mínima.','Registrar ítems "no evaluables" aparte.']
+    },
+    secciones:[
+      { nombre:'A · Decúbitos y volteos', hint:'Supino/prono/volteos', items:[
+        { id:'a1', label:'Decúbito supino: sigue con la mirada', tipo:'radio', opciones:['0','1','2','3'] },
+        { id:'a2', label:'Decúbito supino: manos a línea media', tipo:'radio', opciones:['0','1','2','3'] },
+        { id:'a3', label:'Decúbito prono: levanta cabeza 45°', tipo:'radio', opciones:['0','1','2','3'] },
+        { id:'a4', label:'Decúbito prono: apoyo sobre antebrazos', tipo:'radio', opciones:['0','1','2','3'] },
+        { id:'a5', label:'Volteo supino → prono completo', tipo:'radio', opciones:['0','1','2','3'] }
+      ]},
+      { nombre:'B · Sedestación', hint:'Equilibrio en sentado', items:[
+        { id:'b1', label:'Se mantiene sentado con apoyo', tipo:'radio', opciones:['0','1','2','3'] },
+        { id:'b2', label:'Se mantiene sentado sin apoyo 3s', tipo:'radio', opciones:['0','1','2','3'] },
+        { id:'b3', label:'Sentado: alcanza objeto al frente sin caerse', tipo:'radio', opciones:['0','1','2','3'] },
+        { id:'b4', label:'Pasa de supino a sentado sin ayuda', tipo:'radio', opciones:['0','1','2','3'] },
+        { id:'b5', label:'Sentado: gira el tronco 90° y vuelve', tipo:'radio', opciones:['0','1','2','3'] }
+      ]},
+      { nombre:'C · Gateo y rodillas', hint:'Cuadrupedia / rodillas', items:[
+        { id:'c1', label:'Cuadrupedia estática 10s', tipo:'radio', opciones:['0','1','2','3'] },
+        { id:'c2', label:'Gatea 1.8 m', tipo:'radio', opciones:['0','1','2','3'] },
+        { id:'c3', label:'Gatea subiendo 4 escalones', tipo:'radio', opciones:['0','1','2','3'] },
+        { id:'c4', label:'De rodillas sin apoyo 10s', tipo:'radio', opciones:['0','1','2','3'] },
+        { id:'c5', label:'Camina de rodillas 10 pasos', tipo:'radio', opciones:['0','1','2','3'] }
+      ]},
+      { nombre:'D · Bipedestación', hint:'Posición de pie', items:[
+        { id:'d1', label:'Se pone de pie con apoyo', tipo:'radio', opciones:['0','1','2','3'] },
+        { id:'d2', label:'Permanece de pie sin apoyo 3s', tipo:'radio', opciones:['0','1','2','3'] },
+        { id:'d3', label:'Permanece de pie sin apoyo 20s', tipo:'radio', opciones:['0','1','2','3'] },
+        { id:'d4', label:'De pie: levanta un pie 3s', tipo:'radio', opciones:['0','1','2','3'] },
+        { id:'d5', label:'Se agacha y se vuelve a parar sin apoyo', tipo:'radio', opciones:['0','1','2','3'] }
+      ]},
+      { nombre:'E · Marcha, carrera y salto', hint:'Deambulación y habilidades avanzadas', items:[
+        { id:'e1', label:'Camina 10 pasos solo', tipo:'radio', opciones:['0','1','2','3'] },
+        { id:'e2', label:'Camina 3 m hacia atrás', tipo:'radio', opciones:['0','1','2','3'] },
+        { id:'e3', label:'Corre 4.5 m sin caer', tipo:'radio', opciones:['0','1','2','3'] },
+        { id:'e4', label:'Salta con ambos pies 30 cm adelante', tipo:'radio', opciones:['0','1','2','3'] },
+        { id:'e5', label:'Sube 4 escalones alternando', tipo:'radio', opciones:['0','1','2','3'] }
+      ]}
+    ],
+    calculo:{ tipo:'porcentaje', regla:'% por dimensión = (suma / (n_ítems × 3)) × 100. Total = promedio de las 5 dimensiones.' },
+    interpretacion:[
+      { rango:'80–100%', resultado:'Función motora gruesa conservada' },
+      { rango:'60–79%', resultado:'Compromiso leve' },
+      { rango:'40–59%', resultado:'Compromiso moderado' },
+      { rango:'20–39%', resultado:'Compromiso severo' },
+      { rango:'&lt; 20%', resultado:'Compromiso muy severo' }
+    ]
+  },
+
+  reflejos_primitivos: {
+    id:'reflejos_primitivos', nombre:'Reflejos primitivos', label:'Reflejos primitivos',
+    edad_rango:'0 – 12 meses (principalmente)', requiere_edad:true, tipo_input_general:'radio',
+    help:{
+      descripcion:'Evaluación de respuestas automáticas del neonato/lactante. Su persistencia o ausencia orienta hacia disfunción neurológica.',
+      como_aplicar:['Paciente despierto, tranquilo, alimentado.','Aplicar el estímulo específico de cada reflejo.','Registrar: Presente (normal), Ausente o Anormal (asimétrico/exagerado).'],
+      tips_clinicos:['Comparar siempre derecha vs. izquierda.','No forzar estímulos · respetar el estado del bebé.','Considerar la edad: la persistencia después de la edad esperada es patológica.']
+    },
+    secciones:[
+      { nombre:'Reflejos arcaicos', hint:'Respuestas neonatales normales 0-6 meses', items:[
+        { id:'moro', label:'Moro (extensión-flexión ante caída brusca)', tipo:'radio', opciones:['Presente','Ausente','Anormal'] },
+        { id:'busqueda', label:'Búsqueda (rooting)', tipo:'radio', opciones:['Presente','Ausente','Anormal'] },
+        { id:'succion', label:'Succión', tipo:'radio', opciones:['Presente','Ausente','Anormal'] },
+        { id:'prension_palmar', label:'Prensión palmar', tipo:'radio', opciones:['Presente','Ausente','Anormal'] },
+        { id:'prension_plantar', label:'Prensión plantar', tipo:'radio', opciones:['Presente','Ausente','Anormal'] }
+      ]},
+      { nombre:'Reflejos tónicos y posturales', hint:'Respuestas hasta los 6-9 meses', items:[
+        { id:'galant', label:'Galant (incurvación del tronco)', tipo:'radio', opciones:['Presente','Ausente','Anormal'] },
+        { id:'tnc', label:'Tónico cervical asimétrico (TNC)', tipo:'radio', opciones:['Presente','Ausente','Anormal'] },
+        { id:'landau', label:'Landau (extensión en suspensión ventral)', tipo:'radio', opciones:['Presente','Ausente','Anormal'] }
+      ]}
+    ],
+    calculo:{ tipo:'clasificacion', regla:'Contar reflejos anormales y ausentes no esperados para la edad.' },
+    interpretacion:[
+      { rango:'Todos presentes (&lt; 6 meses)', resultado:'Respuesta neurológica normal para edad' },
+      { rango:'Persistencia &gt; 6-9 meses', resultado:'Posible retraso neurológico · referir evaluación' },
+      { rango:'1-2 anormales/asimétricos', resultado:'Sospecha · reevaluar en 1 mes' },
+      { rango:'≥ 3 anormales/asimétricos', resultado:'Signo de alarma neurológica · interconsulta' }
+    ]
+  },
+
+  hitos_desarrollo: {
+    id:'hitos_desarrollo', nombre:'Hitos del desarrollo', label:'Hitos del desarrollo',
+    edad_rango:'0 – 36 meses', requiere_edad:true, tipo_input_general:'checkbox',
+    help:{
+      descripcion:'Comparación de habilidades observadas con los hitos esperados por rango etario (OMS / AAP).',
+      como_aplicar:['Identificar la edad del paciente en meses.','Marcar los hitos que el niño ejecuta consistentemente.','La app resalta los hitos esperados para su edad.'],
+      tips_clinicos:['Si un hito esperado no se cumple, es señal de alarma.','Considerar prematuridad: restar semanas hasta los 24 meses.','Observar también dominios afectivos y sociales.']
+    },
+    secciones:[
+      { nombre:'0 – 3 meses', hint:'Control cefálico inicial', items:[
+        { id:'h_0_3_1', label:'Fija la mirada y sigue objetos', tipo:'checkbox' },
+        { id:'h_0_3_2', label:'Sostiene cabeza brevemente en prono', tipo:'checkbox' },
+        { id:'h_0_3_3', label:'Sonrisa social', tipo:'checkbox' },
+        { id:'h_0_3_4', label:'Vocaliza sonidos guturales', tipo:'checkbox' },
+        { id:'h_0_3_5', label:'Lleva manos a la línea media', tipo:'checkbox' }
+      ]},
+      { nombre:'4 – 6 meses', hint:'Volteos y prensión', items:[
+        { id:'h_4_6_1', label:'Control cefálico completo', tipo:'checkbox' },
+        { id:'h_4_6_2', label:'Se voltea supino ↔ prono', tipo:'checkbox' },
+        { id:'h_4_6_3', label:'Toma objetos con la mano', tipo:'checkbox' },
+        { id:'h_4_6_4', label:'Ríe a carcajadas', tipo:'checkbox' },
+        { id:'h_4_6_5', label:'Balbucea (ba-ba, pa-pa)', tipo:'checkbox' }
+      ]},
+      { nombre:'7 – 9 meses', hint:'Sedestación independiente', items:[
+        { id:'h_7_9_1', label:'Se sienta sin apoyo', tipo:'checkbox' },
+        { id:'h_7_9_2', label:'Pasa objetos de una mano a otra', tipo:'checkbox' },
+        { id:'h_7_9_3', label:'Responde a su nombre', tipo:'checkbox' },
+        { id:'h_7_9_4', label:'Inicia gateo o arrastre', tipo:'checkbox' },
+        { id:'h_7_9_5', label:'Ansiedad ante extraños', tipo:'checkbox' }
+      ]},
+      { nombre:'10 – 12 meses', hint:'Bipedestación y primeras palabras', items:[
+        { id:'h_10_12_1', label:'Se para con apoyo', tipo:'checkbox' },
+        { id:'h_10_12_2', label:'Camina con apoyo (marcha lateral)', tipo:'checkbox' },
+        { id:'h_10_12_3', label:'Pinza fina (índice-pulgar)', tipo:'checkbox' },
+        { id:'h_10_12_4', label:'Dice 1-2 palabras con significado', tipo:'checkbox' },
+        { id:'h_10_12_5', label:'Aplaude · dice adiós', tipo:'checkbox' }
+      ]},
+      { nombre:'13 – 18 meses', hint:'Marcha autónoma', items:[
+        { id:'h_13_18_1', label:'Camina solo sin apoyo', tipo:'checkbox' },
+        { id:'h_13_18_2', label:'Sube escaleras gateando', tipo:'checkbox' },
+        { id:'h_13_18_3', label:'Bebe de un vaso', tipo:'checkbox' },
+        { id:'h_13_18_4', label:'Dice 5-10 palabras', tipo:'checkbox' },
+        { id:'h_13_18_5', label:'Señala objetos que desea', tipo:'checkbox' }
+      ]},
+      { nombre:'19 – 36 meses', hint:'Lenguaje y motor avanzado', items:[
+        { id:'h_19_36_1', label:'Corre sin caerse', tipo:'checkbox' },
+        { id:'h_19_36_2', label:'Sube escaleras alternando pies', tipo:'checkbox' },
+        { id:'h_19_36_3', label:'Frases de 2-3 palabras', tipo:'checkbox' },
+        { id:'h_19_36_4', label:'Control de esfínteres diurno', tipo:'checkbox' },
+        { id:'h_19_36_5', label:'Juego simbólico (muñecos, cocinita)', tipo:'checkbox' }
+      ]}
+    ],
+    calculo:{ tipo:'clasificacion', regla:'Comparar hitos marcados vs hitos esperados para la edad en meses del paciente.' },
+    interpretacion:[
+      { rango:'Cumple ≥ 80% hitos esperados', resultado:'Desarrollo acorde a la edad' },
+      { rango:'Cumple 60-79% hitos esperados', resultado:'Retraso leve · vigilar y reevaluar' },
+      { rango:'Cumple &lt; 60% hitos esperados', resultado:'Retraso del desarrollo · interconsulta' }
+    ]
+  },
+
+  aims: {
+    id:'aims', nombre:'Alberta Infant Motor Scale (AIMS)', label:'AIMS',
+    edad_rango:'0 – 18 meses', requiere_edad:true, tipo_input_general:'checkbox',
+    help:{
+      descripcion:'Evaluación observacional del desarrollo motor grueso en 4 posturas. No se manipula al bebé.',
+      como_aplicar:['Observar al niño durante 20-30 min en ropa cómoda.','Marcar cada ítem que el bebé ejecute espontáneamente.','Sumar el total · comparar con tabla percentil por edad.'],
+      tips_clinicos:['Esperar a que el bebé esté alerta y activo.','No inducir posturas · solo registrar lo observado.','Usar juguetes para motivar el movimiento si es necesario.']
+    },
+    secciones:[
+      { nombre:'Prono', hint:'Actividad en decúbito ventral', items:[
+        { id:'p1', label:'Prono apoyado (1)', tipo:'checkbox' },
+        { id:'p2', label:'Levanta cabeza con rotación (2)', tipo:'checkbox' },
+        { id:'p3', label:'Apoyo sobre antebrazos (3)', tipo:'checkbox' },
+        { id:'p4', label:'Apoyo sobre manos extendidas (4)', tipo:'checkbox' },
+        { id:'p5', label:'Pivotea en prono (5)', tipo:'checkbox' },
+        { id:'p6', label:'Arrastre recíproco (6)', tipo:'checkbox' },
+        { id:'p7', label:'Cuadrupedia estática (7)', tipo:'checkbox' },
+        { id:'p8', label:'Gateo recíproco (8)', tipo:'checkbox' }
+      ]},
+      { nombre:'Supino', hint:'Actividad en decúbito dorsal', items:[
+        { id:'s1', label:'Supino flexión fisiológica (1)', tipo:'checkbox' },
+        { id:'s2', label:'Manos a línea media (2)', tipo:'checkbox' },
+        { id:'s3', label:'Pies al aire / manos a rodillas (3)', tipo:'checkbox' },
+        { id:'s4', label:'Mano-pie contacto (4)', tipo:'checkbox' },
+        { id:'s5', label:'Volteo supino → prono (5)', tipo:'checkbox' }
+      ]},
+      { nombre:'Sedente', hint:'Control en sedestación', items:[
+        { id:'se1', label:'Sentado con apoyo total (1)', tipo:'checkbox' },
+        { id:'se2', label:'Sentado con apoyo en manos (2)', tipo:'checkbox' },
+        { id:'se3', label:'Sentado sin apoyo (3)', tipo:'checkbox' },
+        { id:'se4', label:'Transición a sedestación (4)', tipo:'checkbox' },
+        { id:'se5', label:'Sedestación sin manos · alcanza objeto (5)', tipo:'checkbox' },
+        { id:'se6', label:'Pasa de sentado a cuadrupedia (6)', tipo:'checkbox' }
+      ]},
+      { nombre:'Bípedo', hint:'Control en bipedestación y marcha', items:[
+        { id:'b1', label:'Soporte de peso con apoyo (1)', tipo:'checkbox' },
+        { id:'b2', label:'Paso lateral con apoyo (2)', tipo:'checkbox' },
+        { id:'b3', label:'Bipedestación sin apoyo (3)', tipo:'checkbox' },
+        { id:'b4', label:'Primeros pasos independientes (4)', tipo:'checkbox' },
+        { id:'b5', label:'Marcha autónoma (5)', tipo:'checkbox' },
+        { id:'b6', label:'Se agacha y se levanta (6)', tipo:'checkbox' }
+      ]}
+    ],
+    calculo:{ tipo:'suma', regla:'1 punto por cada ítem observado. Total máximo = 25.' },
+    interpretacion:[
+      { rango:'Percentil &gt; 50 (total alto para edad)', resultado:'Desarrollo motor normal' },
+      { rango:'Percentil 25 – 50', resultado:'Desarrollo dentro del rango bajo · vigilar' },
+      { rango:'Percentil 10 – 25', resultado:'Sospecha de retraso · reevaluar en 1 mes' },
+      { rango:'Percentil &lt; 10', resultado:'Retraso significativo · interconsulta' }
+    ]
+  },
+
+  denver_ii: {
+    id:'denver_ii', nombre:'Denver II', label:'Escala de Denver II',
+    edad_rango:'0 – 6 años', requiere_edad:true, tipo_input_general:'radio',
+    help:{
+      descripcion:'Test de tamizaje del desarrollo en 4 áreas: personal-social, motor fino, lenguaje y motor grueso.',
+      como_aplicar:['Aplicar ítems correspondientes a la edad del paciente.','Registrar: Pasa (P) · Falla (F) · Rechaza (R) · No hay oportunidad (N).','Interpretar según ítems fallidos por debajo del 75% esperado.'],
+      tips_clinicos:['No es diagnóstico · solo tamizaje.','Repetir en 1-2 semanas si hay rechazos.','Considerar cultura y oportunidades del niño.']
+    },
+    secciones:[
+      { nombre:'Personal-social', hint:'Interacción y autocuidado', items:[
+        { id:'ps1', label:'Sonrisa responsiva', tipo:'radio', opciones:['Pasa','Falla','Rechaza'] },
+        { id:'ps2', label:'Imita actividades', tipo:'radio', opciones:['Pasa','Falla','Rechaza'] },
+        { id:'ps3', label:'Bebe de vaso', tipo:'radio', opciones:['Pasa','Falla','Rechaza'] },
+        { id:'ps4', label:'Usa cuchara/tenedor', tipo:'radio', opciones:['Pasa','Falla','Rechaza'] },
+        { id:'ps5', label:'Se viste solo', tipo:'radio', opciones:['Pasa','Falla','Rechaza'] }
+      ]},
+      { nombre:'Motor fino-adaptativo', hint:'Manipulación y coordinación visomotora', items:[
+        { id:'mf1', label:'Sigue con la mirada 180°', tipo:'radio', opciones:['Pasa','Falla','Rechaza'] },
+        { id:'mf2', label:'Pasa objeto de una mano a otra', tipo:'radio', opciones:['Pasa','Falla','Rechaza'] },
+        { id:'mf3', label:'Pinza fina', tipo:'radio', opciones:['Pasa','Falla','Rechaza'] },
+        { id:'mf4', label:'Torre de 4 cubos', tipo:'radio', opciones:['Pasa','Falla','Rechaza'] },
+        { id:'mf5', label:'Dibuja círculo', tipo:'radio', opciones:['Pasa','Falla','Rechaza'] }
+      ]},
+      { nombre:'Lenguaje', hint:'Expresión y comprensión verbal', items:[
+        { id:'l1', label:'Balbucea', tipo:'radio', opciones:['Pasa','Falla','Rechaza'] },
+        { id:'l2', label:'Dice papá/mamá específicos', tipo:'radio', opciones:['Pasa','Falla','Rechaza'] },
+        { id:'l3', label:'Señala 1 parte del cuerpo', tipo:'radio', opciones:['Pasa','Falla','Rechaza'] },
+        { id:'l4', label:'Combina 2 palabras', tipo:'radio', opciones:['Pasa','Falla','Rechaza'] },
+        { id:'l5', label:'Habla comprensible al extraño', tipo:'radio', opciones:['Pasa','Falla','Rechaza'] }
+      ]},
+      { nombre:'Motor grueso', hint:'Postura y locomoción', items:[
+        { id:'mg1', label:'Sostén cefálico', tipo:'radio', opciones:['Pasa','Falla','Rechaza'] },
+        { id:'mg2', label:'Se sienta sin apoyo', tipo:'radio', opciones:['Pasa','Falla','Rechaza'] },
+        { id:'mg3', label:'Camina solo', tipo:'radio', opciones:['Pasa','Falla','Rechaza'] },
+        { id:'mg4', label:'Patea pelota', tipo:'radio', opciones:['Pasa','Falla','Rechaza'] },
+        { id:'mg5', label:'Salto en un pie', tipo:'radio', opciones:['Pasa','Falla','Rechaza'] }
+      ]}
+    ],
+    calculo:{ tipo:'clasificacion', regla:'Contar fallas y rechazos. Interpretación según ítems fallidos por debajo del 75% de niños que deben pasarlos.' },
+    interpretacion:[
+      { rango:'Sin fallas', resultado:'Normal · desarrollo acorde' },
+      { rango:'1 falla o múltiples rechazos', resultado:'Sospechoso · repetir en 1-2 semanas' },
+      { rango:'≥ 2 fallas', resultado:'Anormal · referir a evaluación diagnóstica' },
+      { rango:'Imposible aplicar', resultado:'No evaluable · reintentar cuando el niño colabore' }
+    ]
+  },
+
+  pdms2: {
+    id:'pdms2', nombre:'PDMS-2 (Peabody Developmental Motor Scales-2)', label:'PDMS-2',
+    edad_rango:'0 – 6 años (subset observacional)', requiere_edad:true, tipo_input_general:'radio',
+    help:{
+      descripcion:'Evaluación observacional de habilidades motoras gruesas y finas. Versión resumida clínica (no reemplaza la batería normativa).',
+      como_aplicar:['Observar y puntuar cada ítem: 0 no ejecuta · 1 ejecución parcial · 2 ejecución completa.','Sumar puntajes por subescala.','El resultado orienta, no estandariza.'],
+      tips_clinicos:['Requiere entrenamiento formal para percentiles normativos.','Útil como seguimiento cualitativo entre sesiones.','Combinar con AIMS o GMFM para diagnóstico integral.']
+    },
+    secciones:[
+      { nombre:'Motor grueso · Reflejos y postura', hint:'Control postural básico', items:[
+        { id:'mg_r1', label:'Control cefálico en tracción', tipo:'radio', opciones:['0','1','2'] },
+        { id:'mg_r2', label:'Equilibrio en sedestación', tipo:'radio', opciones:['0','1','2'] },
+        { id:'mg_r3', label:'Reacciones de enderezamiento', tipo:'radio', opciones:['0','1','2'] },
+        { id:'mg_r4', label:'Reacciones de protección', tipo:'radio', opciones:['0','1','2'] },
+        { id:'mg_r5', label:'Alineación en bipedestación', tipo:'radio', opciones:['0','1','2'] }
+      ]},
+      { nombre:'Motor grueso · Locomoción', hint:'Desplazamiento', items:[
+        { id:'mg_l1', label:'Arrastre o gateo funcional', tipo:'radio', opciones:['0','1','2'] },
+        { id:'mg_l2', label:'Marcha independiente', tipo:'radio', opciones:['0','1','2'] },
+        { id:'mg_l3', label:'Corre cambiando de dirección', tipo:'radio', opciones:['0','1','2'] },
+        { id:'mg_l4', label:'Sube y baja escaleras alternando', tipo:'radio', opciones:['0','1','2'] },
+        { id:'mg_l5', label:'Salta con ambos pies', tipo:'radio', opciones:['0','1','2'] }
+      ]},
+      { nombre:'Motor fino · Prensión', hint:'Agarre y manipulación', items:[
+        { id:'mf_p1', label:'Prensión palmar voluntaria', tipo:'radio', opciones:['0','1','2'] },
+        { id:'mf_p2', label:'Pinza inferior', tipo:'radio', opciones:['0','1','2'] },
+        { id:'mf_p3', label:'Pinza superior (punta-punta)', tipo:'radio', opciones:['0','1','2'] },
+        { id:'mf_p4', label:'Agarre de lápiz funcional', tipo:'radio', opciones:['0','1','2'] },
+        { id:'mf_p5', label:'Uso bimanual coordinado', tipo:'radio', opciones:['0','1','2'] }
+      ]},
+      { nombre:'Motor fino · Integración visomotora', hint:'Coordinación ojo-mano', items:[
+        { id:'mf_v1', label:'Transferencia de objetos entre manos', tipo:'radio', opciones:['0','1','2'] },
+        { id:'mf_v2', label:'Apila cubos (≥ 3)', tipo:'radio', opciones:['0','1','2'] },
+        { id:'mf_v3', label:'Imita trazo vertical/horizontal', tipo:'radio', opciones:['0','1','2'] },
+        { id:'mf_v4', label:'Copia círculo', tipo:'radio', opciones:['0','1','2'] },
+        { id:'mf_v5', label:'Recorta con tijeras', tipo:'radio', opciones:['0','1','2'] }
+      ]}
+    ],
+    calculo:{ tipo:'suma', regla:'Sumar total + calcular promedio por subescala. Máximo = 40.' },
+    interpretacion:[
+      { rango:'Total 32 – 40', resultado:'Habilidades motoras avanzadas para la edad' },
+      { rango:'Total 24 – 31', resultado:'Habilidades acordes a la edad' },
+      { rango:'Total 16 – 23', resultado:'Compromiso leve · vigilar' },
+      { rango:'Total &lt; 16', resultado:'Compromiso significativo · interconsulta' }
+    ]
+  },
+
+  brunet_lezine: {
+    id:'brunet_lezine', nombre:'Brunet-Lézine', label:'Brunet-Lézine',
+    edad_rango:'0 – 30 meses', requiere_edad:true, tipo_input_general:'number',
+    help:{
+      descripcion:'Cociente de Desarrollo (QD) basado en la relación entre edad de desarrollo (observada en la batería) y edad cronológica real.',
+      como_aplicar:['Ingresar edad cronológica del paciente en meses.','Ingresar edad de desarrollo estimada (por batería completa o estimación clínica).','La app calcula automáticamente QD = (ED / EC) × 100.'],
+      tips_clinicos:['Para mayor precisión aplicar la batería completa (160 ítems por áreas P, C, L, S).','Edad de desarrollo puede obtenerse también de AIMS o PDMS-2.','QD global y por subescala (postural, coordinación, lenguaje, social).']
+    },
+    secciones:[
+      { nombre:'Edades', hint:'Ingresar ambas edades en meses', items:[
+        { id:'edad_cron', label:'Edad cronológica (meses)', tipo:'number' },
+        { id:'edad_des', label:'Edad de desarrollo observada (meses)', tipo:'number' }
+      ]},
+      { nombre:'Subescalas (opcional)', hint:'Edad de desarrollo estimada por área (meses)', items:[
+        { id:'sub_postural', label:'P · Postural', tipo:'number' },
+        { id:'sub_coord', label:'C · Coordinación óculo-manual', tipo:'number' },
+        { id:'sub_lenguaje', label:'L · Lenguaje', tipo:'number' },
+        { id:'sub_social', label:'S · Social', tipo:'number' }
+      ]}
+    ],
+    calculo:{ tipo:'formula', regla:'QD = (edad de desarrollo / edad cronológica) × 100' },
+    interpretacion:[
+      { rango:'QD ≥ 110', resultado:'Desarrollo superior' },
+      { rango:'QD 85 – 109', resultado:'Desarrollo normal' },
+      { rango:'QD 70 – 84', resultado:'Retraso leve del desarrollo' },
+      { rango:'QD 55 – 69', resultado:'Retraso moderado del desarrollo' },
+      { rango:'QD &lt; 55', resultado:'Retraso severo · interconsulta urgente' }
+    ]
+  }
+};
+
+// Mapeo de nombre visible en la checklist → id del test detallado
+const MAP_TEST_LABEL_ID = {
+  'Escala de Ashworth Modificada': 'ashworth',
+  'GMFM': 'gmfm',
+  'Reflejos primitivos': 'reflejos_primitivos',
+  'Hitos del desarrollo': 'hitos_desarrollo',
+  'AIMS': 'aims',
+  'Escala de Denver II': 'denver_ii',
+  'PDMS-2': 'pdms2',
+  'Brunet-Lézine': 'brunet_lezine'
+};
+
+// Calcula edad del paciente en meses a partir de fecha_nac (YYYY-MM-DD)
+function edadEnMeses(fechaNac) {
+  if (!fechaNac) return null;
+  const d = new Date(fechaNac + 'T12:00:00');
+  if (isNaN(d.getTime())) return null;
+  const hoy = new Date();
+  let meses = (hoy.getFullYear() - d.getFullYear()) * 12 + (hoy.getMonth() - d.getMonth());
+  if (hoy.getDate() < d.getDate()) meses--;
+  return Math.max(0, meses);
+}
+
+// Estado volátil de los tests aplicados en la evaluación actual
+window.testsDetalleActual = {};
 
 // ══════════════════════════════════════
 // INDEXEDDB — versión 6
@@ -1257,6 +1657,425 @@ function guardarPopupPruebas() {
 function cerrarPopupPruebas() {
   const modal = document.getElementById('modal-pruebas');
   if (modal) { modal.remove(); document.body.style.overflow = ''; }
+}
+
+// ══════════════════════════════════════
+// TESTS PEDIÁTRICOS — Modal, render, cálculo (v9)
+// ══════════════════════════════════════
+function abrirTestPediatrico(testId) {
+  const test = TESTS_PEDIATRICOS[testId];
+  if (!test) return;
+  const p = pacientes.find(x => x.id === pacienteActualId);
+  const edadM = p ? edadEnMeses(p.fecha_nac) : null;
+  const resPrev = (window.testsDetalleActual && window.testsDetalleActual[testId]) || null;
+
+  cerrarTestPediatrico();
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay open';
+  overlay.id = 'modal-test-pediatrico';
+
+  let edadInfo = '';
+  if (test.requiere_edad) {
+    if (edadM !== null) {
+      const años = Math.floor(edadM/12); const mRest = edadM % 12;
+      edadInfo = `<div style="font-size:12px;color:var(--teal-dark);background:var(--teal-pale);padding:6px 10px;border-radius:8px;margin-bottom:10px">👶 Edad del paciente: <strong>${edadM} meses</strong> (${años}a ${mRest}m)</div>`;
+    } else {
+      edadInfo = `<div style="font-size:12px;color:#c0392b;background:#fdecea;padding:6px 10px;border-radius:8px;margin-bottom:10px">⚠ Sin fecha de nacimiento registrada — la interpretación por edad no estará disponible</div>`;
+    }
+  }
+
+  let seccionesHtml = '';
+  test.secciones.forEach((sec, si) => {
+    seccionesHtml += `<div class="form-group" style="margin-top:14px;padding:12px;background:rgba(255,255,255,0.5);border-radius:10px;border:1px solid var(--teal-pale)">
+      <div style="font-weight:600;color:var(--teal-dark);font-size:14px;margin-bottom:4px">${sec.nombre}</div>
+      ${sec.hint ? `<div style="font-size:11px;color:var(--text-soft);margin-bottom:10px;font-style:italic">${sec.hint}</div>` : ''}`;
+
+    sec.items.forEach(item => {
+      const valPrev = (resPrev && resPrev.items && resPrev.items[item.id]) || '';
+      if (item.tipo === 'radio') {
+        seccionesHtml += `<div style="margin-bottom:10px">
+          <div style="font-size:13px;color:var(--text);margin-bottom:5px">${item.label}</div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap">
+            ${item.opciones.map(op => `<label class="test-radio-item${valPrev===op?' selected':''}" onclick="selectTestRadio(this,'${testId}','${item.id}','${op.replace(/'/g,"\\'")}')">
+              <input type="radio" name="t_${testId}_${item.id}" value="${op}" ${valPrev===op?'checked':''} style="display:none">
+              <span>${op}</span>
+            </label>`).join('')}
+          </div>
+        </div>`;
+      } else if (item.tipo === 'checkbox') {
+        const isChecked = valPrev === true || valPrev === 'true' || valPrev === '1';
+        seccionesHtml += `<label class="ck-item${isChecked?' checked':''}" style="width:100%;margin-bottom:6px" onclick="toggleTestCheckbox(this,'${testId}','${item.id}')">
+          <input type="checkbox" ${isChecked?'checked':''} style="display:none">
+          <span>${item.label}</span>
+        </label>`;
+      } else if (item.tipo === 'number') {
+        seccionesHtml += `<div style="margin-bottom:10px">
+          <label class="form-label">${item.label}</label>
+          <input class="form-control" type="number" step="0.1" min="0" id="t_${testId}_${item.id}" value="${valPrev||''}" oninput="onTestNumberInput('${testId}','${item.id}',this.value)">
+        </div>`;
+      }
+    });
+    seccionesHtml += `</div>`;
+  });
+
+  overlay.innerHTML = `<div class="modal-drawer" style="max-height:92vh;overflow-y:auto">
+    <div class="modal-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px">
+      <div class="modal-title" style="margin:0">🧪 ${test.nombre}</div>
+      <button class="btn btn-ghost" style="padding:6px 10px;font-size:16px;width:auto" onclick="mostrarAyudaTest('${testId}')" title="Ayuda clínica">ℹ️</button>
+    </div>
+    <p style="font-size:12px;color:var(--text-soft);margin-bottom:10px">${test.edad_rango}</p>
+    ${edadInfo}
+    ${seccionesHtml}
+    <div id="test-resultado-${testId}" style="margin-top:16px;padding:14px;background:linear-gradient(135deg,var(--teal-pale),#fff);border-radius:12px;border:2px solid var(--teal-med);display:none">
+      <div style="font-weight:600;color:var(--teal-dark);margin-bottom:6px">📊 Resultado</div>
+      <div id="test-resultado-body-${testId}" style="font-size:13px;color:var(--text)"></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px">
+      <button class="btn btn-primary" onclick="guardarTestPediatrico('${testId}')">✓ Guardar test</button>
+      <button class="btn btn-ghost" onclick="cerrarTestPediatrico()">Cancelar</button>
+    </div>
+  </div>`;
+  overlay.addEventListener('click', ev => { if(ev.target===overlay) cerrarTestPediatrico(); });
+  document.body.appendChild(overlay);
+  document.body.style.overflow = 'hidden';
+
+  // Si había resultado previo, recalcular para mostrarlo
+  if (resPrev) setTimeout(() => recalcularTestPediatrico(testId), 50);
+}
+
+function selectTestRadio(labelEl, testId, itemId, valor) {
+  const group = labelEl.parentElement;
+  group.querySelectorAll('.test-radio-item').forEach(l => l.classList.remove('selected'));
+  labelEl.classList.add('selected');
+  const input = labelEl.querySelector('input');
+  if (input) input.checked = true;
+  recalcularTestPediatrico(testId);
+}
+
+function toggleTestCheckbox(labelEl, testId, itemId) {
+  const cb = labelEl.querySelector('input');
+  cb.checked = !cb.checked;
+  labelEl.classList.toggle('checked', cb.checked);
+  recalcularTestPediatrico(testId);
+}
+
+function onTestNumberInput(testId, itemId, val) {
+  recalcularTestPediatrico(testId);
+}
+
+function recogerItemsTest(testId) {
+  const test = TESTS_PEDIATRICOS[testId];
+  if (!test) return {};
+  const items = {};
+  test.secciones.forEach(sec => {
+    sec.items.forEach(item => {
+      if (item.tipo === 'radio') {
+        const sel = document.querySelector(`input[name="t_${testId}_${item.id}"]:checked`);
+        if (sel) items[item.id] = sel.value;
+      } else if (item.tipo === 'checkbox') {
+        // Buscar el label contenedor con evento
+        const labels = document.querySelectorAll('#modal-test-pediatrico .ck-item');
+        labels.forEach(lab => {
+          const onclickAttr = lab.getAttribute('onclick') || '';
+          if (onclickAttr.includes(`'${testId}','${item.id}'`)) {
+            const cb = lab.querySelector('input');
+            if (cb && cb.checked) items[item.id] = true;
+          }
+        });
+      } else if (item.tipo === 'number') {
+        const el = document.getElementById(`t_${testId}_${item.id}`);
+        if (el && el.value !== '') items[item.id] = parseFloat(el.value);
+      }
+    });
+  });
+  return items;
+}
+
+function calcularResultadoTest(testId, items) {
+  const test = TESTS_PEDIATRICOS[testId];
+  if (!test) return null;
+  const p = pacientes.find(x => x.id === pacienteActualId);
+  const edadM = p ? edadEnMeses(p.fecha_nac) : null;
+  let resumen = '', detalle = '', valorNum = null, interpretacion = '';
+
+  if (testId === 'ashworth') {
+    const orden = ['0','1','1+','2','3','4'];
+    let maxGrado = '0', localizaciones = [];
+    Object.keys(items).forEach(k => {
+      const g = items[k];
+      if (orden.indexOf(g) > orden.indexOf(maxGrado)) maxGrado = g;
+      if (g !== '0' && g !== undefined) localizaciones.push(`${k}=${g}`);
+    });
+    resumen = `Grado máximo: ${maxGrado}`;
+    const intp = test.interpretacion.find(i => i.rango.includes(`Grado ${maxGrado}`));
+    interpretacion = intp ? intp.resultado : 'Sin datos suficientes';
+    detalle = localizaciones.length ? `Segmentos con espasticidad: ${localizaciones.join(', ')}` : 'Sin espasticidad detectada';
+    valorNum = maxGrado;
+  }
+  else if (testId === 'gmfm') {
+    let totalDim = 0, dims = 0, porDim = [];
+    test.secciones.forEach(sec => {
+      let suma = 0, n = 0;
+      sec.items.forEach(item => {
+        const v = items[item.id];
+        if (v !== undefined && v !== '') { suma += parseInt(v); n++; }
+      });
+      if (n > 0) {
+        const pct = Math.round((suma / (n * 3)) * 100);
+        porDim.push(`${sec.nombre.split(' ')[0]}: ${pct}%`);
+        totalDim += pct; dims++;
+      }
+    });
+    const total = dims > 0 ? Math.round(totalDim / dims) : 0;
+    resumen = `Promedio total: ${total}%`;
+    detalle = porDim.join(' · ');
+    valorNum = total;
+    if (total >= 80) interpretacion = test.interpretacion[0].resultado;
+    else if (total >= 60) interpretacion = test.interpretacion[1].resultado;
+    else if (total >= 40) interpretacion = test.interpretacion[2].resultado;
+    else if (total >= 20) interpretacion = test.interpretacion[3].resultado;
+    else interpretacion = test.interpretacion[4].resultado;
+  }
+  else if (testId === 'reflejos_primitivos') {
+    let anormales = 0, ausentes = 0, presentes = 0;
+    Object.values(items).forEach(v => {
+      if (v === 'Anormal') anormales++;
+      else if (v === 'Ausente') ausentes++;
+      else if (v === 'Presente') presentes++;
+    });
+    resumen = `Presentes: ${presentes} · Ausentes: ${ausentes} · Anormales: ${anormales}`;
+    const totalEval = anormales + ausentes + presentes;
+    detalle = `${totalEval} reflejos evaluados`;
+    if (anormales >= 3) interpretacion = test.interpretacion[3].resultado;
+    else if (anormales >= 1) interpretacion = test.interpretacion[2].resultado;
+    else if (edadM !== null && edadM > 9 && presentes > 3) interpretacion = test.interpretacion[1].resultado;
+    else interpretacion = test.interpretacion[0].resultado;
+    valorNum = anormales;
+  }
+  else if (testId === 'hitos_desarrollo') {
+    // Rango etario esperado según edad del paciente
+    let rangoEsperado = null;
+    if (edadM !== null) {
+      if (edadM <= 3) rangoEsperado = '0 – 3 meses';
+      else if (edadM <= 6) rangoEsperado = '4 – 6 meses';
+      else if (edadM <= 9) rangoEsperado = '7 – 9 meses';
+      else if (edadM <= 12) rangoEsperado = '10 – 12 meses';
+      else if (edadM <= 18) rangoEsperado = '13 – 18 meses';
+      else rangoEsperado = '19 – 36 meses';
+    }
+    let esperados = 0, cumplidos = 0;
+    test.secciones.forEach(sec => {
+      if (sec.nombre === rangoEsperado) {
+        sec.items.forEach(item => {
+          esperados++;
+          if (items[item.id]) cumplidos++;
+        });
+      }
+    });
+    const marcadosTotal = Object.values(items).filter(v => v === true).length;
+    if (rangoEsperado && esperados > 0) {
+      const pct = Math.round((cumplidos / esperados) * 100);
+      resumen = `${cumplidos}/${esperados} hitos esperados (${pct}%) para ${rangoEsperado}`;
+      detalle = `Total de hitos marcados: ${marcadosTotal}`;
+      if (pct >= 80) interpretacion = test.interpretacion[0].resultado;
+      else if (pct >= 60) interpretacion = test.interpretacion[1].resultado;
+      else interpretacion = test.interpretacion[2].resultado;
+      valorNum = pct;
+    } else {
+      resumen = `${marcadosTotal} hitos marcados`;
+      detalle = 'Sin edad registrada — no se pudo comparar con rango esperado';
+      interpretacion = 'Registrar fecha de nacimiento para interpretación automática';
+    }
+  }
+  else if (testId === 'aims') {
+    const total = Object.values(items).filter(v => v === true).length;
+    resumen = `Puntaje AIMS: ${total}/25`;
+    let pctAprox = 'N/A';
+    if (edadM !== null) {
+      // Aproximación percentil por edad (orientativa)
+      const esperadoPorEdad = Math.min(25, Math.round(edadM * 1.4 + 3));
+      const diff = total - esperadoPorEdad;
+      if (diff >= 2) { pctAprox = '> P50'; interpretacion = test.interpretacion[0].resultado; }
+      else if (diff >= -2) { pctAprox = 'P25-P50'; interpretacion = test.interpretacion[1].resultado; }
+      else if (diff >= -5) { pctAprox = 'P10-P25'; interpretacion = test.interpretacion[2].resultado; }
+      else { pctAprox = '< P10'; interpretacion = test.interpretacion[3].resultado; }
+      detalle = `Esperado para ${edadM}m ≈ ${esperadoPorEdad} · Percentil aproximado: ${pctAprox}`;
+    } else {
+      detalle = 'Sin edad — percentil no calculable';
+      interpretacion = 'Registrar fecha de nacimiento para percentil';
+    }
+    valorNum = total;
+  }
+  else if (testId === 'denver_ii') {
+    let pasa = 0, falla = 0, rechaza = 0;
+    Object.values(items).forEach(v => {
+      if (v === 'Pasa') pasa++;
+      else if (v === 'Falla') falla++;
+      else if (v === 'Rechaza') rechaza++;
+    });
+    resumen = `Pasa: ${pasa} · Falla: ${falla} · Rechaza: ${rechaza}`;
+    detalle = `Total evaluado: ${pasa + falla + rechaza} ítems`;
+    if (falla >= 2) interpretacion = test.interpretacion[2].resultado;
+    else if (falla === 1 || rechaza >= 3) interpretacion = test.interpretacion[1].resultado;
+    else if (pasa + falla + rechaza < 3) interpretacion = test.interpretacion[3].resultado;
+    else interpretacion = test.interpretacion[0].resultado;
+    valorNum = falla;
+  }
+  else if (testId === 'pdms2') {
+    let suma = 0, n = 0, porSub = [];
+    test.secciones.forEach(sec => {
+      let s = 0, c = 0;
+      sec.items.forEach(item => {
+        const v = items[item.id];
+        if (v !== undefined && v !== '') { s += parseInt(v); c++; n++; }
+      });
+      suma += s;
+      if (c > 0) porSub.push(`${sec.nombre.split(' · ')[1] || sec.nombre}: ${s}`);
+    });
+    resumen = `Total: ${suma}/40 (${n} ítems)`;
+    detalle = porSub.join(' · ');
+    if (suma >= 32) interpretacion = test.interpretacion[0].resultado;
+    else if (suma >= 24) interpretacion = test.interpretacion[1].resultado;
+    else if (suma >= 16) interpretacion = test.interpretacion[2].resultado;
+    else interpretacion = test.interpretacion[3].resultado;
+    valorNum = suma;
+  }
+  else if (testId === 'brunet_lezine') {
+    const ec = parseFloat(items.edad_cron);
+    const ed = parseFloat(items.edad_des);
+    if (ec > 0 && ed >= 0) {
+      const qd = Math.round((ed / ec) * 100);
+      resumen = `QD = ${qd}`;
+      const subs = [];
+      if (items.sub_postural) subs.push(`P:${Math.round((items.sub_postural/ec)*100)}`);
+      if (items.sub_coord) subs.push(`C:${Math.round((items.sub_coord/ec)*100)}`);
+      if (items.sub_lenguaje) subs.push(`L:${Math.round((items.sub_lenguaje/ec)*100)}`);
+      if (items.sub_social) subs.push(`S:${Math.round((items.sub_social/ec)*100)}`);
+      detalle = `EC=${ec}m · ED=${ed}m` + (subs.length ? ` · Subescalas: ${subs.join(' · ')}` : '');
+      if (qd >= 110) interpretacion = test.interpretacion[0].resultado;
+      else if (qd >= 85) interpretacion = test.interpretacion[1].resultado;
+      else if (qd >= 70) interpretacion = test.interpretacion[2].resultado;
+      else if (qd >= 55) interpretacion = test.interpretacion[3].resultado;
+      else interpretacion = test.interpretacion[4].resultado;
+      valorNum = qd;
+    } else {
+      resumen = 'QD no calculable';
+      detalle = 'Ingresar edad cronológica y edad de desarrollo';
+      interpretacion = '';
+    }
+  }
+
+  return { resumen, detalle, interpretacion, valorNum, items };
+}
+
+function recalcularTestPediatrico(testId) {
+  const items = recogerItemsTest(testId);
+  const result = calcularResultadoTest(testId, items);
+  if (!result) return;
+  const box = document.getElementById(`test-resultado-${testId}`);
+  const body = document.getElementById(`test-resultado-body-${testId}`);
+  if (box && body) {
+    if (result.resumen) {
+      box.style.display = 'block';
+      body.innerHTML = `<div style="font-weight:600;margin-bottom:3px">${result.resumen}</div>
+        ${result.detalle ? `<div style="font-size:12px;color:var(--text-soft);margin-bottom:6px">${result.detalle}</div>` : ''}
+        ${result.interpretacion ? `<div style="padding:6px 10px;background:#fff;border-radius:8px;border-left:3px solid var(--teal-med);font-size:12px">🔍 ${result.interpretacion}</div>` : ''}`;
+    } else {
+      box.style.display = 'none';
+    }
+  }
+}
+
+function guardarTestPediatrico(testId) {
+  const items = recogerItemsTest(testId);
+  if (Object.keys(items).length === 0) {
+    toast('⚠ Completa al menos un ítem antes de guardar');
+    return;
+  }
+  const result = calcularResultadoTest(testId, items);
+  if (!window.testsDetalleActual) window.testsDetalleActual = {};
+  window.testsDetalleActual[testId] = {
+    items: items,
+    resumen: result.resumen,
+    detalle: result.detalle,
+    interpretacion: result.interpretacion,
+    valor: result.valorNum,
+    fecha: new Date().toISOString()
+  };
+  // Auto-marcar el check del test en la lista principal
+  const test = TESTS_PEDIATRICOS[testId];
+  const mainChecks = document.querySelectorAll('#ev-pruebas-checks .ck-item');
+  mainChecks.forEach(item => {
+    const label = item.querySelector('span').textContent;
+    if (label === test.label) {
+      const cb = item.querySelector('input');
+      cb.checked = true;
+      item.classList.add('checked');
+    }
+  });
+  // Refrescar badges
+  actualizarBadgesTests();
+  cerrarTestPediatrico();
+  toast(`✓ ${test.label}: ${result.resumen || 'guardado'}`);
+}
+
+function cerrarTestPediatrico() {
+  const modal = document.getElementById('modal-test-pediatrico');
+  if (modal) { modal.remove(); document.body.style.overflow = ''; }
+}
+
+function mostrarAyudaTest(testId) {
+  const test = TESTS_PEDIATRICOS[testId];
+  if (!test) return;
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay open';
+  overlay.id = 'modal-ayuda-test';
+  overlay.style.zIndex = '10000';
+  overlay.innerHTML = `<div class="modal-drawer" style="max-height:85vh;overflow-y:auto">
+    <div class="modal-handle"></div>
+    <div class="modal-title">ℹ️ ${test.nombre}</div>
+    <div style="margin-top:10px">
+      <div style="font-weight:600;color:var(--teal-dark);margin-bottom:4px">📖 Descripción</div>
+      <p style="font-size:13px;color:var(--text);margin-bottom:14px">${test.help.descripcion}</p>
+      <div style="font-weight:600;color:var(--teal-dark);margin-bottom:4px">🧭 Cómo aplicar</div>
+      <ul style="font-size:13px;color:var(--text);margin:0 0 14px 20px;padding:0">
+        ${test.help.como_aplicar.map(x => `<li style="margin-bottom:4px">${x}</li>`).join('')}
+      </ul>
+      <div style="font-weight:600;color:var(--teal-dark);margin-bottom:4px">💡 Tips clínicos</div>
+      <ul style="font-size:13px;color:var(--text);margin:0 0 14px 20px;padding:0">
+        ${test.help.tips_clinicos.map(x => `<li style="margin-bottom:4px">${x}</li>`).join('')}
+      </ul>
+      <div style="font-weight:600;color:var(--teal-dark);margin-bottom:4px">📊 Interpretación</div>
+      <div style="font-size:12px;color:var(--text);background:var(--teal-pale);padding:10px;border-radius:8px;margin-bottom:14px">
+        ${test.interpretacion.map(i => `<div style="margin-bottom:4px"><strong>${i.rango}:</strong> ${i.resultado}</div>`).join('')}
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="cerrarAyudaTest()" style="margin-top:10px">✓ Entendido</button>
+  </div>`;
+  overlay.addEventListener('click', ev => { if(ev.target===overlay) cerrarAyudaTest(); });
+  document.body.appendChild(overlay);
+}
+
+function cerrarAyudaTest() {
+  const modal = document.getElementById('modal-ayuda-test');
+  if (modal) modal.remove();
+}
+
+function actualizarBadgesTests() {
+  // Añade badge ✓ con el resumen junto a cada check que tiene test aplicado
+  const mainChecks = document.querySelectorAll('#ev-pruebas-checks .ck-item');
+  mainChecks.forEach(item => {
+    const span = item.querySelector('span');
+    if (!span) return;
+    const label = span.textContent.replace(/\s*✓\s.*$/,'').trim();
+    span.textContent = label;
+    const testId = MAP_TEST_LABEL_ID[label];
+    if (testId && window.testsDetalleActual && window.testsDetalleActual[testId]) {
+      const r = window.testsDetalleActual[testId];
+      span.innerHTML = `${label} <span style="color:var(--teal-dark);font-size:11px;font-weight:600">✓ ${r.resumen || 'aplicado'}</span>`;
+    }
+  });
 }
 
 async function guardarHistorial() {
@@ -2968,6 +3787,7 @@ async function renderEvaluacion() {
   const tipoServicio = normTipo(p.tipo_servicio);
   const evals = (await txGet('evaluaciones','pacienteId',pacienteActualId)).sort((a,b) => b.created_at.localeCompare(a.created_at));
   evalActual = {};
+  window.testsDetalleActual = {};
 
   let html = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
@@ -3151,16 +3971,20 @@ async function renderEvaluacion() {
   if (evals.length) {
     html += `<div style="margin-top:20px"><div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-soft);font-weight:500;margin-bottom:10px">Evaluaciones anteriores (${evals.length})</div>
       ${evals.map(ev => {
-        const fecha = new Date(ev.created_at).toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'});
+        const d = new Date(ev.created_at);
+        const fecha = d.toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'});
+        const hora = d.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',hour12:false});
         const sv = ev.signos_vitales || {};
         const hasTox = ev.tests?.toxicidad;
+        const numTestsDet = ev.tests?.detalle ? Object.keys(ev.tests.detalle).length : 0;
         return `<div class="eval-historial-item" onclick="cargarEvaluacionGuardada('${ev.id}')">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <span style="font-size:13px;font-weight:500;color:var(--teal-dark)">${fecha}</span>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-size:13px;font-weight:500;color:var(--teal-dark)">${fecha} · ${hora}</span>
             <span style="font-size:11px;color:var(--text-soft)">${TIPOS_SERVICIO_LABEL[ev.tipo_servicio]||''}</span>
           </div>
           ${sv.fc ? `<div style="font-size:12px;color:var(--text-soft);margin-top:4px">FC:${sv.fc} FR:${sv.fr||'-'} TA:${sv.ta||'-'} SpO2:${sv.spo2||'-'}%</div>` : ''}
           ${hasTox ? `<div style="font-size:12px;margin-top:4px"><span style="padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;color:white;background:${hasTox.interpretacion?.color||'#999'}">${hasTox.interpretacion?.nivel||''} · ${hasTox.total} pts</span></div>` : ''}
+          ${numTestsDet ? `<div style="font-size:11px;color:var(--teal-dark);margin-top:4px;font-weight:500">🧪 ${numTestsDet} test${numTestsDet>1?'s':''} pediátrico${numTestsDet>1?'s':''} aplicado${numTestsDet>1?'s':''}</div>` : ''}
         </div>`;
       }).join('')}
     </div>`;
@@ -3202,16 +4026,35 @@ function calcularIMC() {
 function renderTestsPorServicio(tipo) {
   const container = document.getElementById('eval-tests-container');
   if (!container) return;
-  const pruebas = PRUEBAS_POR_SERVICIO[tipo] || PRUEBAS_POR_SERVICIO.general;
+  let pruebas = PRUEBAS_POR_SERVICIO[tipo] || PRUEBAS_POR_SERVICIO.general;
+
+  // Para pediátrico: extender la lista con los 3 nuevos tests si no están
+  if (tipo === 'pediatrico') {
+    const extras = ['AIMS', 'PDMS-2', 'Brunet-Lézine'];
+    pruebas = { ...pruebas, items: [...pruebas.items, ...extras.filter(e => !pruebas.items.includes(e))] };
+  }
+
   let html = '';
 
   if (pruebas.items.length) {
+    const esPediatrico = (tipo === 'pediatrico');
     html += `<div class="eval-card">
       <div class="eval-card-title" onclick="toggleEvalCard(this)"><span class="arrow open">▶</span> 🧪 Sección 9: Pruebas específicas — ${pruebas.icon} ${pruebas.label}</div>
       <div class="eval-card-body open">
         <button class="btn btn-ghost" style="width:auto;padding:10px 16px;font-size:13px;margin-bottom:12px" onclick="abrirPopupPruebas('${tipo}')">📋 Abrir selector de pruebas</button>
         <div class="ck-group" id="ev-pruebas-checks">
-          ${pruebas.items.map(item => `<label class="ck-item"><input type="checkbox" onchange="ckToggle(this)"><span>${item}</span></label>`).join('')}
+          ${pruebas.items.map(item => {
+            const testId = esPediatrico ? MAP_TEST_LABEL_ID[item] : null;
+            if (testId) {
+              // Ítem pediátrico con test dinámico → botón "Aplicar test" + ℹ️
+              return `<div style="display:flex;align-items:center;gap:6px;width:100%;flex-wrap:wrap">
+                <label class="ck-item" style="flex:1;min-width:180px"><input type="checkbox" onchange="ckToggle(this)"><span>${item}</span></label>
+                <button class="btn btn-ghost" style="padding:8px 10px;font-size:12px;width:auto;white-space:nowrap" onclick="abrirTestPediatrico('${testId}')">▶ Aplicar</button>
+                <button class="btn btn-ghost" style="padding:8px 10px;font-size:14px;width:auto" onclick="mostrarAyudaTest('${testId}')" title="Ayuda">ℹ️</button>
+              </div>`;
+            }
+            return `<label class="ck-item"><input type="checkbox" onchange="ckToggle(this)"><span>${item}</span></label>`;
+          }).join('')}
         </div>
         ${pruebas.hasExtra ? `<div class="form-group" style="margin-top:8px"><label class="form-label">${pruebas.hasExtra}</label><input class="form-control" id="ev-pruebas-extra" type="text" placeholder="Especificar tests..."></div>` : ''}
         <div class="form-group" style="margin-top:8px"><label class="form-label">Notas de evaluación específica</label><textarea class="form-control" id="ev-tests-notas" rows="2" placeholder="Resultados de tests aplicados..."></textarea></div>
@@ -3225,6 +4068,9 @@ function renderTestsPorServicio(tipo) {
   }
 
   container.innerHTML = html;
+
+  // Refrescar badges si ya hay tests aplicados
+  if (tipo === 'pediatrico') setTimeout(actualizarBadgesTests, 50);
 }
 
 async function guardarEvaluacion() {
@@ -3250,10 +4096,14 @@ async function guardarEvaluacion() {
   });
 
   // Pruebas específicas
-  const pruebasChecked = getChecked('ev-pruebas-checks');
+  const pruebasChecked = getChecked('ev-pruebas-checks').map(s => s.replace(/\s*✓.*$/,'').trim());
   const tests = { pruebas: pruebasChecked, notas: document.getElementById('ev-tests-notas')?.value?.trim() || '' };
   if (document.getElementById('ev-pruebas-extra')) tests.extra = document.getElementById('ev-pruebas-extra')?.value?.trim() || '';
   if (normTipo(p.tipo_servicio) === 'sueroterapia') { const toxData = recogerDatosToxicidad(); if (toxData) tests.toxicidad = toxData; }
+  // Tests pediátricos detallados (v9)
+  if (window.testsDetalleActual && Object.keys(window.testsDetalleActual).length > 0) {
+    tests.detalle = window.testsDetalleActual;
+  }
 
   const evaluacion = {
     id: 'eval_' + Date.now(), pacienteId: pacienteActualId,
@@ -3300,22 +4150,125 @@ async function cargarEvaluacionGuardada(evalId) {
   const evals = await txGet('evaluaciones','pacienteId',pacienteActualId);
   const ev = evals.find(x => x.id === evalId);
   if (!ev) return;
-  // Load vital signs
+
+  // Helper: marcar checks por label dentro de un grupo
+  const marcarChecks = (groupId, labels) => {
+    if (!labels || !labels.length) return;
+    const items = document.querySelectorAll(`#${groupId} .ck-item`);
+    items.forEach(item => {
+      const span = item.querySelector('span');
+      if (!span) return;
+      const label = span.textContent.replace(/\s*✓.*$/,'').trim();
+      if (labels.includes(label)) {
+        const cb = item.querySelector('input');
+        if (cb) { cb.checked = true; item.classList.add('checked'); }
+      }
+    });
+  };
+  const setVal = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined && val !== null) el.value = val; };
+
+  // Datos de atención
+  if (ev.datos_atencion) {
+    const da = ev.datos_atencion;
+    setVal('ev-fecha-atencion', da.fecha);
+    setVal('ev-hora-atencion', da.hora);
+    marcarChecks('ev-tipo-atencion', da.tipo_atencion);
+    marcarChecks('ev-tipo-servicio', da.tipo_servicio);
+    marcarChecks('ev-primera-vez', da.primera_vez);
+  }
+
+  // Revisión por sistemas
+  if (ev.revision_sistemas && typeof REVISION_SISTEMAS !== 'undefined') {
+    REVISION_SISTEMAS.forEach((sys, si) => {
+      const data = ev.revision_sistemas[sys.id];
+      if (!data) return;
+      marcarChecks(`sys-body-${si}`, data.items);
+      setVal(`sys-obs-${si}`, data.observaciones);
+      if (typeof updateSysCount === 'function') updateSysCount(si);
+    });
+  }
+
+  // Signos vitales
   const sv = ev.signos_vitales || {};
-  if (sv.ta) document.getElementById('ev-ta').value = sv.ta;
-  if (sv.fc) document.getElementById('ev-fc').value = sv.fc;
-  if (sv.fr) document.getElementById('ev-fr').value = sv.fr;
-  if (sv.spo2) document.getElementById('ev-spo2').value = sv.spo2;
-  if (sv.peso) document.getElementById('ev-peso').value = sv.peso;
-  if (sv.talla) document.getElementById('ev-talla').value = sv.talla;
-  if (sv.peso && sv.talla) calcularIMC();
-  // Load diagnostics
-  if (ev.diagnostico_fisio) document.getElementById('ev-diag-fisio').value = ev.diagnostico_fisio;
-  if (ev.diagnostico_medico) document.getElementById('ev-diag-medico').value = ev.diagnostico_medico;
-  if (ev.tests?.toxicidad) cargarDatosToxicidad(ev.tests.toxicidad);
-  if (ev.tests?.notas && document.getElementById('ev-tests-notas')) document.getElementById('ev-tests-notas').value = ev.tests.notas;
-  const fecha = new Date(ev.created_at).toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'});
-  toast(`Evaluación del ${fecha} cargada`);
+  setVal('ev-ta', sv.ta);
+  setVal('ev-fc', sv.fc);
+  setVal('ev-fr', sv.fr);
+  setVal('ev-spo2', sv.spo2);
+  setVal('ev-peso', sv.peso);
+  setVal('ev-talla', sv.talla);
+  if (sv.peso && sv.talla && typeof calcularIMC === 'function') calcularIMC();
+
+  // Valoración
+  if (ev.valoracion) {
+    const v = ev.valoracion;
+    setVal('ev-dolor-eva', v.dolor_eva);
+    setVal('ev-fuerza-daniels', v.fuerza_daniels);
+    marcarChecks('ev-rom', v.rom);
+    setVal('ev-rom-zona', v.rom_zona);
+    marcarChecks('ev-postura', v.postura);
+    marcarChecks('ev-marcha', v.marcha);
+  }
+
+  // Diagnósticos
+  setVal('ev-diag-fisio', ev.diagnostico_fisio);
+  setVal('ev-diag-medico', ev.diagnostico_medico);
+
+  // Pronóstico
+  if (ev.pronostico) {
+    marcarChecks('ev-pronostico', ev.pronostico.nivel);
+    setVal('ev-pronostico-tiempo', ev.pronostico.tiempo);
+  }
+
+  // Objetivos
+  if (ev.objetivos) {
+    setVal('ev-obj-corto', ev.objetivos.corto);
+    setVal('ev-obj-mediano', ev.objetivos.mediano);
+    setVal('ev-obj-largo', ev.objetivos.largo);
+  }
+
+  // Plan de tratamiento
+  if (ev.plan_tratamiento) {
+    const pt = ev.plan_tratamiento;
+    marcarChecks('ev-plan-modalidades', pt.modalidades);
+    setVal('ev-plan-otro', pt.otro);
+    setVal('ev-frecuencia', pt.frecuencia);
+    setVal('ev-num-sesiones', pt.num_sesiones);
+  }
+
+  // Tests
+  if (ev.tests?.toxicidad && typeof cargarDatosToxicidad === 'function') cargarDatosToxicidad(ev.tests.toxicidad);
+  if (ev.tests?.notas) setVal('ev-tests-notas', ev.tests.notas);
+  if (ev.tests?.extra) setVal('ev-pruebas-extra', ev.tests.extra);
+  // Checks de pruebas específicas (ej: Goniometría, EVA, Tinetti, etc.)
+  if (ev.tests?.pruebas && ev.tests.pruebas.length) {
+    setTimeout(() => marcarChecks('ev-pruebas-checks', ev.tests.pruebas), 150);
+  }
+
+  // Tests pediátricos detallados (v9)
+  if (ev.tests?.detalle && typeof ev.tests.detalle === 'object') {
+    window.testsDetalleActual = JSON.parse(JSON.stringify(ev.tests.detalle));
+    setTimeout(() => {
+      const mainChecks = document.querySelectorAll('#ev-pruebas-checks .ck-item');
+      mainChecks.forEach(item => {
+        const span = item.querySelector('span');
+        if (!span) return;
+        const label = span.textContent.replace(/\s*✓.*$/,'').trim();
+        const testId = MAP_TEST_LABEL_ID[label];
+        if (testId && window.testsDetalleActual[testId]) {
+          const cb = item.querySelector('input');
+          if (cb) { cb.checked = true; item.classList.add('checked'); }
+        }
+      });
+      actualizarBadgesTests();
+    }, 200);
+  } else {
+    window.testsDetalleActual = {};
+  }
+
+  const d = new Date(ev.created_at);
+  const fecha = d.toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'});
+  const hora = d.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',hour12:false});
+  toast(`✓ Evaluación del ${fecha} · ${hora} cargada`);
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 // ══════════════════════════════════════
@@ -3550,7 +4503,7 @@ if ('serviceWorker' in navigator) {
   if (location.protocol === 'https:' || location.protocol === 'http:') {
     navigator.serviceWorker.register('./sw.js').then(() => console.log('SW registrado (archivo)')).catch(e => console.warn('SW archivo falló, usando fallback', e));
   } else {
-    const swCode = `const CACHE='kinara-v8.1';const URLS=['./'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(URLS))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('./')))));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));`;
+    const swCode = `const CACHE='kinara-v9';const URLS=['./'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(URLS))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('./')))));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));`;
     const blob = new Blob([swCode], {type:'application/javascript'});
     navigator.serviceWorker.register(URL.createObjectURL(blob)).then(()=>console.log('SW registrado (blob)')).catch(()=>{});
   }
