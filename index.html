@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>KINARA v15 · Gestión de Pacientes</title>
+<title>KINARA v16 · Gestión de Pacientes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -759,7 +759,7 @@
 <!-- ══ MENÚ LATERAL ══ -->
 <div class="menu-overlay" id="menu-overlay" onclick="if(event.target===this)cerrarMenu()">
   <div class="menu-panel">
-    <div class="menu-header"><h3>KINARA</h3><p>Gestión Clínica · v15</p></div>
+    <div class="menu-header"><h3>KINARA</h3><p>Gestión Clínica · v16</p></div>
     <div class="menu-body">
       <!-- ── Supabase Sync ── -->
       <div style="padding:12px 16px 8px;border-bottom:1px solid var(--border);margin-bottom:4px">
@@ -793,7 +793,7 @@
         <span class="menu-item-icon">✕</span><span class="menu-item-text">Cerrar menú</span>
       </button>
     </div>
-    <div class="menu-footer">KINARA v15 · Offline-first + Cloud sync<br>Geraldine Castillo Torres · Fisioterapeuta<br>COLFI 22915 · ReTHUS 2025-08-21</div>
+    <div class="menu-footer">KINARA v16 · Offline-first + Cloud sync<br>Geraldine Castillo Torres · Fisioterapeuta<br>COLFI 22915 · ReTHUS 2025-08-21</div>
   </div>
 </div>
 
@@ -3160,7 +3160,7 @@ async function guardarFotosSesion(sesionId) {
     await new Promise(r => setTimeout(r, 5));
   }
 }
-async function eliminarFoto(fotoId, pid) { if (!confirm('¿Eliminar esta foto?')) return; await txDelete('fotos', fotoId); await cargarGaleria(pid); toast('Foto eliminada'); }
+async function eliminarFoto(fotoId, pid) { if (!confirm('¿Eliminar esta foto?')) return; await borrarSincronizado('fotos', fotoId); await cargarGaleria(pid); toast('Foto eliminada'); }
 
 // ══════════════════════════════════════
 // VISOR FULLSCREEN
@@ -3264,9 +3264,9 @@ async function eliminarPacienteActual() {
   const pid = p.id;
   for (const store of ['sesiones','fotos','mapas','consentimientos','evaluaciones']) {
     const items = await txGet(store, 'pacienteId', pid);
-    for (const item of items) await txDelete(store, item.id);
+    for (const item of items) await borrarSincronizado(store, item.id);
   }
-  await txDelete('pacientes', pid);
+  await borrarSincronizado('pacientes', pid);
   await cargarLista();
   volverLista();
   toast('✓ Paciente eliminado');
@@ -4048,7 +4048,7 @@ async function guardarConsentimientoTipo(tipo) {
 }
 async function eliminarConsentimiento(id) {
   if (!confirm('¿Actualizar el consentimiento? Se eliminará la firma actual.')) return;
-  await txDelete('consentimientos', id);
+  await borrarSincronizado('consentimientos', id);
   renderConsentimiento();
 }
 // ══════════════════════════════════════
@@ -5122,7 +5122,7 @@ async function eliminarEvaluacion(evalId) {
   const d = new Date(ev.created_at);
   const fecha = d.toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'});
   if (!confirm(`⚠️ ¿Eliminar la evaluación del ${fecha}?\n\nEsta acción no se puede deshacer.`)) return;
-  await txDelete('evaluaciones', evalId);
+  await borrarSincronizado('evaluaciones', evalId);
   toast('🗑 Evaluación eliminada');
   renderEvaluacion();
 }
@@ -5484,7 +5484,7 @@ if ('serviceWorker' in navigator) {
   if (location.protocol === 'https:' || location.protocol === 'http:') {
     navigator.serviceWorker.register('./sw.js').then(() => console.log('SW registrado (archivo)')).catch(e => console.warn('SW archivo falló, usando fallback', e));
   } else {
-    const swCode = `const CACHE='kinara-v15';const URLS=['./'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(URLS))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('./')))));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));`;
+    const swCode = `const CACHE='kinara-v16';const URLS=['./'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(URLS))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('./')))));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));`;
     const blob = new Blob([swCode], {type:'application/javascript'});
     navigator.serviceWorker.register(URL.createObjectURL(blob)).then(()=>console.log('SW registrado (blob)')).catch(()=>{});
   }
@@ -5540,10 +5540,10 @@ async function limpiarDatosDemo() {
   if (!confirm(`¿Eliminar ${existentes.length} paciente(s) de ejemplo?`)) return;
   for (const pid of demoIds) {
     try {
-      await txDelete('pacientes', pid);
+      await borrarSincronizado('pacientes', pid);
       for (const store of ['sesiones','fotos','mapas','consentimientos','evaluaciones']) {
         const items = await txGet(store, 'pacienteId', pid);
-        for (const item of items) await txDelete(store, item.id);
+        for (const item of items) await borrarSincronizado(store, item.id);
       }
     } catch(e) {}
   }
@@ -5770,6 +5770,10 @@ async function sincronizarConSupabase(silencioso = false) {
   let errores = [];
 
   try {
+    // ── 0. BORRADOS PENDIENTES ──
+    const borrados = await procesarBorradosPendientes();
+    if (borrados > 0) totalSubidos += borrados;
+
     // ── 1. PACIENTES ──
     const todosPacientes = await txGet('pacientes');
     const pacientesPendientes = todosPacientes.filter(p => !p.sincronizado);
@@ -5930,6 +5934,50 @@ async function contarPendientesSync() {
   } catch(e) { return 0; }
 }
 
+// ── BORRADOS SINCRONIZADOS ────────────
+// Borra en Supabase; si está offline, encola para el próximo sync
+async function supaDelete(tabla, id) {
+  const resp = await fetch(`${SUPA_URL}/rest/v1/${tabla}?id=eq.${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    headers: supaHeaders()
+  });
+  if (!resp.ok && resp.status !== 404) throw new Error(`Delete ${tabla}: ${resp.status}`);
+}
+
+// Borra localmente Y en la nube (con cola offline)
+async function borrarSincronizado(store, id) {
+  await txDelete(store, id);
+  // mapear store IndexedDB → tabla Supabase (mismos nombres)
+  if (navigator.onLine) {
+    try {
+      await supaDelete(store, id);
+      return;
+    } catch(e) { console.warn('Delete remoto falló, encolando:', e); }
+  }
+  // Offline o falló → encolar
+  try {
+    const cola = JSON.parse(await getConfig('borrados_pendientes') || '[]');
+    cola.push({ tabla: store, id });
+    await setConfig('borrados_pendientes', JSON.stringify(cola));
+    contarPendientesSync();
+  } catch(e) { console.warn('Cola de borrados:', e); }
+}
+
+// Procesa la cola de borrados pendientes (se llama al inicio del sync)
+async function procesarBorradosPendientes() {
+  try {
+    const cola = JSON.parse(await getConfig('borrados_pendientes') || '[]');
+    if (!cola.length) return 0;
+    const fallidos = [];
+    for (const item of cola) {
+      try { await supaDelete(item.tabla, item.id); }
+      catch(e) { fallidos.push(item); }
+    }
+    await setConfig('borrados_pendientes', JSON.stringify(fallidos));
+    return cola.length - fallidos.length;
+  } catch(e) { return 0; }
+}
+
 // ── DESCARGA DESDE LA NUBE ────────────
 // Trae todos los registros de Supabase y los fusiona en IndexedDB local.
 // Para dispositivos nuevos (celular) o recuperación de datos.
@@ -6028,11 +6076,22 @@ async function descargarDesdeNube() {
       ['mapas', 'mapas', unmapMapa]
     ];
 
+    let totalEliminados = 0;
     for (const [tabla, store, unmap] of pares) {
       const filas = await supaFetch(tabla);
       const locales = await txGet(store);
       const localById = {};
       locales.forEach(l => localById[l.id] = l);
+
+      // Eliminar locales que ya fueron sincronizados pero NO existen en la nube
+      // (significa que otro dispositivo los borró)
+      const nubeIds = new Set(filas.map(r => r.id));
+      for (const local of locales) {
+        if (local.sincronizado === true && !nubeIds.has(local.id)) {
+          await txDelete(store, local.id);
+          totalEliminados++;
+        }
+      }
 
       for (const row of filas) {
         const local = localById[row.id];
@@ -6075,7 +6134,8 @@ async function descargarDesdeNube() {
     await cargarLista();
     contarPendientesSync();
     const msgImgs = imgsDescargadas ? ` · ${imgsDescargadas} imágenes` : '';
-    toast(`⬇️ Descarga completa — ${totalNuevos} nuevos, ${totalActualizados} actualizados${msgImgs}`);
+    const msgElim = totalEliminados ? ` · ${totalEliminados} eliminados` : '';
+    toast(`⬇️ Descarga completa — ${totalNuevos} nuevos, ${totalActualizados} actualizados${msgElim}${msgImgs}`);
   } catch(err) {
     console.error('Error descarga:', err);
     toast('⚠ Error al descargar: ' + err.message.slice(0, 60));
