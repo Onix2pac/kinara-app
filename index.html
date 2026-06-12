@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>KINARA v10 · Gestión de Pacientes</title>
+<title>KINARA v12 · Gestión de Pacientes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -759,8 +759,20 @@
 <!-- ══ MENÚ LATERAL ══ -->
 <div class="menu-overlay" id="menu-overlay" onclick="if(event.target===this)cerrarMenu()">
   <div class="menu-panel">
-    <div class="menu-header"><h3>KINARA</h3><p>Gestión Clínica · v10</p></div>
+    <div class="menu-header"><h3>KINARA</h3><p>Gestión Clínica · v12</p></div>
     <div class="menu-body">
+      <!-- ── Supabase Sync ── -->
+      <div style="padding:12px 16px 8px;border-bottom:1px solid var(--border);margin-bottom:4px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--teal-dark)">☁️ Sync en la nube
+              <span id="sync-badge" style="display:none;background:var(--gold);color:white;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px">0</span>
+            </div>
+            <div id="sync-hora" style="font-size:11px;color:var(--text-soft);margin-top:2px"></div>
+          </div>
+          <button id="btn-sync-manual" onclick="sincronizarConSupabase(false);cerrarMenu()" style="background:var(--teal);color:white;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">☁️ Sincronizar</button>
+        </div>
+      </div>
       <button class="menu-item" onclick="exportarDatos()">
         <span class="menu-item-icon">💾</span>
         <span><span class="menu-item-text">Exportar copia de seguridad</span><span class="menu-item-sub">Descargar todos los datos como JSON</span></span>
@@ -780,7 +792,7 @@
         <span class="menu-item-icon">✕</span><span class="menu-item-text">Cerrar menú</span>
       </button>
     </div>
-    <div class="menu-footer">KINARA v9 · Offline-first<br>Geraldine Castillo Torres · Fisioterapeuta<br>COLFI 22915 · ReTHUS 2025-08-21</div>
+    <div class="menu-footer">KINARA v12 · Offline-first + Cloud sync<br>Geraldine Castillo Torres · Fisioterapeuta<br>COLFI 22915 · ReTHUS 2025-08-21</div>
   </div>
 </div>
 
@@ -3049,8 +3061,10 @@ async function guardarHistorial() {
   });
   p.antecedentes_v7 = antV7;
   p.updated_at = new Date().toISOString();
+  p.sincronizado = false;
   await txPut('pacientes', p);
   await cargarLista();
+  contarPendientesSync();
   toast('✓ Historial guardado');
 }
 
@@ -3229,8 +3243,10 @@ async function guardarPaciente() {
     fecha_registro: ex ? ex.fecha_registro : new Date().toISOString(),
     updated_at: new Date().toISOString()
   };
+  p.sincronizado = false;
   await txPut('pacientes', p);
   await cargarLista();
+  contarPendientesSync();
   cerrarModal('modal-paciente');
   toast(editandoPacienteId ? '✓ Paciente actualizado' : '✓ Paciente registrado');
   if (editandoPacienteId) await abrirFicha(id);
@@ -3295,6 +3311,7 @@ async function guardarSesion() {
     evolucion: evolSeleccionada || null,
     areas, created_at: new Date().toISOString()
   };
+  sesion.sincronizado = false;
   await txPut('sesiones', sesion);
   if (fotosNuevaSesion.length) await guardarFotosSesion(sesionId);
   await cargarSesiones(pacienteActualId);
@@ -5088,7 +5105,9 @@ async function guardarEvaluacion() {
     },
     created_at: new Date().toISOString()
   };
+  evaluacion.sincronizado = false;
   await txPut('evaluaciones', evaluacion);
+  contarPendientesSync();
   toast('✓ Evaluación guardada');
   renderEvaluacion();
 }
@@ -5462,7 +5481,7 @@ if ('serviceWorker' in navigator) {
   if (location.protocol === 'https:' || location.protocol === 'http:') {
     navigator.serviceWorker.register('./sw.js').then(() => console.log('SW registrado (archivo)')).catch(e => console.warn('SW archivo falló, usando fallback', e));
   } else {
-    const swCode = `const CACHE='kinara-v11';const URLS=['./'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(URLS))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('./')))));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));`;
+    const swCode = `const CACHE='kinara-v12';const URLS=['./'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(URLS))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('./')))));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));`;
     const blob = new Blob([swCode], {type:'application/javascript'});
     navigator.serviceWorker.register(URL.createObjectURL(blob)).then(()=>console.log('SW registrado (blob)')).catch(()=>{});
   }
@@ -5530,6 +5549,231 @@ async function limpiarDatosDemo() {
 }
 
 // ══════════════════════════════════════
+// SUPABASE SYNC — v12
+// Sincronización offline-first con Supabase
+// ══════════════════════════════════════
+
+const SUPA_URL = 'https://mcuetlysryrfsgljektw.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jdWV0bHlzcnlyZnNnbGpla3R3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyODY5ODYsImV4cCI6MjA5Njg2Mjk4Nn0.zD99gIv6qkzjKB7VXChvSY_ClfuuX-8ooTTvQSqkhXc';
+
+// Headers comunes para todas las peticiones a Supabase
+function supaHeaders(extras = {}) {
+  return {
+    'apikey': SUPA_KEY,
+    'Authorization': `Bearer ${SUPA_KEY}`,
+    'Content-Type': 'application/json',
+    'Prefer': 'resolution=merge-duplicates',
+    ...extras
+  };
+}
+
+// Upsert genérico — inserta o actualiza por PK (id)
+async function supaUpsert(tabla, registros) {
+  if (!registros.length) return { ok: true, count: 0 };
+  const resp = await fetch(`${SUPA_URL}/rest/v1/${tabla}`, {
+    method: 'POST',
+    headers: supaHeaders({ 'Prefer': 'resolution=merge-duplicates,return=minimal' }),
+    body: JSON.stringify(registros)
+  });
+  if (!resp.ok) {
+    const err = await resp.text();
+    throw new Error(`Supabase ${tabla}: ${resp.status} — ${err}`);
+  }
+  return { ok: true, count: registros.length };
+}
+
+// Mapear un paciente de IndexedDB → fila de Supabase
+function mapPaciente(p) {
+  const { id, nombre, fecha_nac, cedula, telefono, correo, direccion, eps,
+          tipo_servicio, estado, fecha_registro, updated_at, ...rest } = p;
+  return {
+    id, nombre, fecha_nac, cedula,
+    telefono, email: correo,
+    direccion, eps, tipo_servicio, estado,
+    fecha_ingreso: fecha_registro,
+    datos_extra: rest,
+    updated_at: updated_at || new Date().toISOString(),
+    sincronizado: true
+  };
+}
+
+// Mapear una sesión de IndexedDB → fila de Supabase
+function mapSesion(s) {
+  const { id, pacienteId, fecha, hora, tipo, evolucion, created_at, updated_at, ...rest } = s;
+  return {
+    id,
+    paciente_id: pacienteId,
+    fecha, tipo_servicio: tipo, evolucion,
+    datos_extra: rest,
+    created_at: created_at || new Date().toISOString(),
+    updated_at: updated_at || new Date().toISOString(),
+    sincronizado: true
+  };
+}
+
+// Mapear una evaluación de IndexedDB → fila de Supabase
+function mapEvaluacion(ev) {
+  const { id, pacienteId, tipo_servicio, signos_vitales, revision_sistemas,
+          valoracion, diagnostico, tests, plan_tratamiento, objetivos,
+          pronostico, created_at, updated_at, ...rest } = ev;
+  return {
+    id,
+    paciente_id: pacienteId,
+    tipo_servicio, signos_vitales, revision_sistemas,
+    valoracion, diagnostico, tests,
+    plan_tratamiento, objetivos, pronostico,
+    datos_extra: rest,
+    created_at: created_at || new Date().toISOString(),
+    updated_at: updated_at || new Date().toISOString(),
+    sincronizado: true
+  };
+}
+
+// Mapear un consentimiento de IndexedDB → fila de Supabase
+// NOTA: pdf_base64 se omite aquí (va a Storage separado en el futuro)
+function mapConsentimiento(c) {
+  const { id, pacienteId, tipo_servicio, fecha, firmado, pdfBase64, created_at, ...rest } = c;
+  return {
+    id,
+    paciente_id: pacienteId,
+    tipo_servicio, fecha,
+    firmado: firmado || false,
+    datos_extra: rest,
+    created_at: created_at || new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    sincronizado: true
+  };
+}
+
+// ── SYNC PRINCIPAL ────────────────────
+// Sube todos los registros pendientes (sincronizado:false o sin flag)
+// y marca los sincronizados en IndexedDB
+let syncEnCurso = false;
+
+async function sincronizarConSupabase(silencioso = false) {
+  if (!navigator.onLine) {
+    if (!silencioso) toast('📵 Sin conexión — sync pendiente');
+    return { ok: false, razon: 'offline' };
+  }
+  if (syncEnCurso) return { ok: false, razon: 'en_curso' };
+  syncEnCurso = true;
+
+  const btnSync = document.getElementById('btn-sync-manual');
+  if (btnSync) { btnSync.textContent = '⏳ Sincronizando...'; btnSync.disabled = true; }
+
+  let totalSubidos = 0;
+  let errores = [];
+
+  try {
+    // ── 1. PACIENTES ──
+    const todosPacientes = await txGet('pacientes');
+    const pacientesPendientes = todosPacientes.filter(p => !p.sincronizado);
+    if (pacientesPendientes.length) {
+      const filas = pacientesPendientes.map(mapPaciente);
+      await supaUpsert('pacientes', filas);
+      for (const p of pacientesPendientes) {
+        await txPut('pacientes', { ...p, sincronizado: true });
+      }
+      totalSubidos += pacientesPendientes.length;
+    }
+
+    // ── 2. SESIONES ──
+    const todasSesiones = await txGet('sesiones');
+    const sesionesPendientes = todasSesiones.filter(s => !s.sincronizado);
+    if (sesionesPendientes.length) {
+      const filas = sesionesPendientes.map(mapSesion);
+      await supaUpsert('sesiones', filas);
+      for (const s of sesionesPendientes) {
+        await txPut('sesiones', { ...s, sincronizado: true });
+      }
+      totalSubidos += sesionesPendientes.length;
+    }
+
+    // ── 3. EVALUACIONES ──
+    const todasEvals = await txGet('evaluaciones');
+    const evalsPendientes = todasEvals.filter(e => !e.sincronizado);
+    if (evalsPendientes.length) {
+      const filas = evalsPendientes.map(mapEvaluacion);
+      await supaUpsert('evaluaciones', filas);
+      for (const ev of evalsPendientes) {
+        await txPut('evaluaciones', { ...ev, sincronizado: true });
+      }
+      totalSubidos += evalsPendientes.length;
+    }
+
+    // ── 4. CONSENTIMIENTOS ──
+    const todosConsent = await txGet('consentimientos');
+    const consentPendientes = todosConsent.filter(c => c.sincronizado === false);
+    if (consentPendientes.length) {
+      const filas = consentPendientes.map(mapConsentimiento);
+      await supaUpsert('consentimientos', filas);
+      for (const c of consentPendientes) {
+        await txPut('consentimientos', { ...c, sincronizado: true });
+      }
+      totalSubidos += consentPendientes.length;
+    }
+
+    // Actualizar UI de estado
+    const ahora = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+    await setConfig('ultimo_sync', ahora);
+    actualizarUISync(ahora, totalSubidos);
+
+    if (!silencioso) {
+      if (totalSubidos > 0) {
+        toast(`☁️ Sync completo — ${totalSubidos} registro${totalSubidos > 1 ? 's' : ''} subido${totalSubidos > 1 ? 's' : ''}`);
+      } else {
+        toast('☁️ Todo sincronizado — nada nuevo');
+      }
+    }
+    return { ok: true, subidos: totalSubidos };
+
+  } catch(err) {
+    console.error('Error sync Supabase:', err);
+    if (!silencioso) toast('⚠ Error al sincronizar: ' + err.message.slice(0, 60));
+    return { ok: false, error: err.message };
+  } finally {
+    syncEnCurso = false;
+    if (btnSync) { btnSync.textContent = '☁️ Sincronizar'; btnSync.disabled = false; }
+  }
+}
+
+// Actualizar el badge de sync en el menú
+function actualizarUISync(hora, subidos) {
+  const badge = document.getElementById('sync-badge');
+  const horaEl = document.getElementById('sync-hora');
+  if (badge) badge.style.display = 'none';
+  if (horaEl) horaEl.textContent = hora ? `Último sync: ${hora}` : '';
+}
+
+// Contar pendientes y mostrar badge
+async function contarPendientesSync() {
+  try {
+    const pacs  = (await txGet('pacientes')).filter(p => !p.sincronizado).length;
+    const sess  = (await txGet('sesiones')).filter(s => !s.sincronizado).length;
+    const evs   = (await txGet('evaluaciones')).filter(e => !e.sincronizado).length;
+    const cons  = (await txGet('consentimientos')).filter(c => c.sincronizado === false).length;
+    const total = pacs + sess + evs + cons;
+    const badge = document.getElementById('sync-badge');
+    if (badge) {
+      badge.textContent = total;
+      badge.style.display = total > 0 ? 'inline-flex' : 'none';
+    }
+    return total;
+  } catch(e) { return 0; }
+}
+
+// Auto-sync al recuperar conexión
+window.addEventListener('online', () => {
+  toast('🌐 Conexión restaurada — sincronizando...');
+  setTimeout(() => sincronizarConSupabase(true), 1500);
+});
+
+// Auto-sync periódico cada 5 minutos (mantiene el proyecto Supabase activo + sube pendientes)
+setInterval(() => {
+  if (navigator.onLine) sincronizarConSupabase(true);
+}, 5 * 60 * 1000);
+
+// ══════════════════════════════════════
 // INIT — v7.1: Escala de dolor FUERA del async, try-catch robusto, demo fix mejorado
 // ══════════════════════════════════════
 
@@ -5553,6 +5797,17 @@ buildDolorScale();
   } catch(err) { console.warn('Logo:', err); }
 
   await cargarLista();
+
+  // Sync inicial silencioso al arrancar (si hay conexión)
+  try {
+    const ultimoSync = await getConfig('ultimo_sync');
+    if (ultimoSync) {
+      const horaEl = document.getElementById('sync-hora');
+      if (horaEl) horaEl.textContent = `Último sync: ${ultimoSync}`;
+    }
+    await contarPendientesSync();
+    if (navigator.onLine) setTimeout(() => sincronizarConSupabase(true), 3000);
+  } catch(e) { console.warn('Sync inicial:', e); }
 
   // FIX v7.1: Solo crear demos si la DB es completamente nueva
   // Si ya hay pacientes (reales o demos), NUNCA recrear
