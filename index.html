@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>KINARA v13 · Gestión de Pacientes</title>
+<title>KINARA v14 · Gestión de Pacientes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -759,7 +759,7 @@
 <!-- ══ MENÚ LATERAL ══ -->
 <div class="menu-overlay" id="menu-overlay" onclick="if(event.target===this)cerrarMenu()">
   <div class="menu-panel">
-    <div class="menu-header"><h3>KINARA</h3><p>Gestión Clínica · v13</p></div>
+    <div class="menu-header"><h3>KINARA</h3><p>Gestión Clínica · v14</p></div>
     <div class="menu-body">
       <!-- ── Supabase Sync ── -->
       <div style="padding:12px 16px 8px;border-bottom:1px solid var(--border);margin-bottom:4px">
@@ -772,6 +772,7 @@
           </div>
           <button id="btn-sync-manual" onclick="sincronizarConSupabase(false);cerrarMenu()" style="background:var(--teal);color:white;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">☁️ Sincronizar</button>
         </div>
+        <button id="btn-descargar-nube" onclick="descargarDesdeNube()" style="width:100%;margin-top:8px;background:rgba(42,143,124,.08);color:var(--teal-dark);border:1px solid var(--teal-mid);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer">⬇️ Descargar de la nube</button>
       </div>
       <button class="menu-item" onclick="exportarDatos()">
         <span class="menu-item-icon">💾</span>
@@ -792,7 +793,7 @@
         <span class="menu-item-icon">✕</span><span class="menu-item-text">Cerrar menú</span>
       </button>
     </div>
-    <div class="menu-footer">KINARA v13 · Offline-first + Cloud sync<br>Geraldine Castillo Torres · Fisioterapeuta<br>COLFI 22915 · ReTHUS 2025-08-21</div>
+    <div class="menu-footer">KINARA v14 · Offline-first + Cloud sync<br>Geraldine Castillo Torres · Fisioterapeuta<br>COLFI 22915 · ReTHUS 2025-08-21</div>
   </div>
 </div>
 
@@ -5481,7 +5482,7 @@ if ('serviceWorker' in navigator) {
   if (location.protocol === 'https:' || location.protocol === 'http:') {
     navigator.serviceWorker.register('./sw.js').then(() => console.log('SW registrado (archivo)')).catch(e => console.warn('SW archivo falló, usando fallback', e));
   } else {
-    const swCode = `const CACHE='kinara-v13';const URLS=['./'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(URLS))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('./')))));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));`;
+    const swCode = `const CACHE='kinara-v14';const URLS=['./'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(URLS))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('./')))));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));`;
     const blob = new Blob([swCode], {type:'application/javascript'});
     navigator.serviceWorker.register(URL.createObjectURL(blob)).then(()=>console.log('SW registrado (blob)')).catch(()=>{});
   }
@@ -5827,6 +5828,119 @@ async function contarPendientesSync() {
     }
     return total;
   } catch(e) { return 0; }
+}
+
+// ── DESCARGA DESDE LA NUBE ────────────
+// Trae todos los registros de Supabase y los fusiona en IndexedDB local.
+// Para dispositivos nuevos (celular) o recuperación de datos.
+async function supaFetch(tabla) {
+  const resp = await fetch(`${SUPA_URL}/rest/v1/${tabla}?select=*&limit=10000`, {
+    headers: supaHeaders()
+  });
+  if (!resp.ok) throw new Error(`${tabla}: HTTP ${resp.status}`);
+  return resp.json();
+}
+
+// Convierte fila de Supabase → objeto IndexedDB (operación inversa de los mappers)
+function unmapPaciente(row) {
+  return {
+    id: row.id, nombre: row.nombre, fecha_nac: row.fecha_nac, cedula: row.cedula,
+    telefono: row.telefono, correo: row.email, direccion: row.direccion, eps: row.eps,
+    tipo_servicio: row.tipo_servicio, estado: row.estado,
+    fecha_registro: row.fecha_ingreso, updated_at: row.updated_at,
+    pdf_alta_url: row.pdf_alta_url || undefined,
+    ...(row.datos_extra || {}),
+    sincronizado: true
+  };
+}
+
+function unmapSesion(row) {
+  return {
+    id: row.id, pacienteId: row.paciente_id, fecha: row.fecha,
+    tipo: row.tipo_servicio, evolucion: row.evolucion,
+    created_at: row.created_at, updated_at: row.updated_at,
+    ...(row.datos_extra || {}),
+    sincronizado: true
+  };
+}
+
+function unmapEvaluacion(row) {
+  return {
+    id: row.id, pacienteId: row.paciente_id, tipo_servicio: row.tipo_servicio,
+    signos_vitales: row.signos_vitales, revision_sistemas: row.revision_sistemas,
+    valoracion: row.valoracion, diagnostico: row.diagnostico, tests: row.tests,
+    plan_tratamiento: row.plan_tratamiento, objetivos: row.objetivos, pronostico: row.pronostico,
+    created_at: row.created_at, updated_at: row.updated_at,
+    ...(row.datos_extra || {}),
+    sincronizado: true
+  };
+}
+
+function unmapConsentimiento(row) {
+  return {
+    id: row.id, pacienteId: row.paciente_id, tipo_servicio: row.tipo_servicio,
+    fecha: row.fecha, firmado: row.firmado,
+    pdf_url: row.pdf_url || undefined,
+    created_at: row.created_at,
+    ...(row.datos_extra || {}),
+    sincronizado: true
+  };
+}
+
+async function descargarDesdeNube() {
+  if (!navigator.onLine) { toast('📵 Sin conexión'); return; }
+  if (!confirm('⬇️ Descargar datos desde la nube\n\nLos registros de la nube se fusionarán con los locales.\nLos registros locales con cambios sin sincronizar NO se tocarán.\n\n¿Continuar?')) return;
+
+  const btn = document.getElementById('btn-descargar-nube');
+  if (btn) { btn.textContent = '⏳ Descargando...'; btn.disabled = true; }
+
+  try {
+    let totalNuevos = 0, totalActualizados = 0;
+
+    // Pares [tabla Supabase, store IndexedDB, unmapper]
+    const pares = [
+      ['pacientes', 'pacientes', unmapPaciente],
+      ['sesiones', 'sesiones', unmapSesion],
+      ['evaluaciones', 'evaluaciones', unmapEvaluacion],
+      ['consentimientos', 'consentimientos', unmapConsentimiento]
+    ];
+
+    for (const [tabla, store, unmap] of pares) {
+      const filas = await supaFetch(tabla);
+      const locales = await txGet(store);
+      const localById = {};
+      locales.forEach(l => localById[l.id] = l);
+
+      for (const row of filas) {
+        const local = localById[row.id];
+        if (!local) {
+          // No existe localmente → traerlo
+          await txPut(store, unmap(row));
+          totalNuevos++;
+        } else if (local.sincronizado !== false) {
+          // Existe y NO tiene cambios locales pendientes → actualizar con versión de la nube
+          // PRESERVAR campos binarios locales (PDFs, firmas) que no viajan por la tabla
+          const remoto = unmap(row);
+          if (local.documento_pdf && !remoto.documento_pdf) remoto.documento_pdf = local.documento_pdf;
+          if (local.documento_pdf_alta && !remoto.documento_pdf_alta) remoto.documento_pdf_alta = local.documento_pdf_alta;
+          if (local.firma && !remoto.firma) remoto.firma = local.firma;
+          if (local.firma_alta && !remoto.firma_alta) remoto.firma_alta = local.firma_alta;
+          await txPut(store, remoto);
+          totalActualizados++;
+        }
+        // Si local.sincronizado === false → tiene cambios pendientes, NO pisar
+      }
+    }
+
+    await cargarLista();
+    contarPendientesSync();
+    toast(`⬇️ Descarga completa — ${totalNuevos} nuevos, ${totalActualizados} actualizados`);
+  } catch(err) {
+    console.error('Error descarga:', err);
+    toast('⚠ Error al descargar: ' + err.message.slice(0, 60));
+  } finally {
+    if (btn) { btn.textContent = '⬇️ Descargar de la nube'; btn.disabled = false; }
+  }
 }
 
 // Auto-sync al recuperar conexión

@@ -1,9 +1,9 @@
 // ══════════════════════════════════════
-// KINARA v13 — Service Worker
+// KINARA v14 — Service Worker
 // Estrategia: Cache-first para assets, network-first para navegación
 // ══════════════════════════════════════
 
-const CACHE_NAME = 'kinara-v13';
+const CACHE_NAME = 'kinara-v14';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
