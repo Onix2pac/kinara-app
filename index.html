@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>KINARA v16 · Gestión de Pacientes</title>
+<title>KINARA v17 · Gestión de Pacientes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -759,7 +759,7 @@
 <!-- ══ MENÚ LATERAL ══ -->
 <div class="menu-overlay" id="menu-overlay" onclick="if(event.target===this)cerrarMenu()">
   <div class="menu-panel">
-    <div class="menu-header"><h3>KINARA</h3><p>Gestión Clínica · v16</p></div>
+    <div class="menu-header"><h3>KINARA</h3><p>Gestión Clínica · v17</p></div>
     <div class="menu-body">
       <!-- ── Supabase Sync ── -->
       <div style="padding:12px 16px 8px;border-bottom:1px solid var(--border);margin-bottom:4px">
@@ -793,7 +793,7 @@
         <span class="menu-item-icon">✕</span><span class="menu-item-text">Cerrar menú</span>
       </button>
     </div>
-    <div class="menu-footer">KINARA v16 · Offline-first + Cloud sync<br>Geraldine Castillo Torres · Fisioterapeuta<br>COLFI 22915 · ReTHUS 2025-08-21</div>
+    <div class="menu-footer">KINARA v17 · Offline-first + Cloud sync<br>Geraldine Castillo Torres · Fisioterapeuta<br>COLFI 22915 · ReTHUS 2025-08-21</div>
   </div>
 </div>
 
@@ -5484,7 +5484,7 @@ if ('serviceWorker' in navigator) {
   if (location.protocol === 'https:' || location.protocol === 'http:') {
     navigator.serviceWorker.register('./sw.js').then(() => console.log('SW registrado (archivo)')).catch(e => console.warn('SW archivo falló, usando fallback', e));
   } else {
-    const swCode = `const CACHE='kinara-v16';const URLS=['./'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(URLS))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('./')))));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));`;
+    const swCode = `const CACHE='kinara-v17';const URLS=['./'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(URLS))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('./')))));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));`;
     const blob = new Blob([swCode], {type:'application/javascript'});
     navigator.serviceWorker.register(URL.createObjectURL(blob)).then(()=>console.log('SW registrado (blob)')).catch(()=>{});
   }
@@ -6056,6 +6056,67 @@ function unmapMapa(row) {
   };
 }
 
+// Descarga silenciosa para el sync automático (sin confirmación ni toasts)
+async function descargarSilencioso() {
+  if (!navigator.onLine) return;
+  try {
+    const pares = [
+      ['pacientes', 'pacientes', unmapPaciente],
+      ['sesiones', 'sesiones', unmapSesion],
+      ['evaluaciones', 'evaluaciones', unmapEvaluacion],
+      ['consentimientos', 'consentimientos', unmapConsentimiento],
+      ['fotos', 'fotos', unmapFoto],
+      ['mapas', 'mapas', unmapMapa]
+    ];
+    let cambios = 0;
+    for (const [tabla, store, unmap] of pares) {
+      const filas = await supaFetch(tabla);
+      const locales = await txGet(store);
+      const localById = {};
+      locales.forEach(l => localById[l.id] = l);
+      const nubeIds = new Set(filas.map(r => r.id));
+
+      // Eliminar locales sincronizados que ya no están en la nube
+      for (const local of locales) {
+        if (local.sincronizado === true && !nubeIds.has(local.id)) {
+          await txDelete(store, local.id);
+          cambios++;
+        }
+      }
+      // Traer nuevos y actualizar (sin pisar cambios locales pendientes)
+      for (const row of filas) {
+        const local = localById[row.id];
+        if (!local) {
+          await txPut(store, unmap(row));
+          cambios++;
+        } else if (local.sincronizado !== false) {
+          const remoto = unmap(row);
+          if (local.documento_pdf && !remoto.documento_pdf) remoto.documento_pdf = local.documento_pdf;
+          if (local.documento_pdf_alta && !remoto.documento_pdf_alta) remoto.documento_pdf_alta = local.documento_pdf_alta;
+          if (local.firma && !remoto.firma) remoto.firma = local.firma;
+          if (local.firma_alta && !remoto.firma_alta) remoto.firma_alta = local.firma_alta;
+          if (local.dataUrl && !remoto.dataUrl) remoto.dataUrl = local.dataUrl;
+          await txPut(store, remoto);
+        }
+      }
+    }
+    // Descargar binarios de imágenes faltantes en segundo plano
+    for (const store of ['fotos', 'mapas']) {
+      const regs = await txGet(store);
+      const sinBinario = regs.filter(r => r.url && !r.dataUrl);
+      for (const r of sinBinario) {
+        try { r.dataUrl = await urlADataUrl(r.url); await txPut(store, r); cambios++; }
+        catch(e) {}
+      }
+    }
+    if (cambios > 0) {
+      await cargarLista();
+      contarPendientesSync();
+    }
+    return cambios;
+  } catch(e) { console.warn('Descarga silenciosa:', e); return 0; }
+}
+
 async function descargarDesdeNube() {
   if (!navigator.onLine) { toast('📵 Sin conexión'); return; }
   if (!confirm('⬇️ Descargar datos desde la nube\n\nLos registros de la nube se fusionarán con los locales.\nLos registros locales con cambios sin sincronizar NO se tocarán.\n\n¿Continuar?')) return;
@@ -6147,12 +6208,18 @@ async function descargarDesdeNube() {
 // Auto-sync al recuperar conexión
 window.addEventListener('online', () => {
   toast('🌐 Conexión restaurada — sincronizando...');
-  setTimeout(() => sincronizarConSupabase(true), 1500);
+  setTimeout(async () => {
+    await sincronizarConSupabase(true);
+    await descargarSilencioso();
+  }, 1500);
 });
 
-// Auto-sync periódico cada 5 minutos (mantiene el proyecto Supabase activo + sube pendientes)
-setInterval(() => {
-  if (navigator.onLine) sincronizarConSupabase(true);
+// Auto-sync periódico cada 5 minutos: sube pendientes y baja cambios de otros dispositivos
+setInterval(async () => {
+  if (navigator.onLine) {
+    await sincronizarConSupabase(true);
+    await descargarSilencioso();
+  }
 }, 5 * 60 * 1000);
 
 // ══════════════════════════════════════
@@ -6180,7 +6247,7 @@ buildDolorScale();
 
   await cargarLista();
 
-  // Sync inicial silencioso al arrancar (si hay conexión)
+  // Sync inicial silencioso al arrancar: primero baja cambios de otros dispositivos, luego sube los propios
   try {
     const ultimoSync = await getConfig('ultimo_sync');
     if (ultimoSync) {
@@ -6188,7 +6255,12 @@ buildDolorScale();
       if (horaEl) horaEl.textContent = `Último sync: ${ultimoSync}`;
     }
     await contarPendientesSync();
-    if (navigator.onLine) setTimeout(() => sincronizarConSupabase(true), 3000);
+    if (navigator.onLine) {
+      setTimeout(async () => {
+        await sincronizarConSupabase(true);  // subir pendientes primero (incluye cola de borrados)
+        await descargarSilencioso();          // luego bajar cambios de otros dispositivos
+      }, 3000);
+    }
   } catch(e) { console.warn('Sync inicial:', e); }
 
   // FIX v7.1: Solo crear demos si la DB es completamente nueva
