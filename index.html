@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>KINARA v14 · Gestión de Pacientes</title>
+<title>KINARA v15 · Gestión de Pacientes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -759,7 +759,7 @@
 <!-- ══ MENÚ LATERAL ══ -->
 <div class="menu-overlay" id="menu-overlay" onclick="if(event.target===this)cerrarMenu()">
   <div class="menu-panel">
-    <div class="menu-header"><h3>KINARA</h3><p>Gestión Clínica · v14</p></div>
+    <div class="menu-header"><h3>KINARA</h3><p>Gestión Clínica · v15</p></div>
     <div class="menu-body">
       <!-- ── Supabase Sync ── -->
       <div style="padding:12px 16px 8px;border-bottom:1px solid var(--border);margin-bottom:4px">
@@ -793,7 +793,7 @@
         <span class="menu-item-icon">✕</span><span class="menu-item-text">Cerrar menú</span>
       </button>
     </div>
-    <div class="menu-footer">KINARA v14 · Offline-first + Cloud sync<br>Geraldine Castillo Torres · Fisioterapeuta<br>COLFI 22915 · ReTHUS 2025-08-21</div>
+    <div class="menu-footer">KINARA v15 · Offline-first + Cloud sync<br>Geraldine Castillo Torres · Fisioterapeuta<br>COLFI 22915 · ReTHUS 2025-08-21</div>
   </div>
 </div>
 
@@ -3156,7 +3156,7 @@ function renderFotosPreviews() {
 function quitarFotoPreview(i) { fotosNuevaSesion.splice(i, 1); renderFotosPreviews(); }
 async function guardarFotosSesion(sesionId) {
   for (const f of fotosNuevaSesion) {
-    await txPut('fotos', { id: 'foto_'+Date.now()+'_'+Math.random().toString(36).slice(2,6), sesionId, pacienteId: pacienteActualId, tipo: f.tipo, dataUrl: f.dataUrl, fecha: new Date().toISOString().split('T')[0], created_at: new Date().toISOString() });
+    await txPut('fotos', { id: 'foto_'+Date.now()+'_'+Math.random().toString(36).slice(2,6), sesionId, pacienteId: pacienteActualId, tipo: f.tipo, dataUrl: f.dataUrl, fecha: new Date().toISOString().split('T')[0], created_at: new Date().toISOString(), sincronizado: false });
     await new Promise(r => setTimeout(r, 5));
   }
 }
@@ -3802,8 +3802,10 @@ async function guardarMapaClinico() {
     zonas: { ...zonasMarcadas },
     notas,
     dataUrl,
-    created_at: new Date().toISOString()
+    created_at: new Date().toISOString(),
+    sincronizado: false
   });
+  contarPendientesSync();
   toast('✓ Mapa guardado');
   cargarHistorialMapas();
 }
@@ -5482,7 +5484,7 @@ if ('serviceWorker' in navigator) {
   if (location.protocol === 'https:' || location.protocol === 'http:') {
     navigator.serviceWorker.register('./sw.js').then(() => console.log('SW registrado (archivo)')).catch(e => console.warn('SW archivo falló, usando fallback', e));
   } else {
-    const swCode = `const CACHE='kinara-v14';const URLS=['./'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(URLS))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('./')))));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));`;
+    const swCode = `const CACHE='kinara-v15';const URLS=['./'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(URLS))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('./')))));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));`;
     const blob = new Blob([swCode], {type:'application/javascript'});
     navigator.serviceWorker.register(URL.createObjectURL(blob)).then(()=>console.log('SW registrado (blob)')).catch(()=>{});
   }
@@ -5651,6 +5653,33 @@ function mapConsentimiento(c) {
   };
 }
 
+// Mapear foto de IndexedDB → fila de Supabase (sin dataUrl)
+function mapFoto(f) {
+  const { id, pacienteId, sesionId, tipo, fecha, dataUrl, url, created_at, ...rest } = f;
+  return {
+    id, paciente_id: pacienteId, sesion_id: sesionId || null,
+    tipo, fecha, url: url || null,
+    datos_extra: rest,
+    created_at: created_at || new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    sincronizado: true
+  };
+}
+
+// Mapear mapa corporal de IndexedDB → fila de Supabase (sin dataUrl)
+function mapMapa(m) {
+  const { id, pacienteId, fecha, vista, zonas, notas, dataUrl, url, created_at, ...rest } = m;
+  return {
+    id, paciente_id: pacienteId, fecha, vista,
+    zonas: zonas || {}, notas: notas || '',
+    url: url || null,
+    datos_extra: rest,
+    created_at: created_at || new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    sincronizado: true
+  };
+}
+
 // ── STORAGE: subida de PDFs ───────────
 // Convierte base64 (dataURI o puro) a Blob y lo sube al bucket
 async function subirPDFaStorage(ruta, base64) {
@@ -5677,6 +5706,42 @@ async function subirPDFaStorage(ruta, base64) {
   }
   // URL pública del archivo
   return `${SUPA_URL}/storage/v1/object/public/consentimientos/${ruta}`;
+}
+
+// Sube una imagen dataUrl (png/jpeg) al bucket media → retorna URL pública
+async function subirImagenAStorage(ruta, dataUrl) {
+  const [meta, b64] = dataUrl.split(',');
+  const mime = (meta.match(/data:([^;]+)/) || [])[1] || 'image/png';
+  const byteChars = atob(b64);
+  const bytes = new Uint8Array(byteChars.length);
+  for (let i = 0; i < byteChars.length; i++) bytes[i] = byteChars.charCodeAt(i);
+  const blob = new Blob([bytes], { type: mime });
+
+  const resp = await fetch(`${SUPA_URL}/storage/v1/object/media/${ruta}`, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPA_KEY,
+      'Authorization': `Bearer ${SUPA_KEY}`,
+      'Content-Type': mime,
+      'x-upsert': 'true'
+    },
+    body: blob
+  });
+  if (!resp.ok) throw new Error(`Storage media: ${resp.status}`);
+  return `${SUPA_URL}/storage/v1/object/public/media/${ruta}`;
+}
+
+// Descarga una URL de imagen y la convierte a dataUrl (para offline en dispositivo nuevo)
+async function urlADataUrl(url) {
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error(`fetch img: ${resp.status}`);
+  const blob = await resp.blob();
+  return new Promise((res, rej) => {
+    const fr = new FileReader();
+    fr.onload = () => res(fr.result);
+    fr.onerror = rej;
+    fr.readAsDataURL(blob);
+  });
 }
 
 // Limpia un texto para usarlo como nombre de archivo seguro
@@ -5781,6 +5846,39 @@ async function sincronizarConSupabase(silencioso = false) {
       }
     } catch(e) { console.warn('PDFs altas:', e); errores.push('PDF alta: ' + e.message); }
 
+    // ── 6. FOTOS a STORAGE + tabla ──
+    try {
+      const todasFotos = await txGet('fotos');
+      const fotosPendientes = todasFotos.filter(f => f.dataUrl && (!f.url || !f.sincronizado));
+      for (const f of fotosPendientes) {
+        if (!f.url) {
+          const ext = f.dataUrl.includes('image/jpeg') ? 'jpg' : 'png';
+          const ruta = `fotos/${safeFileName(f.pacienteId)}/${f.id}.${ext}`;
+          f.url = await subirImagenAStorage(ruta, f.dataUrl);
+        }
+        await supaUpsert('fotos', [mapFoto(f)]);
+        f.sincronizado = true;
+        await txPut('fotos', f);
+        totalSubidos++;
+      }
+    } catch(e) { console.warn('Fotos sync:', e); errores.push('Fotos: ' + e.message); }
+
+    // ── 7. MAPAS a STORAGE + tabla ──
+    try {
+      const todosMapas = await txGet('mapas');
+      const mapasPendientes = todosMapas.filter(m => (!m.url && m.dataUrl) || !m.sincronizado);
+      for (const m of mapasPendientes) {
+        if (!m.url && m.dataUrl) {
+          const ruta = `mapas/${safeFileName(m.pacienteId)}/${m.id}.png`;
+          m.url = await subirImagenAStorage(ruta, m.dataUrl);
+        }
+        await supaUpsert('mapas', [mapMapa(m)]);
+        m.sincronizado = true;
+        await txPut('mapas', m);
+        totalSubidos++;
+      }
+    } catch(e) { console.warn('Mapas sync:', e); errores.push('Mapas: ' + e.message); }
+
     // Actualizar UI de estado
     const ahora = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
     await setConfig('ultimo_sync', ahora);
@@ -5820,7 +5918,9 @@ async function contarPendientesSync() {
     const sess  = (await txGet('sesiones')).filter(s => !s.sincronizado).length;
     const evs   = (await txGet('evaluaciones')).filter(e => !e.sincronizado).length;
     const cons  = (await txGet('consentimientos')).filter(c => c.sincronizado === false).length;
-    const total = pacs + sess + evs + cons;
+    const fts   = (await txGet('fotos')).filter(f => f.sincronizado === false).length;
+    const mps   = (await txGet('mapas')).filter(m => m.sincronizado === false).length;
+    const total = pacs + sess + evs + cons + fts + mps;
     const badge = document.getElementById('sync-badge');
     if (badge) {
       badge.textContent = total;
@@ -5887,6 +5987,27 @@ function unmapConsentimiento(row) {
   };
 }
 
+function unmapFoto(row) {
+  return {
+    id: row.id, pacienteId: row.paciente_id, sesionId: row.sesion_id,
+    tipo: row.tipo, fecha: row.fecha, url: row.url || undefined,
+    created_at: row.created_at,
+    ...(row.datos_extra || {}),
+    sincronizado: true
+  };
+}
+
+function unmapMapa(row) {
+  return {
+    id: row.id, pacienteId: row.paciente_id, fecha: row.fecha,
+    vista: row.vista, zonas: row.zonas || {}, notas: row.notas || '',
+    url: row.url || undefined,
+    created_at: row.created_at,
+    ...(row.datos_extra || {}),
+    sincronizado: true
+  };
+}
+
 async function descargarDesdeNube() {
   if (!navigator.onLine) { toast('📵 Sin conexión'); return; }
   if (!confirm('⬇️ Descargar datos desde la nube\n\nLos registros de la nube se fusionarán con los locales.\nLos registros locales con cambios sin sincronizar NO se tocarán.\n\n¿Continuar?')) return;
@@ -5902,7 +6023,9 @@ async function descargarDesdeNube() {
       ['pacientes', 'pacientes', unmapPaciente],
       ['sesiones', 'sesiones', unmapSesion],
       ['evaluaciones', 'evaluaciones', unmapEvaluacion],
-      ['consentimientos', 'consentimientos', unmapConsentimiento]
+      ['consentimientos', 'consentimientos', unmapConsentimiento],
+      ['fotos', 'fotos', unmapFoto],
+      ['mapas', 'mapas', unmapMapa]
     ];
 
     for (const [tabla, store, unmap] of pares) {
@@ -5925,6 +6048,7 @@ async function descargarDesdeNube() {
           if (local.documento_pdf_alta && !remoto.documento_pdf_alta) remoto.documento_pdf_alta = local.documento_pdf_alta;
           if (local.firma && !remoto.firma) remoto.firma = local.firma;
           if (local.firma_alta && !remoto.firma_alta) remoto.firma_alta = local.firma_alta;
+          if (local.dataUrl && !remoto.dataUrl) remoto.dataUrl = local.dataUrl;
           await txPut(store, remoto);
           totalActualizados++;
         }
@@ -5932,9 +6056,26 @@ async function descargarDesdeNube() {
       }
     }
 
+    // Descargar binarios de imágenes faltantes (dispositivo nuevo, offline-first)
+    let imgsDescargadas = 0;
+    try {
+      for (const store of ['fotos', 'mapas']) {
+        const regs = await txGet(store);
+        const sinBinario = regs.filter(r => r.url && !r.dataUrl);
+        for (const r of sinBinario) {
+          try {
+            r.dataUrl = await urlADataUrl(r.url);
+            await txPut(store, r);
+            imgsDescargadas++;
+          } catch(e) { console.warn(`Imagen ${r.id}:`, e); }
+        }
+      }
+    } catch(e) { console.warn('Descarga de imágenes:', e); }
+
     await cargarLista();
     contarPendientesSync();
-    toast(`⬇️ Descarga completa — ${totalNuevos} nuevos, ${totalActualizados} actualizados`);
+    const msgImgs = imgsDescargadas ? ` · ${imgsDescargadas} imágenes` : '';
+    toast(`⬇️ Descarga completa — ${totalNuevos} nuevos, ${totalActualizados} actualizados${msgImgs}`);
   } catch(err) {
     console.error('Error descarga:', err);
     toast('⚠ Error al descargar: ' + err.message.slice(0, 60));
