@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>KINARA v17 · Gestión de Pacientes</title>
+<title>KINARA v18 · Gestión de Pacientes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -759,7 +759,7 @@
 <!-- ══ MENÚ LATERAL ══ -->
 <div class="menu-overlay" id="menu-overlay" onclick="if(event.target===this)cerrarMenu()">
   <div class="menu-panel">
-    <div class="menu-header"><h3>KINARA</h3><p>Gestión Clínica · v17</p></div>
+    <div class="menu-header"><h3>KINARA</h3><p>Gestión Clínica · v18</p></div>
     <div class="menu-body">
       <!-- ── Supabase Sync ── -->
       <div style="padding:12px 16px 8px;border-bottom:1px solid var(--border);margin-bottom:4px">
@@ -793,7 +793,7 @@
         <span class="menu-item-icon">✕</span><span class="menu-item-text">Cerrar menú</span>
       </button>
     </div>
-    <div class="menu-footer">KINARA v17 · Offline-first + Cloud sync<br>Geraldine Castillo Torres · Fisioterapeuta<br>COLFI 22915 · ReTHUS 2025-08-21</div>
+    <div class="menu-footer">KINARA v18 · Offline-first + Cloud sync<br>Geraldine Castillo Torres · Fisioterapeuta<br>COLFI 22915 · ReTHUS 2025-08-21</div>
   </div>
 </div>
 
@@ -4748,7 +4748,7 @@ async function renderEvaluacion() {
   if (!p) return;
   const el = document.getElementById('eval-content');
   const tipoServicio = normTipo(p.tipo_servicio);
-  const evals = (await txGet('evaluaciones','pacienteId',pacienteActualId)).sort((a,b) => b.created_at.localeCompare(a.created_at));
+  const evals = (await txGet('evaluaciones','pacienteId',pacienteActualId)).sort((a,b) => (b.created_at||'').localeCompare(a.created_at||''));
   evalActual = {};
   window.testsDetalleActual = {};
 
@@ -4934,9 +4934,9 @@ async function renderEvaluacion() {
   if (evals.length) {
     html += `<div style="margin-top:20px"><div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-soft);font-weight:500;margin-bottom:10px">Evaluaciones anteriores (${evals.length})</div>
       ${evals.map(ev => {
-        const d = new Date(ev.created_at);
-        const fecha = d.toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'});
-        const hora = d.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',hour12:false});
+        const d = ev.created_at ? new Date(ev.created_at) : null;
+        const fecha = d && !isNaN(d) ? d.toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'}) : 'Sin fecha';
+        const hora = d && !isNaN(d) ? d.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',hour12:false}) : '';
         const sv = ev.signos_vitales || {};
         const hasTox = ev.tests?.toxicidad;
         const numTestsDet = ev.tests?.detalle ? Object.keys(ev.tests.detalle).length : 0;
@@ -5484,7 +5484,7 @@ if ('serviceWorker' in navigator) {
   if (location.protocol === 'https:' || location.protocol === 'http:') {
     navigator.serviceWorker.register('./sw.js').then(() => console.log('SW registrado (archivo)')).catch(e => console.warn('SW archivo falló, usando fallback', e));
   } else {
-    const swCode = `const CACHE='kinara-v17';const URLS=['./'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(URLS))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('./')))));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));`;
+    const swCode = `const CACHE='kinara-v18';const URLS=['./'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(URLS))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('./')))));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));`;
     const blob = new Blob([swCode], {type:'application/javascript'});
     navigator.serviceWorker.register(URL.createObjectURL(blob)).then(()=>console.log('SW registrado (blob)')).catch(()=>{});
   }
@@ -5934,6 +5934,25 @@ async function contarPendientesSync() {
   } catch(e) { return 0; }
 }
 
+// Refresca la vista que el usuario tiene abierta (tras una descarga de la nube)
+async function refrescarVistaActiva() {
+  try {
+    if (!pacienteActualId) return;
+    // Verificar que la ficha esté visible
+    const ficha = document.getElementById('view-ficha');
+    if (!ficha || !ficha.classList.contains('active')) return;
+    // Detectar tab activo y re-renderizar su contenido
+    const tabActivo = document.querySelector('.ficha-tab.active');
+    if (!tabActivo) return;
+    const onclick = tabActivo.getAttribute('onclick') || '';
+    if (onclick.includes('tab-evaluacion')) await renderEvaluacion();
+    else if (onclick.includes('tab-sesiones')) await cargarSesiones(pacienteActualId);
+    else if (onclick.includes('tab-galeria')) await cargarGaleria(pacienteActualId);
+    else if (onclick.includes('tab-consentimiento')) renderConsentimiento();
+    else if (onclick.includes('tab-mapa')) cargarHistorialMapas();
+  } catch(e) { console.warn('Refresh vista:', e); }
+}
+
 // ── BORRADOS SINCRONIZADOS ────────────
 // Borra en Supabase; si está offline, encola para el próximo sync
 async function supaDelete(tabla, id) {
@@ -6112,6 +6131,7 @@ async function descargarSilencioso() {
     if (cambios > 0) {
       await cargarLista();
       contarPendientesSync();
+      await refrescarVistaActiva();
     }
     return cambios;
   } catch(e) { console.warn('Descarga silenciosa:', e); return 0; }
@@ -6194,6 +6214,7 @@ async function descargarDesdeNube() {
 
     await cargarLista();
     contarPendientesSync();
+    await refrescarVistaActiva();
     const msgImgs = imgsDescargadas ? ` · ${imgsDescargadas} imágenes` : '';
     const msgElim = totalEliminados ? ` · ${totalEliminados} eliminados` : '';
     toast(`⬇️ Descarga completa — ${totalNuevos} nuevos, ${totalActualizados} actualizados${msgElim}${msgImgs}`);
