@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>KINARA v20 · Gestión de Pacientes</title>
+<title>KINARA v21 · Gestión de Pacientes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -759,7 +759,7 @@
 <!-- ══ MENÚ LATERAL ══ -->
 <div class="menu-overlay" id="menu-overlay" onclick="if(event.target===this)cerrarMenu()">
   <div class="menu-panel">
-    <div class="menu-header"><h3>KINARA</h3><p>Gestión Clínica · v20</p></div>
+    <div class="menu-header"><h3>KINARA</h3><p>Gestión Clínica · v21</p></div>
     <div class="menu-body">
       <!-- ── Supabase Sync ── -->
       <div style="padding:12px 16px 8px;border-bottom:1px solid var(--border);margin-bottom:4px">
@@ -773,6 +773,7 @@
           <button id="btn-sync-manual" onclick="sincronizarConSupabase(false);cerrarMenu()" style="background:var(--teal);color:white;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">☁️ Sincronizar</button>
         </div>
         <button id="btn-descargar-nube" onclick="descargarDesdeNube()" style="width:100%;margin-top:8px;background:rgba(42,143,124,.08);color:var(--teal-dark);border:1px solid var(--teal-mid);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer">⬇️ Descargar de la nube</button>
+        <button onclick="diagnosticoSync()" style="width:100%;margin-top:6px;background:transparent;color:var(--text-soft);border:1px dashed var(--border);border-radius:8px;padding:7px 14px;font-size:11px;font-weight:500;cursor:pointer">🩺 Diagnóstico de sync</button>
       </div>
       <button class="menu-item" onclick="exportarDatos()">
         <span class="menu-item-icon">💾</span>
@@ -793,7 +794,7 @@
         <span class="menu-item-icon">✕</span><span class="menu-item-text">Cerrar menú</span>
       </button>
     </div>
-    <div class="menu-footer">KINARA v20 · Offline-first + Cloud sync<br>Geraldine Castillo Torres · Fisioterapeuta<br>COLFI 22915 · ReTHUS 2025-08-21</div>
+    <div class="menu-footer">KINARA v21 · Offline-first + Cloud sync<br>Geraldine Castillo Torres · Fisioterapeuta<br>COLFI 22915 · ReTHUS 2025-08-21</div>
   </div>
 </div>
 
@@ -5484,7 +5485,7 @@ if ('serviceWorker' in navigator) {
   if (location.protocol === 'https:' || location.protocol === 'http:') {
     navigator.serviceWorker.register('./sw.js').then(() => console.log('SW registrado (archivo)')).catch(e => console.warn('SW archivo falló, usando fallback', e));
   } else {
-    const swCode = `const CACHE='kinara-v20';const URLS=['./'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(URLS))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('./')))));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));`;
+    const swCode = `const CACHE='kinara-v21';const URLS=['./'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(URLS))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('./')))));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));`;
     const blob = new Blob([swCode], {type:'application/javascript'});
     navigator.serviceWorker.register(URL.createObjectURL(blob)).then(()=>console.log('SW registrado (blob)')).catch(()=>{});
   }
@@ -5560,7 +5561,7 @@ async function limpiarDatosDemo() {
 // AUTO-ACTUALIZACIÓN — v20
 // La app verifica version.json y se recarga sola cuando hay versión nueva
 // ══════════════════════════════════════
-const APP_VERSION = 20;
+const APP_VERSION = 21;
 
 async function verificarActualizacion() {
   try {
@@ -5938,6 +5939,7 @@ async function sincronizarConSupabase(silencioso = false) {
 
   } catch(err) {
     console.error('Error sync Supabase:', err);
+    window.ultimoErrorSync = `[subida ${new Date().toLocaleTimeString('es-CO')}] ${err.message}`;
     if (!silencioso) toast('⚠ Error al sincronizar: ' + err.message.slice(0, 60));
     return { ok: false, error: err.message };
   } finally {
@@ -5990,6 +5992,66 @@ async function refrescarVistaActiva() {
     else if (onclick.includes('tab-consentimiento')) renderConsentimiento();
     else if (onclick.includes('tab-mapa')) cargarHistorialMapas();
   } catch(e) { console.warn('Refresh vista:', e); }
+}
+
+// ── DIAGNÓSTICO DE SYNC ───────────────
+async function diagnosticoSync() {
+  toast('🩺 Ejecutando diagnóstico...');
+  const tablas = ['pacientes','sesiones','evaluaciones','consentimientos','fotos','mapas'];
+  let filas = '';
+  let errorFetch = null;
+
+  for (const t of tablas) {
+    let localTotal = 0, localPend = 0, nubeViva = 0, nubeTomb = 0;
+    try {
+      const locales = await txGet(t);
+      localTotal = locales.length;
+      localPend = locales.filter(r => r.sincronizado === false).length;
+    } catch(e) { localTotal = -1; }
+    try {
+      const remoto = await supaFetch(t);
+      nubeViva = remoto.filter(r => !r.deleted_at).length;
+      nubeTomb = remoto.filter(r => r.deleted_at).length;
+    } catch(e) { nubeViva = -1; errorFetch = `${t}: ${e.message}`; }
+    const match = (localTotal === nubeViva) ? '✅' : '⚠️';
+    filas += `<tr>
+      <td style="padding:6px 8px;font-weight:600;color:var(--teal-dark)">${t}</td>
+      <td style="padding:6px 8px;text-align:center">${localTotal}${localPend ? ` <span style="color:var(--gold-dark)">(${localPend} pend)</span>` : ''}</td>
+      <td style="padding:6px 8px;text-align:center">${nubeViva}${nubeTomb ? ` <span style="color:var(--text-soft)">+${nubeTomb}💀</span>` : ''}</td>
+      <td style="padding:6px 8px;text-align:center">${match}</td>
+    </tr>`;
+  }
+
+  let colaBorrados = 0;
+  try { colaBorrados = JSON.parse(await getConfig('borrados_pendientes') || '[]').length; } catch(e) {}
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay open';
+  overlay.id = 'modal-diagnostico';
+  overlay.innerHTML = `<div class="modal-drawer" style="max-height:88vh;overflow-y:auto">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🩺 Diagnóstico de sincronización</div>
+    <div style="font-size:12px;color:var(--text-soft);margin:6px 0 12px">
+      Versión: <strong>v${APP_VERSION}</strong> ·
+      Conexión: <strong>${navigator.onLine ? '🌐 Online' : '📵 Offline'}</strong> ·
+      Cola de borrados: <strong>${colaBorrados}</strong>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:13px;background:white;border-radius:10px;overflow:hidden">
+      <tr style="background:var(--teal-pale);font-size:11px;text-transform:uppercase;letter-spacing:.05em">
+        <th style="padding:8px;text-align:left">Tabla</th>
+        <th style="padding:8px">Local</th>
+        <th style="padding:8px">Nube</th>
+        <th style="padding:8px">OK</th>
+      </tr>
+      ${filas}
+    </table>
+    ${window.ultimoErrorSync ? `<div style="margin-top:12px;padding:10px;background:rgba(230,57,70,.08);border:1px solid var(--danger);border-radius:8px;font-size:12px;color:var(--danger)"><strong>Último error:</strong><br>${window.ultimoErrorSync}</div>` : '<div style="margin-top:12px;font-size:12px;color:var(--teal-dark)">✅ Sin errores registrados en esta sesión</div>'}
+    ${errorFetch ? `<div style="margin-top:8px;padding:10px;background:rgba(230,57,70,.08);border-radius:8px;font-size:12px;color:var(--danger)"><strong>Error consultando nube:</strong> ${errorFetch}</div>` : ''}
+    <button class="btn btn-primary" style="margin-top:14px" onclick="document.getElementById('modal-diagnostico').remove();document.body.style.overflow=''">Cerrar</button>
+  </div>`;
+  overlay.addEventListener('click', ev => { if(ev.target===overlay){ overlay.remove(); document.body.style.overflow=''; } });
+  document.body.appendChild(overlay);
+  document.body.style.overflow = 'hidden';
 }
 
 // ── BORRADOS SINCRONIZADOS ────────────
@@ -6187,7 +6249,11 @@ async function descargarSilencioso() {
       await refrescarVistaActiva();
     }
     return cambios;
-  } catch(e) { console.warn('Descarga silenciosa:', e); return 0; }
+  } catch(e) {
+    console.warn('Descarga silenciosa:', e);
+    window.ultimoErrorSync = `[descarga-auto ${new Date().toLocaleTimeString('es-CO')}] ${e.message}`;
+    return 0;
+  }
 }
 
 async function descargarDesdeNube() {
@@ -6284,6 +6350,7 @@ async function descargarDesdeNube() {
     toast(`⬇️ Descarga completa — ${totalNuevos} nuevos, ${totalActualizados} actualizados${msgElim}${msgImgs}`);
   } catch(err) {
     console.error('Error descarga:', err);
+    window.ultimoErrorSync = `[descarga ${new Date().toLocaleTimeString('es-CO')}] ${err.message}`;
     toast('⚠ Error al descargar: ' + err.message.slice(0, 60));
   } finally {
     if (btn) { btn.textContent = '⬇️ Descargar de la nube'; btn.disabled = false; }
