@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>KINARA v21 · Gestión de Pacientes</title>
+<title>KINARA v22 · Gestión de Pacientes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -759,7 +759,7 @@
 <!-- ══ MENÚ LATERAL ══ -->
 <div class="menu-overlay" id="menu-overlay" onclick="if(event.target===this)cerrarMenu()">
   <div class="menu-panel">
-    <div class="menu-header"><h3>KINARA</h3><p>Gestión Clínica · v21</p></div>
+    <div class="menu-header"><h3>KINARA</h3><p>Gestión Clínica · v22</p></div>
     <div class="menu-body">
       <!-- ── Supabase Sync ── -->
       <div style="padding:12px 16px 8px;border-bottom:1px solid var(--border);margin-bottom:4px">
@@ -794,7 +794,7 @@
         <span class="menu-item-icon">✕</span><span class="menu-item-text">Cerrar menú</span>
       </button>
     </div>
-    <div class="menu-footer">KINARA v21 · Offline-first + Cloud sync<br>Geraldine Castillo Torres · Fisioterapeuta<br>COLFI 22915 · ReTHUS 2025-08-21</div>
+    <div class="menu-footer">KINARA v22 · Offline-first + Cloud sync<br>Geraldine Castillo Torres · Fisioterapeuta<br>COLFI 22915 · ReTHUS 2025-08-21</div>
   </div>
 </div>
 
@@ -5485,7 +5485,7 @@ if ('serviceWorker' in navigator) {
   if (location.protocol === 'https:' || location.protocol === 'http:') {
     navigator.serviceWorker.register('./sw.js').then(() => console.log('SW registrado (archivo)')).catch(e => console.warn('SW archivo falló, usando fallback', e));
   } else {
-    const swCode = `const CACHE='kinara-v21';const URLS=['./'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(URLS))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('./')))));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));`;
+    const swCode = `const CACHE='kinara-v22';const URLS=['./'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(URLS))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('./')))));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));`;
     const blob = new Blob([swCode], {type:'application/javascript'});
     navigator.serviceWorker.register(URL.createObjectURL(blob)).then(()=>console.log('SW registrado (blob)')).catch(()=>{});
   }
@@ -5561,7 +5561,7 @@ async function limpiarDatosDemo() {
 // AUTO-ACTUALIZACIÓN — v20
 // La app verifica version.json y se recarga sola cuando hay versión nueva
 // ══════════════════════════════════════
-const APP_VERSION = 21;
+const APP_VERSION = 22;
 
 async function verificarActualizacion() {
   try {
@@ -6001,19 +6001,31 @@ async function diagnosticoSync() {
   let filas = '';
   let errorFetch = null;
 
+  let detallesDiff = '';
   for (const t of tablas) {
     let localTotal = 0, localPend = 0, nubeViva = 0, nubeTomb = 0;
+    let localesArr = [], remotoArr = [];
     try {
-      const locales = await txGet(t);
-      localTotal = locales.length;
-      localPend = locales.filter(r => r.sincronizado === false).length;
+      localesArr = await txGet(t);
+      localTotal = localesArr.length;
+      localPend = localesArr.filter(r => r.sincronizado === false).length;
     } catch(e) { localTotal = -1; }
     try {
-      const remoto = await supaFetch(t);
-      nubeViva = remoto.filter(r => !r.deleted_at).length;
-      nubeTomb = remoto.filter(r => r.deleted_at).length;
+      remotoArr = await supaFetch(t);
+      nubeViva = remotoArr.filter(r => !r.deleted_at).length;
+      nubeTomb = remotoArr.filter(r => r.deleted_at).length;
     } catch(e) { nubeViva = -1; errorFetch = `${t}: ${e.message}`; }
     const match = (localTotal === nubeViva) ? '✅' : '⚠️';
+    // Si hay diferencia, calcular qué IDs faltan en cada lado
+    if (localTotal !== nubeViva && localTotal >= 0 && nubeViva >= 0) {
+      const localIds = new Set(localesArr.map(r => r.id));
+      const vivasNube = remotoArr.filter(r => !r.deleted_at);
+      const faltanLocal = vivasNube.filter(r => !localIds.has(r.id)).map(r => r.id).slice(0, 3);
+      const nubeIdsViv = new Set(vivasNube.map(r => r.id));
+      const soloLocal = localesArr.filter(r => !nubeIdsViv.has(r.id)).map(r => `${r.id}${r.sincronizado === false ? ' (pend)' : ''}`).slice(0, 3);
+      if (faltanLocal.length) detallesDiff += `<div style="margin-top:6px"><strong>${t} — faltan en este dispositivo:</strong><br>${faltanLocal.join('<br>')}</div>`;
+      if (soloLocal.length) detallesDiff += `<div style="margin-top:6px"><strong>${t} — solo en este dispositivo:</strong><br>${soloLocal.join('<br>')}</div>`;
+    }
     filas += `<tr>
       <td style="padding:6px 8px;font-weight:600;color:var(--teal-dark)">${t}</td>
       <td style="padding:6px 8px;text-align:center">${localTotal}${localPend ? ` <span style="color:var(--gold-dark)">(${localPend} pend)</span>` : ''}</td>
@@ -6045,6 +6057,7 @@ async function diagnosticoSync() {
       </tr>
       ${filas}
     </table>
+    ${detallesDiff ? `<div style="margin-top:12px;padding:10px;background:rgba(212,160,23,.08);border:1px solid var(--gold);border-radius:8px;font-size:11px;color:var(--text);word-break:break-all">${detallesDiff}</div>` : ''}
     ${window.ultimoErrorSync ? `<div style="margin-top:12px;padding:10px;background:rgba(230,57,70,.08);border:1px solid var(--danger);border-radius:8px;font-size:12px;color:var(--danger)"><strong>Último error:</strong><br>${window.ultimoErrorSync}</div>` : '<div style="margin-top:12px;font-size:12px;color:var(--teal-dark)">✅ Sin errores registrados en esta sesión</div>'}
     ${errorFetch ? `<div style="margin-top:8px;padding:10px;background:rgba(230,57,70,.08);border-radius:8px;font-size:12px;color:var(--danger)"><strong>Error consultando nube:</strong> ${errorFetch}</div>` : ''}
     <button class="btn btn-primary" style="margin-top:14px" onclick="document.getElementById('modal-diagnostico').remove();document.body.style.overflow=''">Cerrar</button>
