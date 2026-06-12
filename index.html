@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>KINARA v18 · Gestión de Pacientes</title>
+<title>KINARA v19 · Gestión de Pacientes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -759,7 +759,7 @@
 <!-- ══ MENÚ LATERAL ══ -->
 <div class="menu-overlay" id="menu-overlay" onclick="if(event.target===this)cerrarMenu()">
   <div class="menu-panel">
-    <div class="menu-header"><h3>KINARA</h3><p>Gestión Clínica · v18</p></div>
+    <div class="menu-header"><h3>KINARA</h3><p>Gestión Clínica · v19</p></div>
     <div class="menu-body">
       <!-- ── Supabase Sync ── -->
       <div style="padding:12px 16px 8px;border-bottom:1px solid var(--border);margin-bottom:4px">
@@ -793,7 +793,7 @@
         <span class="menu-item-icon">✕</span><span class="menu-item-text">Cerrar menú</span>
       </button>
     </div>
-    <div class="menu-footer">KINARA v18 · Offline-first + Cloud sync<br>Geraldine Castillo Torres · Fisioterapeuta<br>COLFI 22915 · ReTHUS 2025-08-21</div>
+    <div class="menu-footer">KINARA v19 · Offline-first + Cloud sync<br>Geraldine Castillo Torres · Fisioterapeuta<br>COLFI 22915 · ReTHUS 2025-08-21</div>
   </div>
 </div>
 
@@ -5484,7 +5484,7 @@ if ('serviceWorker' in navigator) {
   if (location.protocol === 'https:' || location.protocol === 'http:') {
     navigator.serviceWorker.register('./sw.js').then(() => console.log('SW registrado (archivo)')).catch(e => console.warn('SW archivo falló, usando fallback', e));
   } else {
-    const swCode = `const CACHE='kinara-v18';const URLS=['./'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(URLS))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('./')))));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));`;
+    const swCode = `const CACHE='kinara-v19';const URLS=['./'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(URLS))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('./')))));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));`;
     const blob = new Blob([swCode], {type:'application/javascript'});
     navigator.serviceWorker.register(URL.createObjectURL(blob)).then(()=>console.log('SW registrado (blob)')).catch(()=>{});
   }
@@ -5590,7 +5590,7 @@ function mapPaciente(p) {
   // documento_pdf_alta y firma_alta (base64 pesados) NUNCA van a la tabla
   const { id, nombre, fecha_nac, cedula, telefono, correo, direccion, eps,
           tipo_servicio, estado, fecha_registro, updated_at,
-          documento_pdf_alta, firma_alta, pdf_alta_url, ...rest } = p;
+          documento_pdf_alta, firma_alta, pdf_alta_url, sincronizado, ...rest } = p;
   return {
     id, nombre, fecha_nac, cedula,
     telefono, email: correo,
@@ -5605,7 +5605,7 @@ function mapPaciente(p) {
 
 // Mapear una sesión de IndexedDB → fila de Supabase
 function mapSesion(s) {
-  const { id, pacienteId, fecha, hora, tipo, evolucion, created_at, updated_at, ...rest } = s;
+  const { id, pacienteId, fecha, hora, tipo, evolucion, created_at, updated_at, sincronizado, ...rest } = s;
   return {
     id,
     paciente_id: pacienteId,
@@ -5621,7 +5621,7 @@ function mapSesion(s) {
 function mapEvaluacion(ev) {
   const { id, pacienteId, tipo_servicio, signos_vitales, revision_sistemas,
           valoracion, diagnostico, tests, plan_tratamiento, objetivos,
-          pronostico, created_at, updated_at, ...rest } = ev;
+          pronostico, created_at, updated_at, sincronizado, ...rest } = ev;
   return {
     id,
     paciente_id: pacienteId,
@@ -5639,7 +5639,7 @@ function mapEvaluacion(ev) {
 // NOTA: pdf_base64 se omite aquí (va a Storage separado en el futuro)
 function mapConsentimiento(c) {
   // documento_pdf y firma (base64 pesados) NUNCA van a la tabla — el PDF va a Storage
-  const { id, pacienteId, tipo_servicio, fecha, firmado, pdfBase64, documento_pdf, firma, created_at, pdf_url, ...rest } = c;
+  const { id, pacienteId, tipo_servicio, fecha, firmado, pdfBase64, documento_pdf, firma, created_at, pdf_url, sincronizado, ...rest } = c;
   return {
     id,
     paciente_id: pacienteId,
@@ -5655,7 +5655,7 @@ function mapConsentimiento(c) {
 
 // Mapear foto de IndexedDB → fila de Supabase (sin dataUrl)
 function mapFoto(f) {
-  const { id, pacienteId, sesionId, tipo, fecha, dataUrl, url, created_at, ...rest } = f;
+  const { id, pacienteId, sesionId, tipo, fecha, dataUrl, url, created_at, sincronizado, ...rest } = f;
   return {
     id, paciente_id: pacienteId, sesion_id: sesionId || null,
     tipo, fecha, url: url || null,
@@ -5668,7 +5668,7 @@ function mapFoto(f) {
 
 // Mapear mapa corporal de IndexedDB → fila de Supabase (sin dataUrl)
 function mapMapa(m) {
-  const { id, pacienteId, fecha, vista, zonas, notas, dataUrl, url, created_at, ...rest } = m;
+  const { id, pacienteId, fecha, vista, zonas, notas, dataUrl, url, created_at, sincronizado, ...rest } = m;
   return {
     id, paciente_id: pacienteId, fecha, vista,
     zonas: zonas || {}, notas: notas || '',
@@ -5954,13 +5954,16 @@ async function refrescarVistaActiva() {
 }
 
 // ── BORRADOS SINCRONIZADOS ────────────
-// Borra en Supabase; si está offline, encola para el próximo sync
+// Marca el registro como eliminado en Supabase (tombstone) en vez de borrarlo.
+// Así el borrado queda registrado y TODOS los dispositivos lo aplican al sincronizar,
+// sin importar cuándo se conecten. Evita resurrección de registros fantasma.
 async function supaDelete(tabla, id) {
   const resp = await fetch(`${SUPA_URL}/rest/v1/${tabla}?id=eq.${encodeURIComponent(id)}`, {
-    method: 'DELETE',
-    headers: supaHeaders()
+    method: 'PATCH',
+    headers: supaHeaders({ 'Prefer': 'return=minimal' }),
+    body: JSON.stringify({ deleted_at: new Date().toISOString(), sincronizado: true })
   });
-  if (!resp.ok && resp.status !== 404) throw new Error(`Delete ${tabla}: ${resp.status}`);
+  if (!resp.ok && resp.status !== 404) throw new Error(`Tombstone ${tabla}: ${resp.status}`);
 }
 
 // Borra localmente Y en la nube (con cola offline)
@@ -6095,15 +6098,26 @@ async function descargarSilencioso() {
       locales.forEach(l => localById[l.id] = l);
       const nubeIds = new Set(filas.map(r => r.id));
 
-      // Eliminar locales sincronizados que ya no están en la nube
+      // TOMBSTONES: eliminados en la nube → borrar local siempre
+      for (const t of filas.filter(r => r.deleted_at)) {
+        if (localById[t.id]) {
+          await txDelete(store, t.id);
+          delete localById[t.id];
+          cambios++;
+        }
+      }
+      const filasVivas = filas.filter(r => !r.deleted_at);
+
+      // Respaldo: locales sincronizados que ya no están en la nube
       for (const local of locales) {
-        if (local.sincronizado === true && !nubeIds.has(local.id)) {
+        if (local.sincronizado === true && !nubeIds.has(local.id) && localById[local.id]) {
           await txDelete(store, local.id);
+          delete localById[local.id];
           cambios++;
         }
       }
       // Traer nuevos y actualizar (sin pisar cambios locales pendientes)
-      for (const row of filas) {
+      for (const row of filasVivas) {
         const local = localById[row.id];
         if (!local) {
           await txPut(store, unmap(row));
@@ -6164,17 +6178,28 @@ async function descargarDesdeNube() {
       const localById = {};
       locales.forEach(l => localById[l.id] = l);
 
-      // Eliminar locales que ya fueron sincronizados pero NO existen en la nube
-      // (significa que otro dispositivo los borró)
+      // TOMBSTONES: registros marcados como eliminados en la nube → borrar local SIEMPRE
+      const tombstones = filas.filter(r => r.deleted_at);
+      for (const t of tombstones) {
+        if (localById[t.id]) {
+          await txDelete(store, t.id);
+          delete localById[t.id];
+          totalEliminados++;
+        }
+      }
+      const filasVivas = filas.filter(r => !r.deleted_at);
+
+      // Respaldo: locales sincronizados que NO existen en la nube (borrados pre-tombstone)
       const nubeIds = new Set(filas.map(r => r.id));
       for (const local of locales) {
-        if (local.sincronizado === true && !nubeIds.has(local.id)) {
+        if (local.sincronizado === true && !nubeIds.has(local.id) && localById[local.id]) {
           await txDelete(store, local.id);
+          delete localById[local.id];
           totalEliminados++;
         }
       }
 
-      for (const row of filas) {
+      for (const row of filasVivas) {
         const local = localById[row.id];
         if (!local) {
           // No existe localmente → traerlo
