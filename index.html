@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>KINARA v12 · Gestión de Pacientes</title>
+<title>KINARA v13 · Gestión de Pacientes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -759,7 +759,7 @@
 <!-- ══ MENÚ LATERAL ══ -->
 <div class="menu-overlay" id="menu-overlay" onclick="if(event.target===this)cerrarMenu()">
   <div class="menu-panel">
-    <div class="menu-header"><h3>KINARA</h3><p>Gestión Clínica · v12</p></div>
+    <div class="menu-header"><h3>KINARA</h3><p>Gestión Clínica · v13</p></div>
     <div class="menu-body">
       <!-- ── Supabase Sync ── -->
       <div style="padding:12px 16px 8px;border-bottom:1px solid var(--border);margin-bottom:4px">
@@ -792,7 +792,7 @@
         <span class="menu-item-icon">✕</span><span class="menu-item-text">Cerrar menú</span>
       </button>
     </div>
-    <div class="menu-footer">KINARA v12 · Offline-first + Cloud sync<br>Geraldine Castillo Torres · Fisioterapeuta<br>COLFI 22915 · ReTHUS 2025-08-21</div>
+    <div class="menu-footer">KINARA v13 · Offline-first + Cloud sync<br>Geraldine Castillo Torres · Fisioterapeuta<br>COLFI 22915 · ReTHUS 2025-08-21</div>
   </div>
 </div>
 
@@ -5481,7 +5481,7 @@ if ('serviceWorker' in navigator) {
   if (location.protocol === 'https:' || location.protocol === 'http:') {
     navigator.serviceWorker.register('./sw.js').then(() => console.log('SW registrado (archivo)')).catch(e => console.warn('SW archivo falló, usando fallback', e));
   } else {
-    const swCode = `const CACHE='kinara-v12';const URLS=['./'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(URLS))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('./')))));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));`;
+    const swCode = `const CACHE='kinara-v13';const URLS=['./'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(URLS))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('./')))));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));`;
     const blob = new Blob([swCode], {type:'application/javascript'});
     navigator.serviceWorker.register(URL.createObjectURL(blob)).then(()=>console.log('SW registrado (blob)')).catch(()=>{});
   }
@@ -5584,13 +5584,16 @@ async function supaUpsert(tabla, registros) {
 
 // Mapear un paciente de IndexedDB → fila de Supabase
 function mapPaciente(p) {
+  // documento_pdf_alta y firma_alta (base64 pesados) NUNCA van a la tabla
   const { id, nombre, fecha_nac, cedula, telefono, correo, direccion, eps,
-          tipo_servicio, estado, fecha_registro, updated_at, ...rest } = p;
+          tipo_servicio, estado, fecha_registro, updated_at,
+          documento_pdf_alta, firma_alta, pdf_alta_url, ...rest } = p;
   return {
     id, nombre, fecha_nac, cedula,
     telefono, email: correo,
     direccion, eps, tipo_servicio, estado,
     fecha_ingreso: fecha_registro,
+    pdf_alta_url: pdf_alta_url || null,
     datos_extra: rest,
     updated_at: updated_at || new Date().toISOString(),
     sincronizado: true
@@ -5632,17 +5635,53 @@ function mapEvaluacion(ev) {
 // Mapear un consentimiento de IndexedDB → fila de Supabase
 // NOTA: pdf_base64 se omite aquí (va a Storage separado en el futuro)
 function mapConsentimiento(c) {
-  const { id, pacienteId, tipo_servicio, fecha, firmado, pdfBase64, created_at, ...rest } = c;
+  // documento_pdf y firma (base64 pesados) NUNCA van a la tabla — el PDF va a Storage
+  const { id, pacienteId, tipo_servicio, fecha, firmado, pdfBase64, documento_pdf, firma, created_at, pdf_url, ...rest } = c;
   return {
     id,
     paciente_id: pacienteId,
     tipo_servicio, fecha,
     firmado: firmado || false,
+    pdf_url: pdf_url || null,
     datos_extra: rest,
     created_at: created_at || new Date().toISOString(),
     updated_at: new Date().toISOString(),
     sincronizado: true
   };
+}
+
+// ── STORAGE: subida de PDFs ───────────
+// Convierte base64 (dataURI o puro) a Blob y lo sube al bucket
+async function subirPDFaStorage(ruta, base64) {
+  // Aceptar tanto dataURI (data:application/pdf;base64,xxx) como base64 puro
+  const b64 = base64.includes(',') ? base64.split(',')[1] : base64;
+  const byteChars = atob(b64);
+  const bytes = new Uint8Array(byteChars.length);
+  for (let i = 0; i < byteChars.length; i++) bytes[i] = byteChars.charCodeAt(i);
+  const blob = new Blob([bytes], { type: 'application/pdf' });
+
+  const resp = await fetch(`${SUPA_URL}/storage/v1/object/consentimientos/${ruta}`, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPA_KEY,
+      'Authorization': `Bearer ${SUPA_KEY}`,
+      'Content-Type': 'application/pdf',
+      'x-upsert': 'true'
+    },
+    body: blob
+  });
+  if (!resp.ok) {
+    const err = await resp.text();
+    throw new Error(`Storage: ${resp.status} — ${err.slice(0,100)}`);
+  }
+  // URL pública del archivo
+  return `${SUPA_URL}/storage/v1/object/public/consentimientos/${ruta}`;
+}
+
+// Limpia un texto para usarlo como nombre de archivo seguro
+function safeFileName(s) {
+  return (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 60);
 }
 
 // ── SYNC PRINCIPAL ────────────────────
@@ -5712,6 +5751,34 @@ async function sincronizarConSupabase(silencioso = false) {
       }
       totalSubidos += consentPendientes.length;
     }
+
+    // ── 5. PDFs a STORAGE ──
+    // Consentimientos con PDF generado pero sin URL en la nube
+    try {
+      const consentConPDF = todosConsent.filter(c => c.documento_pdf && !c.pdf_url);
+      for (const c of consentConPDF) {
+        const nombre = `${safeFileName(c.pacienteId)}/${safeFileName(c.tipo_consentimiento || c.tipo_servicio || 'consentimiento')}_${c.id}.pdf`;
+        const url = await subirPDFaStorage(nombre, c.documento_pdf);
+        c.pdf_url = url;
+        await txPut('consentimientos', c);
+        // Actualizar la fila en Supabase con la URL
+        await supaUpsert('consentimientos', [mapConsentimiento(c)]);
+        totalSubidos++;
+      }
+    } catch(e) { console.warn('PDFs consentimientos:', e); errores.push('PDF consent: ' + e.message); }
+
+    // Actas de alta con PDF pero sin URL
+    try {
+      const pacsConAlta = todosPacientes.filter(p => p.documento_pdf_alta && !p.pdf_alta_url);
+      for (const p of pacsConAlta) {
+        const nombre = `altas/${safeFileName(p.nombre)}_${p.id}.pdf`;
+        const url = await subirPDFaStorage(nombre, p.documento_pdf_alta);
+        p.pdf_alta_url = url;
+        await txPut('pacientes', p);
+        await supaUpsert('pacientes', [mapPaciente(p)]);
+        totalSubidos++;
+      }
+    } catch(e) { console.warn('PDFs altas:', e); errores.push('PDF alta: ' + e.message); }
 
     // Actualizar UI de estado
     const ahora = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
