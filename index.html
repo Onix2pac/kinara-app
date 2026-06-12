@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>KINARA v9 · Gestión de Pacientes</title>
+<title>KINARA v10 · Gestión de Pacientes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -759,7 +759,7 @@
 <!-- ══ MENÚ LATERAL ══ -->
 <div class="menu-overlay" id="menu-overlay" onclick="if(event.target===this)cerrarMenu()">
   <div class="menu-panel">
-    <div class="menu-header"><h3>KINARA</h3><p>Gestión Clínica · v9</p></div>
+    <div class="menu-header"><h3>KINARA</h3><p>Gestión Clínica · v10</p></div>
     <div class="menu-body">
       <button class="menu-item" onclick="exportarDatos()">
         <span class="menu-item-icon">💾</span>
@@ -854,7 +854,7 @@ const PRUEBAS_POR_SERVICIO = {
   pediatrico: { icon:'🧒', label:'Pediátrica', items:['Escala de Denver II','GMFM','Escala de Ashworth Modificada','Reflejos primitivos','Hitos del desarrollo'] },
   geriatrico: { icon:'👵', label:'Geriátrica', items:['Índice de Barthel','Escala de Tinetti','Timed Up and Go (TUG)','Escala de Lawton y Brody'] },
   respiratorio: { icon:'🫁', label:'Respiratoria', items:['Escala de Borg','Pico de flujo espiratorio','Prueba de caminata de 6 minutos','Auscultación pulmonar'] },
-  ortopedico: { icon:'💪', label:'Ortopédica / Física', items:['Escala Visual Análoga (EVA)','Escala de Daniels','Goniometría','Tests ortopédicos específicos'], hasExtra:'¿Cuáles?' },
+  ortopedico: { icon:'💪', label:'Ortopédica / Física', items:['Escala Visual Análoga (EVA)','Escala de Daniels','Goniometría','DASH','WOMAC','Lysholm Knee Score','KOOS','Tampa Scale (TSK-17)','PRWE','Arco Doloroso','Test de Neer','Test de Jobe','Hawkins-Kennedy','Test de Speed','Test de McMurray','Test de Thessaly','Test de Lachman','Prueba de Cajón (LCA/LCP)','Prueba Valgo/Varo (LCM/LCL)','Signo de Clarke','Step Down Test'] },
   dermatofuncional: { icon:'🧴', label:'Dermatofuncional', items:['Escala de Fitzpatrick','Escala de Nurnberger-Muller','Perimetría','Pliegues cutáneos','Evaluación de cicatrices'] },
   sueroterapia: { icon:'💉', label:'Sueroterapia', items:['Valoración venosa','Estado de hidratación','Signos vitales pre-procedimiento','Escala de Glasgow'] },
   descarga_muscular: { icon:'🏋', label:'Descarga Muscular', items:['Escala Visual Análoga (EVA)','Palpación puntos gatillo','Acortamiento muscular','Movilidad articular'] },
@@ -1232,6 +1232,7 @@ const TESTS_PEDIATRICOS = {
 
 // Mapeo de nombre visible en la checklist → id del test detallado
 const MAP_TEST_LABEL_ID = {
+  // Tests pediátricos
   'Escala de Ashworth Modificada': 'ashworth',
   'GMFM': 'gmfm',
   'Reflejos primitivos': 'reflejos_primitivos',
@@ -1239,8 +1240,621 @@ const MAP_TEST_LABEL_ID = {
   'AIMS': 'aims',
   'Escala de Denver II': 'denver_ii',
   'PDMS-2': 'pdms2',
-  'Brunet-Lézine': 'brunet_lezine'
+  'Brunet-Lézine': 'brunet_lezine',
+  // Tests ortopédicos — cuestionarios
+  'DASH': 'dash',
+  'WOMAC': 'womac',
+  'Lysholm Knee Score': 'lysholm',
+  'KOOS': 'koos',
+  'Tampa Scale (TSK-17)': 'tsk',
+  'PRWE': 'prwe',
+  // Tests ortopédicos — hombro
+  'Arco Doloroso': 'arco_doloroso',
+  'Test de Neer': 'neer',
+  'Test de Jobe': 'jobe',
+  'Hawkins-Kennedy': 'hawkins_kennedy',
+  'Test de Speed': 'speed',
+  // Tests ortopédicos — rodilla
+  'Test de McMurray': 'mcmurray',
+  'Test de Thessaly': 'thessaly',
+  'Test de Lachman': 'lachman',
+  'Prueba de Cajón (LCA/LCP)': 'cajon',
+  'Prueba Valgo/Varo (LCM/LCL)': 'valgo_varo',
+  'Signo de Clarke': 'clarke',
+  'Step Down Test': 'step_down'
 };
+
+// ══════════════════════════════════════
+// TESTS ORTOPÉDICOS — v10
+// ══════════════════════════════════════
+
+// ---------- CUESTIONARIOS VALIDADOS ----------
+const TESTS_ORTOPEDICOS = {
+
+  // ── DASH ──────────────────────────────────
+  dash: {
+    id:'dash', nombre:'DASH — Discapacidades del Brazo, Hombro y Mano', label:'DASH',
+    edad_rango:'Adultos con patología de miembro superior', requiere_edad:false, tipo_input_general:'radio',
+    help:{
+      descripcion:'Cuestionario autoadministrado de 30 ítems que mide función física y síntomas del miembro superior durante la última semana. Puntuación 0–100; mayor puntaje = mayor discapacidad.',
+      como_aplicar:['Entregar el formulario al paciente para que lo complete de forma autónoma.','Explicar que debe responder según cómo se sintió durante la última semana.','Se necesitan al menos 27 de los 30 ítems respondidos para calcular puntaje válido.'],
+      tips_clinicos:['Útil para hombro, codo, muñeca y mano — compara entre diagnósticos.','Cambio mínimo clínicamente importante (MCID): ≥10 puntos.','Existe versión abreviada QuickDASH (11 ítems) si el tiempo es limitado.']
+    },
+    secciones:[
+      { nombre:'Actividades físicas (ítems 1–11)', hint:'1=Sin dificultad · 2=Leve · 3=Moderada · 4=Grave · 5=Incapaz', items:[
+        { id:'d01', label:'1. Abrir un frasco nuevo o apretado', tipo:'radio', opciones:['1','2','3','4','5'] },
+        { id:'d02', label:'2. Escribir', tipo:'radio', opciones:['1','2','3','4','5'] },
+        { id:'d03', label:'3. Girar una llave', tipo:'radio', opciones:['1','2','3','4','5'] },
+        { id:'d04', label:'4. Preparar una comida', tipo:'radio', opciones:['1','2','3','4','5'] },
+        { id:'d05', label:'5. Empujar una puerta pesada', tipo:'radio', opciones:['1','2','3','4','5'] },
+        { id:'d06', label:'6. Poner un objeto en un estante por encima de la cabeza', tipo:'radio', opciones:['1','2','3','4','5'] },
+        { id:'d07', label:'7. Tareas domésticas pesadas (lavar pisos, limpiar ventanas)', tipo:'radio', opciones:['1','2','3','4','5'] },
+        { id:'d08', label:'8. Jardinería o trabajos en exterior', tipo:'radio', opciones:['1','2','3','4','5'] },
+        { id:'d09', label:'9. Tender la cama', tipo:'radio', opciones:['1','2','3','4','5'] },
+        { id:'d10', label:'10. Cargar una bolsa de compras o maletín', tipo:'radio', opciones:['1','2','3','4','5'] },
+        { id:'d11', label:'11. Cargar un objeto pesado (más de 5 kg)', tipo:'radio', opciones:['1','2','3','4','5'] }
+      ]},
+      { nombre:'Actividades físicas (ítems 12–21)', hint:'1=Sin dificultad · 5=Incapaz', items:[
+        { id:'d12', label:'12. Cambiar una bombilla por encima de la cabeza', tipo:'radio', opciones:['1','2','3','4','5'] },
+        { id:'d13', label:'13. Lavarse o secarse el cabello', tipo:'radio', opciones:['1','2','3','4','5'] },
+        { id:'d14', label:'14. Lavarse la espalda', tipo:'radio', opciones:['1','2','3','4','5'] },
+        { id:'d15', label:'15. Ponerse un suéter / pullover', tipo:'radio', opciones:['1','2','3','4','5'] },
+        { id:'d16', label:'16. Cortar alimentos con cuchillo', tipo:'radio', opciones:['1','2','3','4','5'] },
+        { id:'d17', label:'17. Actividades recreativas sin mucho esfuerzo (naipes, tejido)', tipo:'radio', opciones:['1','2','3','4','5'] },
+        { id:'d18', label:'18. Actividades recreativas con fuerza en brazo/hombro/mano', tipo:'radio', opciones:['1','2','3','4','5'] },
+        { id:'d19', label:'19. Manejar vehículo o usar transporte público', tipo:'radio', opciones:['1','2','3','4','5'] },
+        { id:'d20', label:'20. Actividad sexual', tipo:'radio', opciones:['1','2','3','4','5','N/A'] },
+        { id:'d21', label:'21. Actividades sociales habituales con familia/amigos/vecinos', tipo:'radio', opciones:['1','2','3','4','5'] }
+      ]},
+      { nombre:'Síntomas (ítems 22–30)', hint:'22–26: 1=Nada · 5=Muchísimo · 27–29: 1=Ninguna dificultad · 5=Incapaz · 30: 1=Nada difícil · 5=Tan difícil que no pudo dormir', items:[
+        { id:'d22', label:'22. Dolor en brazo, hombro o mano durante la semana', tipo:'radio', opciones:['1','2','3','4','5'] },
+        { id:'d23', label:'23. Dolor al realizar actividades específicas', tipo:'radio', opciones:['1','2','3','4','5'] },
+        { id:'d24', label:'24. Hormigueo (pinchazos) en brazo, hombro o mano', tipo:'radio', opciones:['1','2','3','4','5'] },
+        { id:'d25', label:'25. Debilidad en brazo, hombro o mano', tipo:'radio', opciones:['1','2','3','4','5'] },
+        { id:'d26', label:'26. Rigidez en brazo, hombro o mano', tipo:'radio', opciones:['1','2','3','4','5'] },
+        { id:'d27', label:'27. Dificultad para dormir por el dolor', tipo:'radio', opciones:['1','2','3','4','5'] },
+        { id:'d28', label:'28. Sentirse menos capaz o menos confiado por el problema', tipo:'radio', opciones:['1','2','3','4','5'] },
+        { id:'d29', label:'29. Dificultad para concentrarse', tipo:'radio', opciones:['1','2','3','4','5'] },
+        { id:'d30', label:'30. Tensión o estrés por el problema del brazo, hombro o mano', tipo:'radio', opciones:['1','2','3','4','5'] }
+      ]}
+    ],
+    calculo:{ tipo:'formula', regla:'[(suma_n/n - 1) * 25] donde n = ítems respondidos (mín 27)' },
+    interpretacion:[
+      { rango:'0–25', resultado:'Discapacidad mínima — función casi normal' },
+      { rango:'26–50', resultado:'Discapacidad leve — limitación funcional moderada' },
+      { rango:'51–75', resultado:'Discapacidad moderada — limitación funcional significativa' },
+      { rango:'76–100', resultado:'Discapacidad grave a completa — incapacidad severa de miembro superior' }
+    ]
+  },
+
+  // ── WOMAC ─────────────────────────────────
+  womac: {
+    id:'womac', nombre:'WOMAC — Índice de Osteoartritis Western Ontario & McMaster', label:'WOMAC',
+    edad_rango:'Adultos con osteoartritis de rodilla o cadera', requiere_edad:false, tipo_input_general:'radio',
+    help:{
+      descripcion:'Cuestionario de 24 ítems que evalúa dolor (5 ítems), rigidez (2 ítems) y función física (17 ítems) en osteoartritis de rodilla y cadera. Escala Likert 0–4. Puntaje total 0–96.',
+      como_aplicar:['Pedir al paciente que responda según los síntomas de las últimas 48 horas.','Cada ítem se califica de 0 (ninguno) a 4 (extremo).','Calcular subescalas por separado: Dolor 0–20, Rigidez 0–8, Función 0–68.'],
+      tips_clinicos:['Puntaje más alto = peor estado.','MCID: ~10 puntos en escala total.','El KOOS incluye el WOMAC completo más dominios adicionales para pacientes activos.']
+    },
+    secciones:[
+      { nombre:'Subescala A — Dolor (0–20)', hint:'0=Ninguno · 1=Leve · 2=Moderado · 3=Grave · 4=Extremo', items:[
+        { id:'wa1', label:'A1. Dolor al caminar en superficie plana', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'wa2', label:'A2. Dolor al subir o bajar escaleras', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'wa3', label:'A3. Dolor en reposo o en cama durante la noche', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'wa4', label:'A4. Dolor sentado o acostado', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'wa5', label:'A5. Dolor al estar de pie', tipo:'radio', opciones:['0','1','2','3','4'] }
+      ]},
+      { nombre:'Subescala B — Rigidez (0–8)', hint:'0=Ninguna · 4=Extrema', items:[
+        { id:'wb1', label:'B1. Rigidez matutina al despertar', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'wb2', label:'B2. Rigidez después de sentarse, acostarse o reposar', tipo:'radio', opciones:['0','1','2','3','4'] }
+      ]},
+      { nombre:'Subescala C — Función física (0–68)', hint:'0=Ninguna dificultad · 4=Extrema dificultad', items:[
+        { id:'wc01', label:'C1. Bajar escaleras', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'wc02', label:'C2. Subir escaleras', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'wc03', label:'C3. Levantarse de una silla', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'wc04', label:'C4. Estar de pie', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'wc05', label:'C5. Agacharse al piso', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'wc06', label:'C6. Caminar en superficie plana', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'wc07', label:'C7. Entrar y salir de un auto', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'wc08', label:'C8. Ir de compras', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'wc09', label:'C9. Ponerse medias/calcetines', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'wc10', label:'C10. Quitarse medias/calcetines', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'wc11', label:'C11. Levantarse de la cama', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'wc12', label:'C12. Acostarse en la cama', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'wc13', label:'C13. Entrar y salir del baño / bañarse', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'wc14', label:'C14. Estar sentado', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'wc15', label:'C15. Sentarse y levantarse del inodoro', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'wc16', label:'C16. Tareas domésticas pesadas', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'wc17', label:'C17. Tareas domésticas ligeras', tipo:'radio', opciones:['0','1','2','3','4'] }
+      ]}
+    ],
+    calculo:{ tipo:'subescalas', regla:'Dolor(0-20) + Rigidez(0-8) + Función(0-68) = Total(0-96)' },
+    interpretacion:[
+      { rango:'0–24', resultado:'Leve — impacto mínimo de la osteoartritis' },
+      { rango:'25–49', resultado:'Moderado — síntomas que limitan actividades cotidianas' },
+      { rango:'50–72', resultado:'Grave — limitación funcional importante, valorar tratamiento intensivo' },
+      { rango:'73–96', resultado:'Muy grave — discapacidad severa, evaluar intervención quirúrgica' }
+    ]
+  },
+
+  // ── LYSHOLM ───────────────────────────────
+  lysholm: {
+    id:'lysholm', nombre:'Lysholm Knee Score', label:'Lysholm Knee Score',
+    edad_rango:'Adultos con lesiones de rodilla (LCA, meniscos, OA)', requiere_edad:false, tipo_input_general:'radio',
+    help:{
+      descripcion:'Escala de 8 dominios que evalúa función de la rodilla post-lesión o post-cirugía. Puntaje total 0–100; mayor puntaje = mejor función.',
+      como_aplicar:['Puede ser autoadministrada o aplicada por el evaluador.','Cada dominio tiene opciones con puntaje ponderado diferente.','Sumar los 8 dominios para obtener el puntaje total.'],
+      tips_clinicos:['Válida para lesiones de LCA, menisco, OA y otras patologías de rodilla.','MCID: ≥10 puntos.','Interpretar con escala: 95–100 Excelente, 84–94 Bueno, 65–83 Moderado, <65 Malo.']
+    },
+    secciones:[
+      { nombre:'Dominios funcionales', hint:'Seleccionar la opción que mejor describe al paciente actualmente', items:[
+        { id:'ly_cojera', label:'1. Cojera al caminar', tipo:'radio', opciones:['Ninguna (5)','Leve u ocasional (3)','Constante (0)'] },
+        { id:'ly_apoyo', label:'2. Apoyo / soporte', tipo:'radio', opciones:['Ninguno (5)','Bastón o muleta (3)','Imposible apoyar peso (0)'] },
+        { id:'ly_escaleras', label:'3. Subir escaleras', tipo:'radio', opciones:['Sin problemas (10)','Ligeramente alterado (6)','Un escalón a la vez (2)','Imposible (0)'] },
+        { id:'ly_cuclillas', label:'4. Ponerse en cuclillas', tipo:'radio', opciones:['Sin problemas (5)','Ligeramente alterado (4)','No más de 90° (2)','Imposible (0)'] },
+        { id:'ly_inestabilidad', label:'5. Inestabilidad (sensación de fallo)', tipo:'radio', opciones:['Nunca (25)','Raramente en actividad intensa (20)','Frecuente en actividad intensa (15)','Ocasional en actividad moderada (10)','Frecuente en actividad moderada (5)','En cada paso (0)'] },
+        { id:'ly_dolor', label:'6. Dolor', tipo:'radio', opciones:['Ninguno (25)','Inconstante y leve con actividad intensa (20)','Notable con actividad intensa (15)','Notable al o después de caminar >2 km (10)','Notable al o después de caminar <2 km (5)','Constante (0)'] },
+        { id:'ly_edema', label:'7. Edema / Hinchazón', tipo:'radio', opciones:['Ninguno (10)','Con actividad intensa (6)','Con actividad normal (2)','Constante (0)'] },
+        { id:'ly_bloqueo', label:'8. Bloqueo articular', tipo:'radio', opciones:['Sin bloqueo ni sensación de bloqueo (15)','Sensación de bloqueo sin bloqueo real (10)','Bloqueo ocasional (6)','Bloqueo frecuente (2)','Articulación bloqueada en la consulta (0)'] }
+      ]}
+    ],
+    calculo:{ tipo:'suma_ponderada', regla:'Extraer número entre paréntesis de cada respuesta y sumar' },
+    interpretacion:[
+      { rango:'95–100', resultado:'Excelente — función de rodilla normal o casi normal' },
+      { rango:'84–94', resultado:'Bueno — función satisfactoria, limitaciones leves' },
+      { rango:'65–83', resultado:'Moderado — limitación funcional notable, requiere seguimiento' },
+      { rango:'0–64', resultado:'Malo — disfunción grave de rodilla, evaluar intervención' }
+    ]
+  },
+
+  // ── KOOS ──────────────────────────────────
+  koos: {
+    id:'koos', nombre:'KOOS — Knee Injury and Osteoarthritis Outcome Score', label:'KOOS',
+    edad_rango:'Adultos con lesión o artrosis de rodilla', requiere_edad:false, tipo_input_general:'radio',
+    help:{
+      descripcion:'42 ítems en 5 subescalas independientes: Dolor, Síntomas, AVD, Deporte/Recreación y Calidad de Vida. Cada subescala se puntúa de 0 (peor) a 100 (mejor). Extensión del WOMAC.',
+      como_aplicar:['Cada subescala se puntúa de forma independiente.','Escala Likert 0–4 por ítem; transformar a 0–100: [(4–media)*25].','El WOMAC está contenido dentro de las subescalas Dolor, Síntomas y AVD.'],
+      tips_clinicos:['Mejor que el WOMAC para pacientes jóvenes y activos.','La subescala Deporte/Rec es la más sensible para ACL en jóvenes.','MCID: 14–20 puntos según subescala y población.']
+    },
+    secciones:[
+      { nombre:'S — Síntomas (7 ítems)', hint:'0=Nunca/Nada · 4=Siempre/Extremo', items:[
+        { id:'ks1', label:'S1. Hinchazón de rodilla', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'ks2', label:'S2. Chasquido u otro ruido al mover la rodilla', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'ks3', label:'S3. La rodilla se traba o bloquea', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'ks4', label:'S4. Puede extender la rodilla completamente', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'ks5', label:'S5. Puede doblar la rodilla completamente', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'ks6', label:'S6. Rigidez matutina de rodilla', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'ks7', label:'S7. Rigidez después de sentarse/acostarse', tipo:'radio', opciones:['0','1','2','3','4'] }
+      ]},
+      { nombre:'P — Dolor (9 ítems)', hint:'0=Nunca · 4=Siempre', items:[
+        { id:'kp1', label:'P1. Frecuencia de dolor de rodilla', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'kp2', label:'P2. Dolor al girar/pivotar sobre la rodilla', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'kp3', label:'P3. Dolor al estirar completamente la rodilla', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'kp4', label:'P4. Dolor al doblar completamente la rodilla', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'kp5', label:'P5. Dolor al caminar en superficie plana', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'kp6', label:'P6. Dolor al subir o bajar escaleras', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'kp7', label:'P7. Dolor en la noche en cama', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'kp8', label:'P8. Dolor al sentarse o acostarse', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'kp9', label:'P9. Dolor al estar de pie', tipo:'radio', opciones:['0','1','2','3','4'] }
+      ]},
+      { nombre:'A — Actividades diarias (17 ítems)', hint:'0=Ninguna dificultad · 4=Extrema dificultad', items:[
+        { id:'ka01', label:'A1. Bajar escaleras', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'ka02', label:'A2. Subir escaleras', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'ka03', label:'A3. Levantarse de sentado', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'ka04', label:'A4. Estar de pie', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'ka05', label:'A5. Agacharse al piso', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'ka06', label:'A6. Caminar en superficie plana', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'ka07', label:'A7. Entrar y salir de un auto', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'ka08', label:'A8. Ir de compras', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'ka09', label:'A9. Ponerse medias/calcetines', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'ka10', label:'A10. Quitarse medias/calcetines', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'ka11', label:'A11. Levantarse de la cama', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'ka12', label:'A12. Acostarse en la cama', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'ka13', label:'A13. Entrar y salir del baño', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'ka14', label:'A14. Estar sentado', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'ka15', label:'A15. Levantarse del inodoro', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'ka16', label:'A16. Tareas domésticas pesadas', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'ka17', label:'A17. Tareas domésticas ligeras', tipo:'radio', opciones:['0','1','2','3','4'] }
+      ]},
+      { nombre:'SP — Deporte y Recreación (5 ítems)', hint:'0=Ninguna dificultad · 4=Extrema dificultad', items:[
+        { id:'ksp1', label:'SP1. Ponerse en cuclillas', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'ksp2', label:'SP2. Correr', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'ksp3', label:'SP3. Saltar', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'ksp4', label:'SP4. Girar/pivotar sobre la rodilla lesionada', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'ksp5', label:'SP5. Arrodillarse', tipo:'radio', opciones:['0','1','2','3','4'] }
+      ]},
+      { nombre:'Q — Calidad de Vida (4 ítems)', hint:'0=Nunca/Nada · 4=Constantemente/Extremo', items:[
+        { id:'kq1', label:'Q1. ¿Con qué frecuencia es consciente del problema de rodilla?', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'kq2', label:'Q2. ¿Ha modificado su estilo de vida por la rodilla?', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'kq3', label:'Q3. ¿Qué tanta confianza tiene en su rodilla?', tipo:'radio', opciones:['0','1','2','3','4'] },
+        { id:'kq4', label:'Q4. ¿En general, qué tanto le molesta la rodilla?', tipo:'radio', opciones:['0','1','2','3','4'] }
+      ]}
+    ],
+    calculo:{ tipo:'subescalas_koos', regla:'Por subescala: [(4 - media_items) / 4] * 100 → 0 peor, 100 mejor' },
+    interpretacion:[
+      { rango:'>87.5 en subescala', resultado:'Sin dolor / dificultad en esa área' },
+      { rango:'62.6–87.5', resultado:'Dolor / dificultad leve' },
+      { rango:'37.6–62.5', resultado:'Dolor / dificultad moderada' },
+      { rango:'12.6–37.5', resultado:'Dolor / dificultad grave' },
+      { rango:'0–12.5', resultado:'Dolor / dificultad extrema' }
+    ]
+  },
+
+  // ── TSK ───────────────────────────────────
+  tsk: {
+    id:'tsk', nombre:'TSK-17 — Tampa Scale of Kinesiophobia', label:'Tampa Scale (TSK-17)',
+    edad_rango:'Adultos con dolor musculoesquelético crónico', requiere_edad:false, tipo_input_general:'radio',
+    help:{
+      descripcion:'17 ítems que cuantifican el miedo al movimiento y a la (re)lesión. Escala Likert 1–4. Puntaje total 17–68; mayor puntaje = mayor kinesiofobia. Ítems 4, 8, 12 y 16 se invierten.',
+      como_aplicar:['Entregar al paciente para autoadministración.','Escala: 1=Totalmente en desacuerdo · 2=En desacuerdo · 3=De acuerdo · 4=Totalmente de acuerdo.','Invertir ítems 4, 8, 12 y 16 antes de sumar (nueva puntuación = 5 - valor original).'],
+      tips_clinicos:['Punto de corte kinesiofobia alta: ≥37 puntos.','Subescala Evitación de actividad: ítems 1,2,7,9,10,11,12.','Subescala Enfoque somático: ítems 3,4,5,6,8.','Aplicar antes y después del tratamiento para medir impacto.']
+    },
+    secciones:[
+      { nombre:'Ítems 1–9', hint:'1=Totalmente en desacuerdo · 2=En desacuerdo · 3=De acuerdo · 4=Totalmente de acuerdo', items:[
+        { id:'tsk1', label:'1. Tengo miedo de lesionarme si hago ejercicio', tipo:'radio', opciones:['1','2','3','4'] },
+        { id:'tsk2', label:'2. Si me esfuerzo demasiado podría empeorar mi lesión', tipo:'radio', opciones:['1','2','3','4'] },
+        { id:'tsk3', label:'3. Mi cuerpo me dice que algo está seriamente mal', tipo:'radio', opciones:['1','2','3','4'] },
+        { id:'tsk4', label:'4. (inv.) El dolor siempre indica daño en mi cuerpo', tipo:'radio', opciones:['1','2','3','4'] },
+        { id:'tsk5', label:'5. La gente no me toma en serio con respecto a mi dolor', tipo:'radio', opciones:['1','2','3','4'] },
+        { id:'tsk6', label:'6. Mi lesión pone mi cuerpo en peligro para siempre', tipo:'radio', opciones:['1','2','3','4'] },
+        { id:'tsk7', label:'7. El dolor siempre significa que me he lesionado', tipo:'radio', opciones:['1','2','3','4'] },
+        { id:'tsk8', label:'8. (inv.) El solo hecho de tener esta condición no significa que estaré en silla de ruedas', tipo:'radio', opciones:['1','2','3','4'] },
+        { id:'tsk9', label:'9. Tengo miedo de lesionarme accidentalmente', tipo:'radio', opciones:['1','2','3','4'] }
+      ]},
+      { nombre:'Ítems 10–17', hint:'1=Totalmente en desacuerdo · 4=Totalmente de acuerdo · (ítem 12 y 16 son inversos)', items:[
+        { id:'tsk10', label:'10. La manera más segura es tener cuidado y no hacer movimientos innecesarios', tipo:'radio', opciones:['1','2','3','4'] },
+        { id:'tsk11', label:'11. No haría algo que pueda empeorar mi condición', tipo:'radio', opciones:['1','2','3','4'] },
+        { id:'tsk12', label:'12. (inv.) El dolor es inofensivo si estoy activo', tipo:'radio', opciones:['1','2','3','4'] },
+        { id:'tsk13', label:'13. El dolor me dice cuándo parar para no lesionarme', tipo:'radio', opciones:['1','2','3','4'] },
+        { id:'tsk14', label:'14. No es seguro para una persona con mi condición ser físicamente activo', tipo:'radio', opciones:['1','2','3','4'] },
+        { id:'tsk15', label:'15. No puedo hacer lo que la gente normal hace porque me lesiono fácilmente', tipo:'radio', opciones:['1','2','3','4'] },
+        { id:'tsk16', label:'16. (inv.) Aunque algo cause dolor, no necesariamente es peligroso', tipo:'radio', opciones:['1','2','3','4'] },
+        { id:'tsk17', label:'17. Nadie con mi condición debería tener que vivir con dolor', tipo:'radio', opciones:['1','2','3','4'] }
+      ]}
+    ],
+    calculo:{ tipo:'suma_con_inversos', regla:'Suma ítems (invertir 4,8,12,16: new=5-val). Total 17–68.' },
+    interpretacion:[
+      { rango:'17–36', resultado:'Kinesiofobia baja — el paciente no presenta miedo significativo al movimiento' },
+      { rango:'37–52', resultado:'Kinesiofobia moderada-alta — miedo al movimiento presente, impacta la rehabilitación' },
+      { rango:'53–68', resultado:'Kinesiofobia severa — evitación marcada del movimiento, riesgo de cronificación' }
+    ]
+  },
+
+  // ── PRWE ──────────────────────────────────
+  prwe: {
+    id:'prwe', nombre:'PRWE — Patient-Rated Wrist Evaluation', label:'PRWE',
+    edad_rango:'Adultos con patología de muñeca', requiere_edad:false, tipo_input_general:'radio',
+    help:{
+      descripcion:'15 ítems para medir dolor y discapacidad funcional de muñeca. Subescala dolor: 5 ítems (0–50). Subescala función: 10 ítems (0–50, dividiendo la suma por 2). Total: 0–100; 0 = sin dolor.',
+      como_aplicar:['Autoadministrado. Cada ítem se califica de 0 a 10.','Dolor: sumar los 5 ítems (máx 50).','Función: sumar los 10 ítems y dividir por 2 (máx 50).','Total = Dolor + Función (0–100).'],
+      tips_clinicos:['MCID: 11–17 puntos en el total.','Útil para fractura de radio distal, ligamentos, osteoartritis de muñeca.','Comparar con el lado contralateral si es posible.']
+    },
+    secciones:[
+      { nombre:'Dolor (5 ítems — 0 a 10 por ítem)', hint:'0=Sin dolor · 10=El peor dolor imaginable', items:[
+        { id:'pr1', label:'D1. Dolor en reposo', tipo:'radio', opciones:['0','1','2','3','4','5','6','7','8','9','10'] },
+        { id:'pr2', label:'D2. Dolor al hacer movimientos repetitivos de muñeca', tipo:'radio', opciones:['0','1','2','3','4','5','6','7','8','9','10'] },
+        { id:'pr3', label:'D3. Dolor al levantar un objeto pesado', tipo:'radio', opciones:['0','1','2','3','4','5','6','7','8','9','10'] },
+        { id:'pr4', label:'D4. Dolor en su peor momento', tipo:'radio', opciones:['0','1','2','3','4','5','6','7','8','9','10'] },
+        { id:'pr5', label:'D5. Frecuencia del dolor', tipo:'radio', opciones:['0','1','2','3','4','5','6','7','8','9','10'] }
+      ]},
+      { nombre:'Función — Actividades específicas (6 ítems)', hint:'0=Sin dificultad · 10=Incapaz de realizarla', items:[
+        { id:'pf1', label:'F1. Abotonarse ropa', tipo:'radio', opciones:['0','1','2','3','4','5','6','7','8','9','10'] },
+        { id:'pf2', label:'F2. Cortar comida con cuchillo', tipo:'radio', opciones:['0','1','2','3','4','5','6','7','8','9','10'] },
+        { id:'pf3', label:'F3. Firmar su nombre', tipo:'radio', opciones:['0','1','2','3','4','5','6','7','8','9','10'] },
+        { id:'pf4', label:'F4. Levantarse de una silla apoyándose en las manos', tipo:'radio', opciones:['0','1','2','3','4','5','6','7','8','9','10'] },
+        { id:'pf5', label:'F5. Cargar una bolsa del mercado', tipo:'radio', opciones:['0','1','2','3','4','5','6','7','8','9','10'] },
+        { id:'pf6', label:'F6. Bañarse o asearse', tipo:'radio', opciones:['0','1','2','3','4','5','6','7','8','9','10'] }
+      ]},
+      { nombre:'Función — Actividades habituales (4 ítems)', hint:'0=Sin dificultad · 10=Incapaz', items:[
+        { id:'pu1', label:'U1. Cuidado personal (higiene, vestirse)', tipo:'radio', opciones:['0','1','2','3','4','5','6','7','8','9','10'] },
+        { id:'pu2', label:'U2. Trabajo doméstico', tipo:'radio', opciones:['0','1','2','3','4','5','6','7','8','9','10'] },
+        { id:'pu3', label:'U3. Trabajo o actividad laboral', tipo:'radio', opciones:['0','1','2','3','4','5','6','7','8','9','10'] },
+        { id:'pu4', label:'U4. Actividades recreativas / hobby', tipo:'radio', opciones:['0','1','2','3','4','5','6','7','8','9','10'] }
+      ]}
+    ],
+    calculo:{ tipo:'prwe', regla:'Dolor = suma(D1-D5). Función = suma(F1-F6, U1-U4)/2. Total = Dolor + Función.' },
+    interpretacion:[
+      { rango:'0–25', resultado:'Leve — dolor y disfunción mínimos de muñeca' },
+      { rango:'26–50', resultado:'Moderado — afectación funcional notable en actividades diarias' },
+      { rango:'51–75', resultado:'Grave — limitación funcional importante de muñeca' },
+      { rango:'76–100', resultado:'Muy grave — incapacidad severa de muñeca' }
+    ]
+  },
+
+  // ══════════════════════════════════════════
+  // ---------- TESTS FÍSICOS HOMBRO ----------
+  // ══════════════════════════════════════════
+
+  arco_doloroso: {
+    id:'arco_doloroso', nombre:'Arco Doloroso (Painful Arc Sign)', label:'Arco Doloroso',
+    edad_rango:'Adultos con dolor de hombro', requiere_edad:false, tipo_input_general:'radio',
+    help:{
+      descripcion:'Evaluación del arco de abducción activa. El dolor en el arco 60–120° sugiere patología del manguito rotador o pinzamiento subacromial; dolor al final del arco (>120°) sugiere patología acromioclavicular.',
+      como_aplicar:['Paciente sentado o de pie, brazos a los lados.','Solicitar abducción activa lenta desde 0° hasta 180°.','Observar y preguntar en qué ángulo aparece y desaparece el dolor.'],
+      tips_clinicos:['Combinar con Neer y Hawkins-Kennedy para mayor precisión diagnóstica.','Documentar el ángulo exacto de inicio y fin del dolor.','Positivo para manguito: dolor entre 60° y 120°. Positivo para AC: dolor por encima de 120°.']
+    },
+    secciones:[
+      { nombre:'Resultado del test', hint:'Registrar los hallazgos clínicos del arco doloroso', items:[
+        { id:'ad_lado', label:'Lado evaluado', tipo:'radio', opciones:['Derecho','Izquierdo','Bilateral'] },
+        { id:'ad_resultado', label:'Resultado', tipo:'radio', opciones:['Negativo (sin dolor en arco)','Positivo 60–120° (manguito/pinzamiento)','Positivo >120° (articulación AC)','Positivo arco completo (múltiples estructuras)'] },
+        { id:'ad_angulo', label:'Ángulo aproximado de inicio del dolor', tipo:'radio', opciones:['<60°','60–90°','90–120°','>120°','Difuso / no localizable'] },
+        { id:'ad_tipo', label:'Tipo de síntoma reproducido', tipo:'radio', opciones:['Dolor localizado','Dolor difuso','Crepitación + dolor','Debilidad','No reproduce síntomas'] }
+      ]}
+    ],
+    calculo:{ tipo:'cualitativo', regla:'Positivo/Negativo según arco de dolor' },
+    interpretacion:[
+      { rango:'Negativo', resultado:'Sin evidencia de pinzamiento o lesión en el arco de abducción' },
+      { rango:'Positivo 60–120°', resultado:'Sugestivo de síndrome de pinzamiento subacromial o lesión del manguito rotador' },
+      { rango:'Positivo >120°', resultado:'Sugestivo de patología acromioclavicular' },
+      { rango:'Positivo arco completo', resultado:'Patrón inespecífico — considerar múltiples estructuras o capsulitis adhesiva' }
+    ]
+  },
+
+  neer: {
+    id:'neer', nombre:'Test de Neer — Pinzamiento Subacromial', label:'Test de Neer',
+    edad_rango:'Adultos con dolor de hombro anterior o lateral', requiere_edad:false, tipo_input_general:'radio',
+    help:{
+      descripcion:'Reproduce el pinzamiento de los tendones del manguito rotador en el espacio subacromial. El terapeuta estabiliza la escápula y eleva el brazo en flexión con pronación forzada.',
+      como_aplicar:['Paciente sentado. Terapeuta de pie detrás/lateral.','Estabilizar la escápula con una mano sobre el hombro del paciente.','Con la otra mano, elevar el brazo en flexión hacia delante con el codo extendido y el antebrazo en pronación máxima.','El test es positivo si se reproduce dolor en el hombro anterior o lateral.'],
+      tips_clinicos:['Sensibilidad ~72%, Especificidad ~66% para pinzamiento subacromial.','Neer negativo + Hawkins-Kennedy negativo reducen significativamente la probabilidad de pinzamiento puro.','Siempre evaluar bilateralmente.']
+    },
+    secciones:[
+      { nombre:'Resultado del test', hint:'', items:[
+        { id:'neer_lado', label:'Lado evaluado', tipo:'radio', opciones:['Derecho','Izquierdo','Bilateral'] },
+        { id:'neer_resultado', label:'Resultado', tipo:'radio', opciones:['Negativo — sin dolor reproduced','Positivo — dolor anterior/lateral reproducido','No evaluable (limitación de movilidad)'] },
+        { id:'neer_calidad', label:'Calidad del dolor reproducido', tipo:'radio', opciones:['Idéntico al dolor del paciente','Similar pero no exacto','Solo molestia leve','No aplicable'] }
+      ]}
+    ],
+    calculo:{ tipo:'cualitativo', regla:'Positivo/Negativo' },
+    interpretacion:[
+      { rango:'Negativo', resultado:'Baja probabilidad de pinzamiento subacromial por esta maniobra' },
+      { rango:'Positivo', resultado:'Sugestivo de síndrome de pinzamiento subacromial — confirmar con Hawkins-Kennedy y arco doloroso' }
+    ]
+  },
+
+  jobe: {
+    id:'jobe', nombre:'Test de Jobe (Empty Can Test) — Supraespinoso', label:'Test de Jobe',
+    edad_rango:'Adultos con sospecha de lesión del supraespinoso', requiere_edad:false, tipo_input_general:'radio',
+    help:{
+      descripcion:'Evalúa la integridad y fuerza del tendón del supraespinoso. El brazo se posiciona a 90° de abducción en el plano escapular (30° de flexión horizontal), con rotación interna (pulgar apuntando al suelo). El evaluador aplica resistencia al descenso.',
+      como_aplicar:['Paciente de pie o sentado.','Colocar el brazo a 90° de abducción en el plano de la escápula, codo extendido, pulgar hacia abajo (rotación interna).','Aplicar presión hacia abajo sobre el antebrazo mientras el paciente resiste.','Positivo: dolor y/o debilidad significativa que impide mantener la posición.'],
+      tips_clinicos:['Sensibilidad ~69%, Especificidad ~66% para rotura del supraespinoso.','La debilidad + dolor es más específico que solo dolor.','Comparar fuerza bilateral.']
+    },
+    secciones:[
+      { nombre:'Resultado del test', hint:'', items:[
+        { id:'jobe_lado', label:'Lado evaluado', tipo:'radio', opciones:['Derecho','Izquierdo','Bilateral'] },
+        { id:'jobe_resultado', label:'Resultado', tipo:'radio', opciones:['Negativo — sin dolor ni debilidad','Positivo dolor — dolor reproducido sin debilidad significativa','Positivo dolor+debilidad — dolor con caída del brazo o debilidad marcada','No evaluable'] },
+        { id:'jobe_fuerza', label:'Fuerza comparativa vs lado sano', tipo:'radio', opciones:['Normal (5/5)','Leve reducción (4/5)','Reducción moderada (3/5)','Reducción grave (2/5 o menos)','No evaluable (bilateral)'] }
+      ]}
+    ],
+    calculo:{ tipo:'cualitativo', regla:'Positivo/Negativo' },
+    interpretacion:[
+      { rango:'Negativo', resultado:'Integridad del supraespinoso probable — baja sospecha de rotura' },
+      { rango:'Positivo dolor', resultado:'Sugestivo de tendinopatía o rotura parcial del supraespinoso' },
+      { rango:'Positivo dolor+debilidad', resultado:'Alta sospecha de rotura parcial o completa del supraespinoso — considerar imagen' }
+    ]
+  },
+
+  hawkins_kennedy: {
+    id:'hawkins_kennedy', nombre:'Test de Hawkins-Kennedy — Pinzamiento Subacromial', label:'Hawkins-Kennedy',
+    edad_rango:'Adultos con dolor de hombro', requiere_edad:false, tipo_input_general:'radio',
+    help:{
+      descripcion:'Reproduce el pinzamiento del supraespinoso bajo el ligamento coracoacromial. El brazo se lleva a 90° de flexión con codo en 90°, y se aplica rotación interna forzada del hombro.',
+      como_aplicar:['Paciente sentado. Terapeuta de frente.','Llevar el hombro a 90° de flexión y el codo a 90° de flexión.','Con una mano sobre el codo y otra en el antebrazo, aplicar rotación interna forzada (la mano baja hacia el suelo).','Positivo si se reproduce dolor en hombro anterior o lateral.'],
+      tips_clinicos:['Alta sensibilidad (~79%) pero baja especificidad (~59%) — útil para descartar pinzamiento.','Combinado con Neer y arco doloroso: buena orientación diagnóstica.','El test de infraespinoso complementa la evaluación del manguito.']
+    },
+    secciones:[
+      { nombre:'Resultado del test', hint:'', items:[
+        { id:'hk_lado', label:'Lado evaluado', tipo:'radio', opciones:['Derecho','Izquierdo','Bilateral'] },
+        { id:'hk_resultado', label:'Resultado', tipo:'radio', opciones:['Negativo — sin dolor reproducido','Positivo — dolor anterior/lateral reproducido','No evaluable'] },
+        { id:'hk_calidad', label:'Calidad del dolor reproducido', tipo:'radio', opciones:['Idéntico al dolor del paciente','Similar pero no exacto','Solo molestia leve','No aplicable'] }
+      ]}
+    ],
+    calculo:{ tipo:'cualitativo', regla:'Positivo/Negativo' },
+    interpretacion:[
+      { rango:'Negativo', resultado:'Baja probabilidad de pinzamiento subacromial — útil para descarte' },
+      { rango:'Positivo', resultado:'Sugestivo de síndrome de pinzamiento subacromial — confirmar con Neer y arco doloroso' }
+    ]
+  },
+
+  speed: {
+    id:'speed', nombre:'Test de Speed — Tendón del Bíceps (Porción Larga)', label:'Test de Speed',
+    edad_rango:'Adultos con dolor anterior de hombro', requiere_edad:false, tipo_input_general:'radio',
+    help:{
+      descripcion:'Evalúa la integridad del tendón de la porción larga del bíceps y del labrum glenoideo. El paciente intenta flexionar el hombro contra resistencia con el codo extendido y el antebrazo en supinación.',
+      como_aplicar:['Paciente de pie o sentado.','Brazo en flexión de hombro a ~60–90°, codo extendido, antebrazo en supinación completa.','Aplicar resistencia al movimiento de flexión de hombro hacia arriba.','Positivo si se reproduce dolor en el surco bicipital o zona anterior del hombro.'],
+      tips_clinicos:['Sensibilidad ~32%, Especificidad ~75% para lesión bicipital.','El dolor en surco bicipital es más específico que dolor difuso.','Combinar con Test de Yergason para mayor precisión.']
+    },
+    secciones:[
+      { nombre:'Resultado del test', hint:'', items:[
+        { id:'sp_lado', label:'Lado evaluado', tipo:'radio', opciones:['Derecho','Izquierdo','Bilateral'] },
+        { id:'sp_resultado', label:'Resultado', tipo:'radio', opciones:['Negativo — sin dolor reproducido','Positivo — dolor en surco bicipital reproducido','Positivo — dolor anterior difuso','No evaluable'] },
+        { id:'sp_dolor_loc', label:'Localización del dolor reproducido', tipo:'radio', opciones:['Surco bicipital (específico)','Zona anterior difusa','Zona lateral','No reproducible','No aplicable'] }
+      ]}
+    ],
+    calculo:{ tipo:'cualitativo', regla:'Positivo/Negativo' },
+    interpretacion:[
+      { rango:'Negativo', resultado:'Baja sospecha de patología del tendón de la porción larga del bíceps' },
+      { rango:'Positivo (surco bicipital)', resultado:'Sugestivo de tendinopatía bicipital o lesión del labrum — correlacionar con clínica e imagen' },
+      { rango:'Positivo (difuso)', resultado:'Resultado inespecífico — evaluar otras estructuras del hombro anterior' }
+    ]
+  },
+
+  // ══════════════════════════════════════════
+  // ---------- TESTS FÍSICOS RODILLA ---------
+  // ══════════════════════════════════════════
+
+  mcmurray: {
+    id:'mcmurray', nombre:'Test de McMurray — Menisco', label:'Test de McMurray',
+    edad_rango:'Adultos con sospecha de lesión meniscal', requiere_edad:false, tipo_input_general:'radio',
+    help:{
+      descripcion:'Provoca tensión sobre el menisco medial y lateral mediante combinación de rotación tibial y extensión de rodilla. Chasquido o dolor en la línea articular = positivo.',
+      como_aplicar:['Paciente en decúbito supino, rodilla en máxima flexión.','Para menisco medial: aplicar valgo + rotación interna de tibia mientras se extiende lentamente la rodilla.','Para menisco lateral: aplicar varo + rotación externa de tibia mientras se extiende lentamente.','Positivo: chasquido palpable o audible + dolor en la línea articular correspondiente.'],
+      tips_clinicos:['Sensibilidad ~61%, Especificidad ~84% — moderadamente útil para confirmar rotura.','El chasquido + dolor en línea articular aumenta la especificidad.','Palpar la línea articular con los pulgares durante la maniobra.']
+    },
+    secciones:[
+      { nombre:'Resultado del test', hint:'', items:[
+        { id:'mc_lado', label:'Lado evaluado', tipo:'radio', opciones:['Derecho','Izquierdo','Bilateral'] },
+        { id:'mc_menisco_med', label:'Menisco medial (valgo + RI)', tipo:'radio', opciones:['Negativo','Positivo — dolor línea articular medial','Positivo — chasquido + dolor medial','No evaluable'] },
+        { id:'mc_menisco_lat', label:'Menisco lateral (varo + RE)', tipo:'radio', opciones:['Negativo','Positivo — dolor línea articular lateral','Positivo — chasquido + dolor lateral','No evaluable'] },
+        { id:'mc_angulo', label:'Ángulo aproximado de la rodilla al momento del síntoma', tipo:'radio', opciones:['Flexión máxima (>90°)','~90°','~60°','<60° (casi extensión)','Difuso / no localizable'] }
+      ]}
+    ],
+    calculo:{ tipo:'cualitativo', regla:'Positivo/Negativo por compartimento' },
+    interpretacion:[
+      { rango:'Negativo ambos compartimentos', resultado:'Baja probabilidad de rotura meniscal por esta prueba' },
+      { rango:'Positivo medial', resultado:'Sugestivo de lesión del menisco medial — correlacionar con línea articular y RMN' },
+      { rango:'Positivo lateral', resultado:'Sugestivo de lesión del menisco lateral — correlacionar con línea articular y RMN' },
+      { rango:'Positivo bilateral', resultado:'Lesión bilateral posible o patrón inespecífico — solicitar imagen' }
+    ]
+  },
+
+  thessaly: {
+    id:'thessaly', nombre:'Test de Thessaly — Menisco en Carga', label:'Test de Thessaly',
+    edad_rango:'Adultos con sospecha de lesión meniscal, capaces de bipedestación monopodal', requiere_edad:false, tipo_input_general:'radio',
+    help:{
+      descripcion:'Test funcional en carga: el paciente apoya sobre una pierna con la rodilla a 20° de flexión y rota el cuerpo interna y externamente. Reproduce síntomas meniscales bajo condición de carga real.',
+      como_aplicar:['Realizar primero en la rodilla SANA (entrenamiento).','Paciente de pie sobre una sola pierna, rodilla en ~20° de flexión (sostenerse del evaluador).','Rotar el cuerpo hacia ambos lados 3 veces manteniendo la flexión.','Positivo: dolor, chasquido o sensación de bloqueo en la línea articular.'],
+      tips_clinicos:['Sensibilidad ~64%, Especificidad ~53% — no concluyente solo, complementar con McMurray.','Siempre comparar el lado sano primero.','No realizar si hay inestabilidad severa de rodilla o incapacidad de carga.']
+    },
+    secciones:[
+      { nombre:'Resultado del test', hint:'', items:[
+        { id:'th_lado', label:'Lado evaluado', tipo:'radio', opciones:['Derecho','Izquierdo','Bilateral'] },
+        { id:'th_resultado', label:'Resultado a 20° de flexión', tipo:'radio', opciones:['Negativo — sin síntomas en carga','Positivo — dolor en línea articular medial','Positivo — dolor en línea articular lateral','Positivo — sensación de bloqueo/chasquido','No evaluable (no soporta carga monopodal)'] },
+        { id:'th_comparacion', label:'Comparación con lado sano', tipo:'radio', opciones:['Asimétrico (síntoma solo en lado afecto)','Simétrico (similar en ambos lados)','No aplica (bilateral)'] }
+      ]}
+    ],
+    calculo:{ tipo:'cualitativo', regla:'Positivo/Negativo' },
+    interpretacion:[
+      { rango:'Negativo', resultado:'Baja probabilidad de lesión meniscal activa bajo carga' },
+      { rango:'Positivo', resultado:'Sugestivo de lesión meniscal — correlacionar con McMurray y hallazgos de RMN' }
+    ]
+  },
+
+  lachman: {
+    id:'lachman', nombre:'Test de Lachman — LCA', label:'Test de Lachman',
+    edad_rango:'Adultos con sospecha de lesión del ligamento cruzado anterior', requiere_edad:false, tipo_input_general:'radio',
+    help:{
+      descripcion:'Test más sensible para detectar rotura del LCA. Con la rodilla en 20–30° de flexión, se aplica fuerza anterior sobre la tibia mientras se estabiliza el fémur.',
+      como_aplicar:['Paciente en decúbito supino, rodilla a 20–30° de flexión (sin rotación).','Estabilizar el fémur con una mano (apoyo en cara posterior del muslo distal).','Con la otra mano en la cara posterior de la tibia proximal, aplicar fuerza de traslación anterior.','Evaluar cantidad de desplazamiento y calidad del tope final (firme vs blando/ausente).'],
+      tips_clinicos:['Sensibilidad ~85%, Especificidad ~94% — prueba de referencia para LCA.','Tope blando o ausente = alta sospecha de rotura.','Comparar siempre con el lado contralateral.','Clasificar el desplazamiento: Grado I <5mm, Grado II 5–10mm, Grado III >10mm.']
+    },
+    secciones:[
+      { nombre:'Resultado del test', hint:'', items:[
+        { id:'lc_lado', label:'Lado evaluado', tipo:'radio', opciones:['Derecho','Izquierdo','Bilateral'] },
+        { id:'lc_resultado', label:'Resultado', tipo:'radio', opciones:['Negativo — desplazamiento mínimo con tope firme','Positivo Grado I — desplazamiento <5mm tope blando','Positivo Grado II — desplazamiento 5–10mm','Positivo Grado III — desplazamiento >10mm / tope ausente','No evaluable (dolor, espasmo muscular)'] },
+        { id:'lc_tope', label:'Calidad del tope final', tipo:'radio', opciones:['Firme (normal)','Blando (sospechoso)','Ausente','No valorable'] }
+      ]}
+    ],
+    calculo:{ tipo:'cualitativo', regla:'Positivo/Negativo + grado de desplazamiento' },
+    interpretacion:[
+      { rango:'Negativo', resultado:'LCA probablemente íntegro — baja sospecha de rotura' },
+      { rango:'Positivo Grado I', resultado:'Esguince grado I-II del LCA — fibras parcialmente lesionadas' },
+      { rango:'Positivo Grado II', resultado:'Rotura parcial del LCA — solicitar RMN para confirmar extensión' },
+      { rango:'Positivo Grado III', resultado:'Alta sospecha de rotura completa del LCA — derivar a ortopedia' }
+    ]
+  },
+
+  cajon: {
+    id:'cajon', nombre:'Prueba de Cajón Anterior y Posterior — LCA / LCP', label:'Prueba de Cajón (LCA/LCP)',
+    edad_rango:'Adultos con sospecha de lesión de ligamentos cruzados', requiere_edad:false, tipo_input_general:'radio',
+    help:{
+      descripcion:'Evalúa la laxitud del LCA (cajón anterior) y LCP (cajón posterior) con la rodilla en 90° de flexión. Se tira de la tibia hacia adelante (LCA) o hacia atrás (LCP).',
+      como_aplicar:['Paciente en decúbito supino, cadera ~45°, rodilla en 90°, pie apoyado en neutro (terapeuta puede sentarse sobre el pie suavemente para fijarlo).','Cajón anterior: sujetar la tibia proximal con ambas manos y traccionar hacia adelante.','Cajón posterior: con la misma posición, empujar la tibia hacia atrás.','Positivo: desplazamiento >5mm comparado con el lado sano o tope elástico/ausente.'],
+      tips_clinicos:['Sensibilidad cajón anterior ~62%, mejor predictor de LCA en agudo: Lachman.','Cajón posterior es el test de mayor precisión para LCP.','Evaluar siempre los dos sentidos en la misma posición.']
+    },
+    secciones:[
+      { nombre:'Resultado del test', hint:'', items:[
+        { id:'cj_lado', label:'Lado evaluado', tipo:'radio', opciones:['Derecho','Izquierdo','Bilateral'] },
+        { id:'cj_anterior', label:'Cajón Anterior (LCA)', tipo:'radio', opciones:['Negativo — desplazamiento normal','Positivo leve — desplazamiento leve, tope blando','Positivo moderado — desplazamiento 5–10mm','Positivo severo — desplazamiento >10mm','No evaluable'] },
+        { id:'cj_posterior', label:'Cajón Posterior (LCP)', tipo:'radio', opciones:['Negativo — desplazamiento normal','Positivo leve — desplazamiento leve','Positivo moderado — desplazamiento 5–10mm','Positivo severo — desplazamiento >10mm','No evaluable'] }
+      ]}
+    ],
+    calculo:{ tipo:'cualitativo', regla:'Positivo/Negativo por dirección' },
+    interpretacion:[
+      { rango:'Negativo ambos', resultado:'Ligamentos cruzados aparentemente íntegros' },
+      { rango:'Cajón anterior positivo', resultado:'Sospecha de lesión del LCA — confirmar con Lachman y RMN' },
+      { rango:'Cajón posterior positivo', resultado:'Sospecha de lesión del LCP — solicitar RMN y valoración ortopédica' }
+    ]
+  },
+
+  valgo_varo: {
+    id:'valgo_varo', nombre:'Prueba de Bostezo Valgo / Varo — Ligamentos Colaterales', label:'Prueba Valgo/Varo (LCM/LCL)',
+    edad_rango:'Adultos con sospecha de lesión de ligamentos colaterales de rodilla', requiere_edad:false, tipo_input_general:'radio',
+    help:{
+      descripcion:'Evalúa la estabilidad de los ligamentos colateral medial (LCM) y lateral (LCL). Se aplican fuerzas en valgo y varo con la rodilla en extensión completa y a 20–30° de flexión.',
+      como_aplicar:['Paciente en decúbito supino.','Evaluar primero en extensión completa (0°), luego en 20–30° de flexión.','Valgo (LCM): estabilizar el fémur lateral, aplicar fuerza en valgo (presión medial sobre la rodilla) → apertura medial = positivo.','Varo (LCL): estabilizar el fémur medial, aplicar fuerza en varo (presión lateral) → apertura lateral = positivo.'],
+      tips_clinicos:['Positivo en extensión completa implica estructuras más profundas comprometidas (cápsula, cruzados).','Positivo solo a 30° indica lesión aislada del colateral.','Clasificar por grado: I <5mm, II 5–10mm, III >10mm de apertura.']
+    },
+    secciones:[
+      { nombre:'Resultado del test', hint:'', items:[
+        { id:'vv_lado', label:'Lado evaluado', tipo:'radio', opciones:['Derecho','Izquierdo','Bilateral'] },
+        { id:'vv_valgo_0', label:'Estrés Valgo (LCM) en extensión 0°', tipo:'radio', opciones:['Negativo','Positivo Grado I (<5mm)','Positivo Grado II (5–10mm)','Positivo Grado III (>10mm)','No evaluable'] },
+        { id:'vv_valgo_30', label:'Estrés Valgo (LCM) en 30° de flexión', tipo:'radio', opciones:['Negativo','Positivo Grado I (<5mm)','Positivo Grado II (5–10mm)','Positivo Grado III (>10mm)','No evaluable'] },
+        { id:'vv_varo_0', label:'Estrés Varo (LCL) en extensión 0°', tipo:'radio', opciones:['Negativo','Positivo Grado I (<5mm)','Positivo Grado II (5–10mm)','Positivo Grado III (>10mm)','No evaluable'] },
+        { id:'vv_varo_30', label:'Estrés Varo (LCL) en 30° de flexión', tipo:'radio', opciones:['Negativo','Positivo Grado I (<5mm)','Positivo Grado II (5–10mm)','Positivo Grado III (>10mm)','No evaluable'] }
+      ]}
+    ],
+    calculo:{ tipo:'cualitativo', regla:'Positivo/Negativo + grado por ligamento' },
+    interpretacion:[
+      { rango:'Negativo ambos', resultado:'Ligamentos colaterales probablemente íntegros' },
+      { rango:'Valgo positivo', resultado:'Sospecha de lesión del LCM — grado según apertura medial' },
+      { rango:'Varo positivo', resultado:'Sospecha de lesión del LCL — grado según apertura lateral' },
+      { rango:'Positivo en extensión', resultado:'Lesión grave — probable compromiso de estructuras posteriores y cruzados' }
+    ]
+  },
+
+  clarke: {
+    id:'clarke', nombre:'Signo de Clarke — Síndrome Patelofemoral', label:'Signo de Clarke',
+    edad_rango:'Adultos con dolor anterior de rodilla', requiere_edad:false, tipo_input_general:'radio',
+    help:{
+      descripcion:'Evalúa el dolor retropatelar al comprimir la rótula contra el surco troclear durante la contracción del cuádriceps. También llamado "patellar grind test".',
+      como_aplicar:['Paciente en decúbito supino, rodilla completamente extendida, cuádriceps relajado.','Colocar el borde cubital de la mano justo superior a la rótula aplicando presión descendente e inferior.','Pedir al paciente que contraiga el cuádriceps gradualmente.','Positivo: dolor retropatelar o peripatelar durante la contracción, o crepitación dolorosa.'],
+      tips_clinicos:['Especificidad moderada — puede ser positivo en sujetos sanos.','Repetir 2–3 veces aumentando la presión y comparar con el lado sano.','La crepitación sin dolor no es diagnóstica.','Complementar con Waldron test y evaluación dinámica (step down).']
+    },
+    secciones:[
+      { nombre:'Resultado del test', hint:'', items:[
+        { id:'cl_lado', label:'Lado evaluado', tipo:'radio', opciones:['Derecho','Izquierdo','Bilateral'] },
+        { id:'cl_resultado', label:'Resultado', tipo:'radio', opciones:['Negativo — sin dolor retropatelar','Positivo — dolor retropatelar con contracción','Positivo — crepitación dolorosa','Positivo — dolor + crepitación','No evaluable'] },
+        { id:'cl_localizacion', label:'Localización del dolor', tipo:'radio', opciones:['Retropatelar (bajo la rótula)','Peripatelar medial','Peripatelar lateral','Difuso anterior','No aplicable'] }
+      ]}
+    ],
+    calculo:{ tipo:'cualitativo', regla:'Positivo/Negativo' },
+    interpretacion:[
+      { rango:'Negativo', resultado:'No evidencia de síndrome patelofemoral por esta prueba' },
+      { rango:'Positivo', resultado:'Sugestivo de síndrome patelofemoral o condromalacia patelar — correlacionar con clínica y Step Down Test' }
+    ]
+  },
+
+  step_down: {
+    id:'step_down', nombre:'Step Down Test — Control Neuromuscular Rotuliano', label:'Step Down Test',
+    edad_rango:'Adultos con dolor patelofemoral o evaluación funcional de rodilla', requiere_edad:false, tipo_input_general:'radio',
+    help:{
+      descripcion:'Evalúa el control neuromuscular del cuádriceps y la alineación dinámica de la rodilla durante una tarea funcional de descenso monopodal. Observar alineamiento, dolor y estrategia de movimiento.',
+      como_aplicar:['Paciente de pie sobre un escalón de ~20 cm, manos en la cadera.','Pedir que baje lentamente el pie libre hasta casi tocar el suelo (control excéntrico), sin apoyarlo, y vuelva a subir.','Repetir 5–10 veces. Observar: dolor, valgo de rodilla, hundimiento de cadera, pronación de pie.','Registrar número de repeticiones antes de que aparezca el dolor o la compensación.'],
+      tips_clinicos:['El valgo dinámico de rodilla (colapso medial) indica débilidad de glúteo medio y cuádriceps.','Dolor en las primeras repeticiones = peor pronóstico funcional.','Excelente para readaptación deportiva y seguimiento de SDRP.','Comparar lado sano vs afecto.']
+    },
+    secciones:[
+      { nombre:'Resultado del test', hint:'', items:[
+        { id:'sd_lado', label:'Lado evaluado', tipo:'radio', opciones:['Derecho','Izquierdo','Bilateral'] },
+        { id:'sd_dolor', label:'Dolor durante el test', tipo:'radio', opciones:['Sin dolor','Dolor leve (EVA 1–3)','Dolor moderado (EVA 4–6)','Dolor intenso (EVA 7–10) / interrumpe el test'] },
+        { id:'sd_valgo', label:'Valgo dinámico de rodilla', tipo:'radio', opciones:['Ninguno — alineación normal','Leve — valgo ocasional','Moderado — valgo consistente','Severo — colapso marcado en valgo'] },
+        { id:'sd_reps', label:'Número de repeticiones antes del dolor o compensación', tipo:'radio', opciones:['≥10 (normal)','5–9 (leve reducción)','1–4 (reducción moderada)','<1 / incapaz de realizar'] },
+        { id:'sd_compensacion', label:'Estrategias compensatorias observadas', tipo:'radio', opciones:['Ninguna','Inclinación del tronco','Hundimiento de cadera (Trendelenburg)','Pronación de pie / rodilla en valgo','Múltiples compensaciones'] }
+      ]}
+    ],
+    calculo:{ tipo:'cualitativo', regla:'Observacional — dolor + control neuromuscular' },
+    interpretacion:[
+      { rango:'Sin dolor + alineación normal + ≥10 reps', resultado:'Control neuromuscular adecuado — función patelofemoral normal en esta tarea' },
+      { rango:'Dolor leve o valgo leve', resultado:'Déficit funcional leve — fortalecer cuádriceps y glúteo medio' },
+      { rango:'Dolor moderado o valgo moderado', resultado:'Déficit funcional significativo — trabajar control motor y fuerza proximal' },
+      { rango:'Dolor intenso o incapaz de realizar', resultado:'Disfunción patelofemoral severa — evaluar causa estructural y programa de rehabilitación específico' }
+    ]
+  }
+
+};
+
+
 
 // Calcula edad del paciente en meses a partir de fecha_nac (YYYY-MM-DD)
 function edadEnMeses(fechaNac) {
@@ -2061,6 +2675,335 @@ function cerrarAyudaTest() {
   const modal = document.getElementById('modal-ayuda-test');
   if (modal) modal.remove();
 }
+// ══════════════════════════════════════
+// TESTS ORTOPÉDICOS — funciones de modal
+// Reutilizan la infraestructura de tests pediátricos
+// ══════════════════════════════════════
+
+function _resolverTest(testId) {
+  // Busca el test en el pool pediátrico primero, luego en el ortopédico
+  return (typeof TESTS_PEDIATRICOS !== 'undefined' && TESTS_PEDIATRICOS[testId])
+    || (typeof TESTS_ORTOPEDICOS !== 'undefined' && TESTS_ORTOPEDICOS[testId])
+    || null;
+}
+
+function abrirTestOrtopedico(testId) {
+  const test = _resolverTest(testId);
+  if (!test) { toast('⚠ Test no encontrado: ' + testId); return; }
+  // Si es un test pediátrico, usar el modal pediátrico original
+  if (typeof TESTS_PEDIATRICOS !== 'undefined' && TESTS_PEDIATRICOS[testId]) {
+    abrirTestPediatrico(testId); return;
+  }
+  // Modal ortopédico (misma estructura visual que el pediátrico)
+  cerrarTestOrtopedico();
+  const resPrev = (window.testsDetalleActual && window.testsDetalleActual[testId]) || null;
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay open';
+  overlay.id = 'modal-test-ortopedico';
+
+  let seccionesHtml = '';
+  test.secciones.forEach(sec => {
+    seccionesHtml += `<div class="form-group" style="margin-top:14px;padding:12px;background:rgba(255,255,255,0.5);border-radius:10px;border:1px solid var(--teal-pale)">
+      <div style="font-weight:600;color:var(--teal-dark);font-size:14px;margin-bottom:4px">${sec.nombre}</div>
+      ${sec.hint ? `<div style="font-size:11px;color:var(--text-soft);margin-bottom:10px;font-style:italic">${sec.hint}</div>` : ''}`;
+
+    sec.items.forEach(item => {
+      const valPrev = (resPrev && resPrev.items && resPrev.items[item.id]) || '';
+      if (item.tipo === 'radio') {
+        seccionesHtml += `<div style="margin-bottom:10px">
+          <div style="font-size:13px;color:var(--text);margin-bottom:5px">${item.label}</div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap">
+            ${item.opciones.map(op => `<label class="test-radio-item${valPrev===op?' selected':''}" onclick="selectTestOrtRadio(this,'${testId}','${item.id}','${op.replace(/'/g,"\'").replace(/\(/g,'\(').replace(/\)/g,'\)')}')">
+              <input type="radio" name="to_${testId}_${item.id}" value="${op}" ${valPrev===op?'checked':''} style="display:none">
+              <span>${op}</span>
+            </label>`).join('')}
+          </div>
+        </div>`;
+      }
+    });
+    seccionesHtml += `</div>`;
+  });
+
+  const borrarBtn = resPrev
+    ? `<button class="btn btn-ghost" style="color:var(--danger);border-color:var(--danger)" onclick="borrarTestOrtopedico('${testId}')">🗑 Borrar este test</button>`
+    : '';
+
+  overlay.innerHTML = `<div class="modal-drawer" style="max-height:92vh;overflow-y:auto">
+    <div class="modal-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px">
+      <div class="modal-title" style="margin:0">🧪 ${test.nombre}</div>
+      <button class="btn btn-ghost" style="padding:6px 10px;font-size:16px;width:auto" onclick="mostrarAyudaTestOrtopedico('${testId}')" title="Ayuda clínica">ℹ️</button>
+    </div>
+    <p style="font-size:12px;color:var(--text-soft);margin-bottom:10px">${test.edad_rango}</p>
+    ${seccionesHtml}
+    <div class="form-group" style="margin-top:14px">
+      <label class="form-label">📝 Observaciones / Notas adicionales</label>
+      <textarea class="form-control" id="ort_otro_${testId}" rows="2" placeholder="Observaciones clínicas...">${(resPrev && resPrev.otro) || ''}</textarea>
+    </div>
+    <div id="ort-resultado-${testId}" style="margin-top:16px;padding:14px;background:linear-gradient(135deg,var(--teal-pale),#fff);border-radius:12px;border:2px solid var(--teal-light);display:${resPrev?'block':'none'}">
+      <div style="font-weight:600;color:var(--teal-dark);margin-bottom:6px">📊 Resultado</div>
+      <div id="ort-resultado-body-${testId}" style="font-size:13px;color:var(--text)">${resPrev ? (resPrev.resumen + (resPrev.interpretacion ? '<br><em>' + resPrev.interpretacion + '</em>' : '')) : ''}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px">
+      <button class="btn btn-primary" onclick="guardarTestOrtopedico('${testId}')">✓ Guardar test</button>
+      ${borrarBtn}
+      <button class="btn btn-ghost" onclick="cerrarTestOrtopedico()">Cancelar</button>
+    </div>
+  </div>`;
+  overlay.addEventListener('click', ev => { if(ev.target===overlay) cerrarTestOrtopedico(); });
+  document.body.appendChild(overlay);
+  document.body.style.overflow = 'hidden';
+  if (resPrev) setTimeout(() => recalcularTestOrtopedico(testId), 50);
+}
+
+function selectTestOrtRadio(labelEl, testId, itemId, valor) {
+  const group = labelEl.parentElement;
+  group.querySelectorAll('.test-radio-item').forEach(l => l.classList.remove('selected'));
+  labelEl.classList.add('selected');
+  const input = labelEl.querySelector('input');
+  if (input) input.checked = true;
+  recalcularTestOrtopedico(testId);
+}
+
+function recogerItemsTestOrt(testId) {
+  const test = TESTS_ORTOPEDICOS[testId];
+  if (!test) return {};
+  const items = {};
+  test.secciones.forEach(sec => {
+    sec.items.forEach(item => {
+      if (item.tipo === 'radio') {
+        const sel = document.querySelector(`input[name="to_${testId}_${item.id}"]:checked`);
+        if (sel) items[item.id] = sel.value;
+      }
+    });
+  });
+  return items;
+}
+
+function calcularResultadoTestOrt(testId, items) {
+  const test = TESTS_ORTOPEDICOS[testId];
+  if (!test) return { resumen:'', detalle:'', interpretacion:'', valorNum:null };
+  let resumen = '', detalle = '', interpretacion = '', valorNum = null;
+
+  if (test.calculo.tipo === 'formula' && testId === 'dash') {
+    const vals = Object.values(items).map(v => parseInt(v)).filter(v => !isNaN(v) && v >= 1 && v <= 5);
+    if (vals.length >= 27) {
+      const score = Math.round(((vals.reduce((a,b)=>a+b,0)/vals.length) - 1) * 25);
+      valorNum = score;
+      resumen = `DASH: ${score}/100`;
+      const int = test.interpretacion.find(i => {
+        const [a,b] = i.rango.split('–').map(Number);
+        return score >= a && score <= b;
+      });
+      interpretacion = int ? int.resultado : '';
+    } else { resumen = `${vals.length}/30 ítems respondidos (mín. 27)`; interpretacion = 'Puntaje no calculable'; }
+  }
+  else if (testId === 'womac') {
+    const dolorIds = ['wa1','wa2','wa3','wa4','wa5'];
+    const rigidezIds = ['wb1','wb2'];
+    const funcIds = ['wc01','wc02','wc03','wc04','wc05','wc06','wc07','wc08','wc09','wc10','wc11','wc12','wc13','wc14','wc15','wc16','wc17'];
+    const suma = (ids) => ids.reduce((s,id) => s + (items[id] !== undefined ? parseInt(items[id]) : 0), 0);
+    const dolor = suma(dolorIds), rigidez = suma(rigidezIds), func = suma(funcIds);
+    const total = dolor + rigidez + func;
+    valorNum = total;
+    resumen = `Total: ${total}/96 | Dolor: ${dolor}/20 | Rigidez: ${rigidez}/8 | Función: ${func}/68`;
+    const int = test.interpretacion.find(i => {
+      const [a,b] = i.rango.split('–').map(Number);
+      return total >= a && total <= b;
+    });
+    interpretacion = int ? int.resultado : '';
+  }
+  else if (testId === 'lysholm') {
+    const scoreMap = {
+      'Ninguna (5)':5,'Leve u ocasional (3)':3,'Constante (0)':0,
+      'Ninguno (5)':5,'Bastón o muleta (3)':3,'Imposible apoyar peso (0)':0,
+      'Sin problemas (10)':10,'Ligeramente alterado (6)':6,'Un escalón a la vez (2)':2,'Imposible (0)':0,
+      'Sin problemas (5)':5,'Ligeramente alterado (4)':4,'No más de 90° (2)':2,
+      'Nunca (25)':25,'Raramente en actividad intensa (20)':20,'Frecuente en actividad intensa (15)':15,'Ocasional en actividad moderada (10)':10,'Frecuente en actividad moderada (5)':5,'En cada paso (0)':0,
+      'Ninguno (25)':25,'Inconstante y leve con actividad intensa (20)':20,'Notable con actividad intensa (15)':15,'Notable al o después de caminar >2 km (10)':10,'Notable al o después de caminar <2 km (5)':5,'Constante (0)':0,
+      'Ninguno (10)':10,'Con actividad intensa (6)':6,'Con actividad normal (2)':2,
+      'Sin bloqueo ni sensación de bloqueo (15)':15,'Sensación de bloqueo sin bloqueo real (10)':10,'Bloqueo ocasional (6)':6,'Bloqueo frecuente (2)':2,'Articulación bloqueada en la consulta (0)':0
+    };
+    let total = 0;
+    Object.values(items).forEach(v => { if (scoreMap[v] !== undefined) total += scoreMap[v]; });
+    valorNum = total;
+    resumen = `Lysholm: ${total}/100`;
+    const int = test.interpretacion.find(i => {
+      const [a,b] = i.rango.split('–').map(Number);
+      return total >= a && total <= b;
+    });
+    interpretacion = int ? int.resultado : '';
+  }
+  else if (testId === 'koos') {
+    const subescalas = {
+      'Síntomas': ['ks1','ks2','ks3','ks4','ks5','ks6','ks7'],
+      'Dolor': ['kp1','kp2','kp3','kp4','kp5','kp6','kp7','kp8','kp9'],
+      'AVD': ['ka01','ka02','ka03','ka04','ka05','ka06','ka07','ka08','ka09','ka10','ka11','ka12','ka13','ka14','ka15','ka16','ka17'],
+      'Deporte': ['ksp1','ksp2','ksp3','ksp4','ksp5'],
+      'Calidad Vida': ['kq1','kq2','kq3','kq4']
+    };
+    const scores = [];
+    const partes = Object.entries(subescalas).map(([nombre, ids]) => {
+      const vals = ids.map(id => items[id] !== undefined ? parseInt(items[id]) : null).filter(v => v !== null);
+      if (vals.length === 0) return `${nombre}: N/A`;
+      const media = vals.reduce((a,b)=>a+b,0) / vals.length;
+      const score = Math.round((1 - media/4) * 100);
+      scores.push(score);
+      return `${nombre}: ${score}`;
+    }).join(' | ');
+    const promedio = scores.length > 0 ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length) : null;
+    valorNum = promedio;
+    resumen = `KOOS promedio: ${promedio !== null ? promedio + '/100' : 'N/A'}`;
+    detalle = partes;
+    interpretacion = promedio !== null ? (promedio > 87 ? 'Sin problemas significativos' : promedio > 62 ? 'Problemas leves' : promedio > 37 ? 'Problemas moderados' : 'Problemas graves/extremos') : '';
+  }
+  else if (testId === 'tsk') {
+    const invertidos = ['tsk4','tsk8','tsk12','tsk16'];
+    let total = 0, n = 0;
+    Object.entries(items).forEach(([id, v]) => {
+      let val = parseInt(v);
+      if (isNaN(val)) return;
+      if (invertidos.includes(id)) val = 5 - val;
+      total += val; n++;
+    });
+    if (n < 17) { resumen = `${n}/17 ítems respondidos`; interpretacion = 'Completar todos los ítems'; }
+    else {
+      valorNum = total;
+      resumen = `TSK-17: ${total}/68`;
+      const int = test.interpretacion.find(i => {
+        const [a,b] = i.rango.split('–').map(Number);
+        return total >= a && total <= b;
+      });
+      interpretacion = int ? int.resultado : '';
+    }
+  }
+  else if (testId === 'prwe') {
+    const dolorIds = ['pr1','pr2','pr3','pr4','pr5'];
+    const funcIds = ['pf1','pf2','pf3','pf4','pf5','pf6','pu1','pu2','pu3','pu4'];
+    const dolor = dolorIds.reduce((s,id) => s + (items[id] !== undefined ? parseInt(items[id]) : 0), 0);
+    const funcSum = funcIds.reduce((s,id) => s + (items[id] !== undefined ? parseInt(items[id]) : 0), 0);
+    const func = funcSum / 2;
+    const total = Math.round(dolor + func);
+    valorNum = total;
+    resumen = `PRWE: ${total}/100 | Dolor: ${dolor}/50 | Función: ${func}/50`;
+    const int = test.interpretacion.find(i => {
+      const [a,b] = i.rango.split('–').map(Number);
+      return total >= a && total <= b;
+    });
+    interpretacion = int ? int.resultado : '';
+  }
+  else {
+    // Tests físicos cualitativos (Neer, Jobe, McMurray, etc.)
+    const vals = Object.values(items);
+    const positivos = vals.filter(v => v && v.toLowerCase().startsWith('positivo'));
+    const resultado = vals.find(v => v && (v.toLowerCase().includes('positivo') || v.toLowerCase().includes('negativo'))) || '';
+    resumen = resultado || (vals.length > 0 ? vals[0] : 'Evaluado');
+    const int = test.interpretacion.find(i => {
+      const rangoLower = i.rango.toLowerCase();
+      return resumen.toLowerCase().includes(rangoLower) || resumen.toLowerCase().startsWith(rangoLower.split(' ')[0]);
+    });
+    interpretacion = int ? int.resultado : (positivos.length > 0 ? 'Ver interpretación clínica del test' : '');
+    valorNum = positivos.length > 0 ? 1 : 0;
+  }
+
+  return { resumen, detalle, interpretacion, valorNum };
+}
+
+function recalcularTestOrtopedico(testId) {
+  const items = recogerItemsTestOrt(testId);
+  const result = calcularResultadoTestOrt(testId, items);
+  const box = document.getElementById(`ort-resultado-${testId}`);
+  const body = document.getElementById(`ort-resultado-body-${testId}`);
+  if (box && body && result.resumen) {
+    body.innerHTML = `<strong>${result.resumen}</strong>${result.detalle ? '<br><span style="color:var(--text-soft)">' + result.detalle + '</span>' : ''}${result.interpretacion ? '<br><em style="color:var(--teal-dark)">' + result.interpretacion + '</em>' : ''}`;
+    box.style.display = 'block';
+  }
+}
+
+function guardarTestOrtopedico(testId) {
+  const items = recogerItemsTestOrt(testId);
+  if (Object.keys(items).length === 0) { toast('⚠ Completa al menos un ítem antes de guardar'); return; }
+  const result = calcularResultadoTestOrt(testId, items);
+  const otro = document.getElementById(`ort_otro_${testId}`)?.value?.trim() || '';
+  if (!window.testsDetalleActual) window.testsDetalleActual = {};
+  window.testsDetalleActual[testId] = {
+    items, otro,
+    resumen: result.resumen,
+    detalle: result.detalle,
+    interpretacion: result.interpretacion,
+    valor: result.valorNum,
+    fecha: new Date().toISOString()
+  };
+  // Auto-marcar check en la lista principal
+  const test = TESTS_ORTOPEDICOS[testId];
+  const mainChecks = document.querySelectorAll('#ev-pruebas-checks .ck-item');
+  mainChecks.forEach(ckItem => {
+    const span = ckItem.querySelector('span');
+    if (span && span.textContent.replace(/\s*✓.*$/,'').trim() === test.label) {
+      const cb = ckItem.querySelector('input');
+      if (cb) { cb.checked = true; ckItem.classList.add('checked'); }
+    }
+  });
+  actualizarBadgesTests();
+  cerrarTestOrtopedico();
+  toast(`✓ ${test.label}: ${result.resumen || 'guardado'}`);
+}
+
+function borrarTestOrtopedico(testId) {
+  if (!confirm('¿Borrar este test?')) return;
+  if (window.testsDetalleActual) delete window.testsDetalleActual[testId];
+  const test = TESTS_ORTOPEDICOS[testId];
+  const mainChecks = document.querySelectorAll('#ev-pruebas-checks .ck-item');
+  mainChecks.forEach(ckItem => {
+    const span = ckItem.querySelector('span');
+    if (span && span.textContent.replace(/\s*✓.*$/,'').trim() === test.label) {
+      const cb = ckItem.querySelector('input');
+      if (cb) { cb.checked = false; ckItem.classList.remove('checked'); }
+    }
+  });
+  actualizarBadgesTests();
+  cerrarTestOrtopedico();
+  toast(`🗑 ${test.label} eliminado`);
+}
+
+function cerrarTestOrtopedico() {
+  const modal = document.getElementById('modal-test-ortopedico');
+  if (modal) { modal.remove(); document.body.style.overflow = ''; }
+}
+
+function mostrarAyudaTestOrtopedico(testId) {
+  const test = _resolverTest(testId);
+  if (!test) return;
+  // Reusar el modal de ayuda existente
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay open';
+  overlay.id = 'modal-ayuda-test-ort';
+  overlay.style.zIndex = '10000';
+  overlay.innerHTML = `<div class="modal-drawer" style="max-height:85vh;overflow-y:auto">
+    <div class="modal-handle"></div>
+    <div class="modal-title">ℹ️ ${test.nombre}</div>
+    <div style="margin-top:10px">
+      <div style="font-weight:600;color:var(--teal-dark);margin-bottom:4px">📖 Descripción</div>
+      <p style="font-size:13px;color:var(--text);margin-bottom:14px">${test.help.descripcion}</p>
+      <div style="font-weight:600;color:var(--teal-dark);margin-bottom:4px">🧭 Cómo aplicar</div>
+      <ul style="font-size:13px;color:var(--text);margin:0 0 14px 20px;padding:0">
+        ${test.help.como_aplicar.map(x => `<li style="margin-bottom:4px">${x}</li>`).join('')}
+      </ul>
+      <div style="font-weight:600;color:var(--teal-dark);margin-bottom:4px">💡 Tips clínicos</div>
+      <ul style="font-size:13px;color:var(--text);margin:0 0 14px 20px;padding:0">
+        ${test.help.tips_clinicos.map(x => `<li style="margin-bottom:4px">${x}</li>`).join('')}
+      </ul>
+      <div style="font-weight:600;color:var(--teal-dark);margin-bottom:4px">📊 Interpretación</div>
+      <div style="font-size:12px;color:var(--text);background:var(--teal-pale);padding:10px;border-radius:8px;margin-bottom:14px">
+        ${test.interpretacion.map(i => `<div style="margin-bottom:4px"><strong>${i.rango}:</strong> ${i.resultado}</div>`).join('')}
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="document.getElementById('modal-ayuda-test-ort').remove()" style="margin-top:10px">✓ Entendido</button>
+  </div>`;
+  overlay.addEventListener('click', ev => { if(ev.target===overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+}
+
 
 function actualizarBadgesTests() {
   // Añade badge ✓ con el resumen junto a cada check que tiene test aplicado
@@ -4038,19 +4981,20 @@ function renderTestsPorServicio(tipo) {
 
   if (pruebas.items.length) {
     const esPediatrico = (tipo === 'pediatrico');
+    const esOrtopedico = (tipo === 'ortopedico');
     html += `<div class="eval-card">
       <div class="eval-card-title" onclick="toggleEvalCard(this)"><span class="arrow open">▶</span> 🧪 Sección 9: Pruebas específicas — ${pruebas.icon} ${pruebas.label}</div>
       <div class="eval-card-body open">
         <button class="btn btn-ghost" style="width:auto;padding:10px 16px;font-size:13px;margin-bottom:12px" onclick="abrirPopupPruebas('${tipo}')">📋 Abrir selector de pruebas</button>
         <div class="ck-group" id="ev-pruebas-checks">
           ${pruebas.items.map(item => {
-            const testId = esPediatrico ? MAP_TEST_LABEL_ID[item] : null;
+            const testId = (esPediatrico || esOrtopedico) ? MAP_TEST_LABEL_ID[item] : null;
             if (testId) {
-              // Ítem pediátrico con test dinámico → botón "Aplicar test" + ℹ️
+              // Ítem con test dinámico → botón "Aplicar test" + ℹ️
               return `<div style="display:flex;align-items:center;gap:6px;width:100%;flex-wrap:wrap">
                 <label class="ck-item" style="flex:1;min-width:180px"><input type="checkbox" onchange="ckToggle(this)"><span>${item}</span></label>
-                <button class="btn btn-ghost" style="padding:8px 10px;font-size:12px;width:auto;white-space:nowrap" onclick="abrirTestPediatrico('${testId}')">▶ Aplicar</button>
-                <button class="btn btn-ghost" style="padding:8px 10px;font-size:14px;width:auto" onclick="mostrarAyudaTest('${testId}')" title="Ayuda">ℹ️</button>
+                <button class="btn btn-ghost" style="padding:8px 10px;font-size:12px;width:auto;white-space:nowrap" onclick="abrirTestOrtopedico('${testId}')">▶ Aplicar</button>
+                <button class="btn btn-ghost" style="padding:8px 10px;font-size:14px;width:auto" onclick="mostrarAyudaTestOrtopedico('${testId}')" title="Ayuda">ℹ️</button>
               </div>`;
             }
             return `<label class="ck-item"><input type="checkbox" onchange="ckToggle(this)"><span>${item}</span></label>`;
@@ -4070,7 +5014,7 @@ function renderTestsPorServicio(tipo) {
   container.innerHTML = html;
 
   // Refrescar badges si ya hay tests aplicados
-  if (tipo === 'pediatrico') setTimeout(actualizarBadgesTests, 50);
+  if (tipo === 'pediatrico' || tipo === 'ortopedico') setTimeout(actualizarBadgesTests, 50);
 }
 
 async function guardarEvaluacion() {
@@ -4503,7 +5447,7 @@ if ('serviceWorker' in navigator) {
   if (location.protocol === 'https:' || location.protocol === 'http:') {
     navigator.serviceWorker.register('./sw.js').then(() => console.log('SW registrado (archivo)')).catch(e => console.warn('SW archivo falló, usando fallback', e));
   } else {
-    const swCode = `const CACHE='kinara-v9';const URLS=['./'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(URLS))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('./')))));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));`;
+    const swCode = `const CACHE='kinara-v10';const URLS=['./'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(URLS))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('./')))));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));`;
     const blob = new Blob([swCode], {type:'application/javascript'});
     navigator.serviceWorker.register(URL.createObjectURL(blob)).then(()=>console.log('SW registrado (blob)')).catch(()=>{});
   }
