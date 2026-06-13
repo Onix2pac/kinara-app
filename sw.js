@@ -3,7 +3,7 @@
 // Estrategia: Cache-first para assets, network-first para navegación
 // ══════════════════════════════════════
 
-const CACHE_NAME = 'kinara-v22';
+const CACHE_NAME = 'kinara-v23';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

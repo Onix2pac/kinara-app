@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>KINARA v22 · Gestión de Pacientes</title>
+<title>KINARA v23 · Gestión de Pacientes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -759,7 +759,7 @@
 <!-- ══ MENÚ LATERAL ══ -->
 <div class="menu-overlay" id="menu-overlay" onclick="if(event.target===this)cerrarMenu()">
   <div class="menu-panel">
-    <div class="menu-header"><h3>KINARA</h3><p>Gestión Clínica · v22</p></div>
+    <div class="menu-header"><h3>KINARA</h3><p>Gestión Clínica · v23</p></div>
     <div class="menu-body">
       <!-- ── Supabase Sync ── -->
       <div style="padding:12px 16px 8px;border-bottom:1px solid var(--border);margin-bottom:4px">
@@ -794,7 +794,7 @@
         <span class="menu-item-icon">✕</span><span class="menu-item-text">Cerrar menú</span>
       </button>
     </div>
-    <div class="menu-footer">KINARA v22 · Offline-first + Cloud sync<br>Geraldine Castillo Torres · Fisioterapeuta<br>COLFI 22915 · ReTHUS 2025-08-21</div>
+    <div class="menu-footer">KINARA v23 · Offline-first + Cloud sync<br>Geraldine Castillo Torres · Fisioterapeuta<br>COLFI 22915 · ReTHUS 2025-08-21</div>
   </div>
 </div>
 
@@ -5485,7 +5485,7 @@ if ('serviceWorker' in navigator) {
   if (location.protocol === 'https:' || location.protocol === 'http:') {
     navigator.serviceWorker.register('./sw.js').then(() => console.log('SW registrado (archivo)')).catch(e => console.warn('SW archivo falló, usando fallback', e));
   } else {
-    const swCode = `const CACHE='kinara-v22';const URLS=['./'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(URLS))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('./')))));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));`;
+    const swCode = `const CACHE='kinara-v23';const URLS=['./'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(URLS))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('./')))));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));`;
     const blob = new Blob([swCode], {type:'application/javascript'});
     navigator.serviceWorker.register(URL.createObjectURL(blob)).then(()=>console.log('SW registrado (blob)')).catch(()=>{});
   }
@@ -6441,28 +6441,11 @@ buildDolorScale();
     }
   } catch(e) { console.warn('Sync inicial:', e); }
 
-  // FIX v7.1: Solo crear demos si la DB es completamente nueva
-  // Si ya hay pacientes (reales o demos), NUNCA recrear
-  try {
-    const todos = await txGet('pacientes');
-    const demosCreated = await getConfig('demos_created');
-    if (todos.length === 0 && !demosCreated) {
-      const demos = [
-        { id:'demo1', nombre:'Ana María Torres', cedula:'1045678901', tipo_doc:'CC', tipo_servicio:'ortopedico', fecha_nac:'1985-03-15', sexo:'F', telefono:'311 234 5678', correo:'ana.torres@gmail.com', motivo:'Dolor lumbar crónico', diagnostico:'Lumbalgia mecánica', medicamentos:'Ibuprofeno 400mg', alergias:'Ninguna', antecedentes:'Cirugía de hernia discal 2019', estado:'Activo', fecha_registro:new Date(Date.now()-30*86400000).toISOString(), updated_at:new Date().toISOString() },
-        { id:'demo2', nombre:'Carlos Ramírez Vega', cedula:'79234512', tipo_doc:'CC', tipo_servicio:'ortopedico', fecha_nac:'1990-07-22', sexo:'M', telefono:'315 876 4321', correo:'c.ramirez@hotmail.com', motivo:'Rehabilitación post-quirúrgica rodilla', diagnostico:'Meniscopatía post-operatoria', medicamentos:'Colágeno hidrolizado', alergias:'Penicilina', antecedentes:'Artroscopía rodilla ene 2026', estado:'Activo', fecha_registro:new Date(Date.now()-15*86400000).toISOString(), updated_at:new Date().toISOString() },
-        { id:'demo3', nombre:'Lucía Fernández', cedula:'52901234', tipo_doc:'CC', tipo_servicio:'sueroterapia', fecha_nac:'1978-11-08', sexo:'F', telefono:'320 111 9988', correo:'lu.fernandez@gmail.com', motivo:'Dolor cervical y contracturas', diagnostico:'Cervicalgia tensional', medicamentos:'Ninguno', alergias:'AINES', antecedentes:'Hipotiroidismo', estado:'Alta', fecha_registro:new Date(Date.now()-60*86400000).toISOString(), updated_at:new Date().toISOString() }
-      ];
-      for (const d of demos) await txPut('pacientes',d);
-      await txPut('sesiones',{id:'s_d1',pacienteId:'demo1',fecha:'2026-03-10',hora:'09:00',tipo:'Terapia manual',dolor:6,notas:'Mejora leve en movilidad lumbar.',areas:'Lumbar / espalda',evolucion:'mejora',created_at:new Date().toISOString()});
-      await txPut('sesiones',{id:'s_d2',pacienteId:'demo1',fecha:'2026-03-06',hora:'09:00',tipo:'Electroterapia',dolor:7,notas:'Primera sesión.',areas:'Lumbar / espalda',created_at:new Date().toISOString()});
-      await txPut('sesiones',{id:'s_d3',pacienteId:'demo2',fecha:'2026-03-11',hora:'11:00',tipo:'Ejercicio terapéutico',dolor:4,notas:'Gana rango articular.',areas:'Rodilla',evolucion:'mejora',created_at:new Date().toISOString()});
-      await setConfig('demos_created', 'true');
-      await cargarLista();
-    } else if (!demosCreated && todos.length > 0) {
-      // DB ya tenía pacientes (venía de v6), marcar flag para no volver a intentar
-      await setConfig('demos_created', 'true');
-    }
-  } catch(err) { console.warn('Demo init:', err); }
+  // v23: La creación de pacientes demo fue ELIMINADA.
+  // Con sync en la nube (Supabase) la nube es la fuente de verdad:
+  // un dispositivo nuevo solo debe sincronizar, nunca sembrar datos.
+  // (Bug: en instalación nueva, los demos se creaban antes del sync inicial,
+  //  se subían a la nube y reaparecían en todos los dispositivos).
 })();
 
 </script>
