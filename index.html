@@ -5485,7 +5485,7 @@ if ('serviceWorker' in navigator) {
   if (location.protocol === 'https:' || location.protocol === 'http:') {
     navigator.serviceWorker.register('./sw.js').then(() => console.log('SW registrado (archivo)')).catch(e => console.warn('SW archivo falló, usando fallback', e));
   } else {
-    const swCode = `const CACHE='kinara-v23';const URLS=['./'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(URLS))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('./')))));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));`;
+    const swCode = `const CACHE='kinara-v24';const URLS=['./'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(URLS))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('./')))));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));`;
     const blob = new Blob([swCode], {type:'application/javascript'});
     navigator.serviceWorker.register(URL.createObjectURL(blob)).then(()=>console.log('SW registrado (blob)')).catch(()=>{});
   }
@@ -5561,7 +5561,7 @@ async function limpiarDatosDemo() {
 // AUTO-ACTUALIZACIÓN — v20
 // La app verifica version.json y se recarga sola cuando hay versión nueva
 // ══════════════════════════════════════
-const APP_VERSION = 23;
+const APP_VERSION = 24;
 
 async function verificarActualizacion() {
   try {
@@ -6223,11 +6223,18 @@ async function descargarSilencioso() {
       const filasVivas = filas.filter(r => !r.deleted_at);
 
       // Respaldo: locales sincronizados que ya no están en la nube
-      for (const local of locales) {
-        if (local.sincronizado === true && !nubeIds.has(local.id) && localById[local.id]) {
-          await txDelete(store, local.id);
-          delete localById[local.id];
-          cambios++;
+      // GUARD: si la nube devolvió 0 registros pero hay locales sincronizados,
+      // es probable que Supabase esté arrancando/pausado — NO borrar nada.
+      const localSinc = locales.filter(r => r.sincronizado === true).length;
+      if (filas.length === 0 && localSinc > 0) {
+        console.warn(`⚠ ${tabla}: nube vacía con ${localSinc} locales sincronizados — salteando limpieza`);
+      } else {
+        for (const local of locales) {
+          if (local.sincronizado === true && !nubeIds.has(local.id) && localById[local.id]) {
+            await txDelete(store, local.id);
+            delete localById[local.id];
+            cambios++;
+          }
         }
       }
       // Traer nuevos y actualizar (sin pisar cambios locales pendientes)
@@ -6308,12 +6315,19 @@ async function descargarDesdeNube() {
       const filasVivas = filas.filter(r => !r.deleted_at);
 
       // Respaldo: locales sincronizados que NO existen en la nube (borrados pre-tombstone)
+      // GUARD: si la nube devolvió 0 registros pero hay locales sincronizados,
+      // es probable que Supabase esté arrancando/pausado — NO borrar nada.
       const nubeIds = new Set(filas.map(r => r.id));
-      for (const local of locales) {
-        if (local.sincronizado === true && !nubeIds.has(local.id) && localById[local.id]) {
-          await txDelete(store, local.id);
-          delete localById[local.id];
-          totalEliminados++;
+      const localSinc = locales.filter(r => r.sincronizado === true).length;
+      if (filas.length === 0 && localSinc > 0) {
+        console.warn(`⚠ ${tabla}: nube vacía con ${localSinc} locales sincronizados — salteando limpieza`);
+      } else {
+        for (const local of locales) {
+          if (local.sincronizado === true && !nubeIds.has(local.id) && localById[local.id]) {
+            await txDelete(store, local.id);
+            delete localById[local.id];
+            totalEliminados++;
+          }
         }
       }
 

@@ -1,9 +1,9 @@
 // ══════════════════════════════════════
-// KINARA v22 — Service Worker
+// KINARA v24 — Service Worker
 // Estrategia: Cache-first para assets, network-first para navegación
 // ══════════════════════════════════════
 
-const CACHE_NAME = 'kinara-v23';
+const CACHE_NAME = 'kinara-v24';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -30,12 +30,25 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Fetch — Cache-first con fallback a network
+// Fetch — Network-first para API/datos, cache-first para assets estáticos
 self.addEventListener('fetch', event => {
   // Ignorar requests que no son GET
   if (event.request.method !== 'GET') return;
 
-  // Para navegación (HTML), intentar network primero
+  const url = event.request.url;
+
+  // ── NETWORK-ONLY: API de Supabase y version.json NUNCA se cachean ──
+  if (url.includes('supabase.co') || url.includes('version.json')) {
+    event.respondWith(
+      fetch(event.request).catch(() => new Response('{"error":"offline"}', {
+        status: 503,
+        headers: { 'Content-Type': 'application/json' }
+      }))
+    );
+    return;
+  }
+
+  // ── NETWORK-FIRST: navegación (HTML) ──
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
@@ -49,19 +62,17 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Para otros assets (CSS, fuentes, JS, imágenes), cache-first
+  // ── CACHE-FIRST: solo assets estáticos (CSS, fuentes, imágenes) ──
   event.respondWith(
     caches.match(event.request).then(cached => {
       if (cached) return cached;
       return fetch(event.request).then(response => {
-        // Solo cachear respuestas válidas
         if (response && response.status === 200) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
         }
         return response;
       }).catch(() => {
-        // Fallback para navegación
         if (event.request.mode === 'navigate') {
           return caches.match('./');
         }
